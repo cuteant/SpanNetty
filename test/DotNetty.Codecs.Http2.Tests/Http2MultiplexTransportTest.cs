@@ -63,9 +63,9 @@ namespace DotNetty.Codecs.Http2.Tests
                 _serverConnectedChannel = null;
             }
             Task.WaitAll(
-                _sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
-                _sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
-                _bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
+                _sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                _sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                _bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
         }
 
         [Fact]
@@ -191,7 +191,7 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void FlushNotDiscarded()
         {
-            var executorService = new SingleThreadEventExecutor("Discarded", TimeSpan.FromMilliseconds(100));
+            var executorService = new DefaultEventExecutor();
 
             try
             {
@@ -227,11 +227,11 @@ namespace DotNetty.Codecs.Http2.Tests
             }
             finally
             {
-                executorService.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
+                executorService.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
             }
         }
 
-        class TestChannelInboundHandlerAdapter: ChannelHandlerAdapter
+        class TestChannelInboundHandlerAdapter : ChannelHandlerAdapter
         {
             private readonly SingleThreadEventExecutor _executorService;
 

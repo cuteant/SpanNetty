@@ -18,7 +18,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         [Fact]
         public async Task TestAcquire()
         {
-            var group = new MultithreadEventLoopGroup();
+            var group = new DefaultEventLoopGroup();
             var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             var cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
@@ -64,13 +64,13 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             await sc.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         [Fact]
         public async Task TestBoundedChannelPoolSegment()
         {
-            var group = new MultithreadEventLoopGroup();
+            var group = new DefaultEventLoopGroup();
             var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
@@ -103,7 +103,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await channel.CloseAsync();
             await channel2.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         /**
@@ -114,7 +114,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         [Fact]
         public async Task TestUnhealthyChannelIsNotOffered()
         {
-            var group = new MultithreadEventLoopGroup();
+            var group = new DefaultEventLoopGroup();
             var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
@@ -145,7 +145,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await sc.CloseAsync();
             await channel3.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         /**
@@ -157,7 +157,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         [Fact]
         public async Task TestUnhealthyChannelIsOfferedWhenNoHealthCheckRequested()
         {
-            var group = new MultithreadEventLoopGroup();
+            var group = new DefaultEventLoopGroup();
             var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
@@ -183,7 +183,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await sc.CloseAsync();
             await channel2.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         [Fact]
@@ -273,7 +273,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         [Fact]
         public async Task TestCloseAsync()
         {
-            var group = new MultithreadEventLoopGroup();
+            var group = new DefaultEventLoopGroup();
             var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
@@ -307,7 +307,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             await sc.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
     }
 }

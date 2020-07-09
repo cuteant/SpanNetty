@@ -39,7 +39,7 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override EndPoint LocalAddressInternal => Volatile.Read(ref v_localAddress);
 
-        protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is SingleThreadEventLoop;
+        protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is SingleThreadEventLoopBase;
 
         public new LocalAddress LocalAddress => (LocalAddress)base.LocalAddress;
 

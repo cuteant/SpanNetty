@@ -3,24 +3,21 @@
 
 namespace DotNetty.Transport.Libuv
 {
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
+    using System;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
 
-    sealed class EventLoop : LoopExecutor, IEventLoop
+    public sealed class EventLoop : LoopExecutor
     {
-        public EventLoop(IEventLoopGroup parent, string threadName)
-            : base(parent, threadName)
+        internal EventLoop(IEventLoopGroup parent)
+            : this(parent, DefaultThreadFactory<EventLoop>.Instance, RejectedExecutionHandlers.Reject(), DefaultBreakoutInterval)
+        {
+        }
+
+        internal EventLoop(IEventLoopGroup parent, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : base(parent, threadFactory, rejectedHandler, breakoutInterval)
         {
             Start();
         }
-
-        public new IEventLoop GetNext() => (IEventLoop)base.GetNext();
-
-        public Task RegisterAsync(IChannel channel) => channel.Unsafe.RegisterAsync(this);
-
-        public new IEventLoopGroup Parent => (IEventLoopGroup)base.Parent;
-
-        public new IEnumerable<IEventLoop> Items => new[] { this };
     }
 }

@@ -44,6 +44,7 @@ namespace DotNetty.Transport
         func,
         type,
         file,
+        task,
 
         bytes,
         types,
@@ -129,9 +130,10 @@ namespace DotNetty.Transport
         localAddress,
         instanceType,
 
-        remoteAddress,
-        healthChecker,
         attributeType,
+        healthChecker,
+        remoteAddress,
+        tailTaskQueue,
 
         eventLoopCount,
         initialization,
@@ -557,16 +559,6 @@ namespace DotNetty.Transport
             static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("connection attempt already made");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException(Exception e)
-        {
-            throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
-            {
-                return new InvalidOperationException("failed to create a child event loop.", e);
             }
         }
 

@@ -18,13 +18,13 @@
             var queue = _queue;
             if ((uint)_maxCapacity > (uint)queue.Count)
             {
-                queue.AddToBack(item);
+                queue.AddLast​(item);
                 return true;
             }
             return false;
         }
 
-        public bool TryDequeue(out T result) => _queue.TryRemoveFromFront(out result);
+        public bool TryDequeue(out T result) => _queue.TryRemoveFirst(out result);
 
         public void Clear() => _queue.Clear();
     }

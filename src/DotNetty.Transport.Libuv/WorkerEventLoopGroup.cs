@@ -1,28 +1,26 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ForCanBeConvertedToForeach
-
 namespace DotNetty.Transport.Libuv
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    public sealed class WorkerEventLoopGroup : AbstractEventExecutorGroup, IEventLoopGroup
+    public sealed class WorkerEventLoopGroup : AbstractEventExecutorGroup<WorkerEventLoop>, IEventLoopGroup
     {
-        static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount;
-        static readonly TimeSpan StartTimeout = TimeSpan.FromMilliseconds(500);
+        private static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount;
+        private static readonly TimeSpan StartTimeout = TimeSpan.FromMilliseconds(500);
 
-        readonly WorkerEventLoop[] _eventLoops;
-        readonly DispatcherEventLoop _dispatcherLoop;
-        int _requestId;
+        private readonly IEventExecutorChooser<WorkerEventLoop> _chooser;
+        private readonly WorkerEventLoop[] _eventLoops;
+        private readonly DispatcherEventLoop _dispatcherLoop;
 
         public override bool IsShutdown => _eventLoops.All(eventLoop => eventLoop.IsShutdown);
 
@@ -32,14 +30,66 @@ namespace DotNetty.Transport.Libuv
 
         public override Task TerminationCompletion { get; }
 
+        IEnumerable<IEventLoop> IEventLoopGroup.Items => _eventLoops;
+
+        public override IEnumerable<IEventExecutor> Items => _eventLoops;
+
+        public override IReadOnlyList<WorkerEventLoop> GetItems() => _eventLoops;
+
         public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup)
             : this(eventLoopGroup, DefaultEventLoopThreadCount)
         {
         }
 
-        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int eventLoopCount)
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads)
+            : this(eventLoopGroup, nThreads, DefaultThreadFactory<WorkerEventLoopGroup>.Instance)
+        {
+        }
+
+
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IThreadFactory threadFactory)
+            : this(eventLoopGroup, nThreads, threadFactory, RejectedExecutionHandlers.Reject())
+        {
+        }
+
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler)
+            : this(eventLoopGroup, nThreads, threadFactory, rejectedHandler, LoopExecutor.DefaultBreakoutInterval)
+        {
+        }
+
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : this(eventLoopGroup, nThreads, threadFactory, DefaultEventExecutorChooserFactory<WorkerEventLoop>.Instance, rejectedHandler, breakoutInterval)
+        {
+        }
+
+
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IRejectedExecutionHandler rejectedHandler)
+            : this(eventLoopGroup, nThreads, DefaultThreadFactory<WorkerEventLoopGroup>.Instance, rejectedHandler)
+        {
+        }
+
+
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IEventExecutorChooserFactory<WorkerEventLoop> chooserFactory)
+            : this(eventLoopGroup, nThreads, chooserFactory, RejectedExecutionHandlers.Reject())
+        {
+        }
+
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IEventExecutorChooserFactory<WorkerEventLoop> chooserFactory, IRejectedExecutionHandler rejectedHandler)
+            : this(eventLoopGroup, nThreads, chooserFactory, rejectedHandler, LoopExecutor.DefaultBreakoutInterval)
+        {
+        }
+
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IEventExecutorChooserFactory<WorkerEventLoop> chooserFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : this(eventLoopGroup, nThreads, DefaultThreadFactory<WorkerEventLoopGroup>.Instance, chooserFactory, rejectedHandler, breakoutInterval)
+        {
+        }
+
+
+        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IThreadFactory threadFactory, IEventExecutorChooserFactory<WorkerEventLoop> chooserFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
         {
             if (eventLoopGroup is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoopGroup); }
+            if (chooserFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chooserFactory); }
+            if (nThreads < 0) { ThrowHelper.ThrowArgumentException_Positive(nThreads, ExceptionArgument.nThreads); }
 
             _dispatcherLoop = eventLoopGroup.Dispatcher;
             PipeName = _dispatcherLoop.PipeName;
@@ -47,15 +97,17 @@ namespace DotNetty.Transport.Libuv
             // Wait until the pipe is listening to connect
             _dispatcherLoop.WaitForLoopRun(StartTimeout);
 
-            _eventLoops = new WorkerEventLoop[eventLoopCount];
-            var terminationTasks = new Task[eventLoopCount];
-            for (int i = 0; i < eventLoopCount; i++)
+            nThreads = 0u >= (uint)nThreads ? DefaultEventLoopThreadCount : nThreads;
+
+            _eventLoops = new WorkerEventLoop[nThreads];
+            var terminationTasks = new Task[nThreads];
+            for (int i = 0; i < nThreads; i++)
             {
                 WorkerEventLoop eventLoop = null;
                 bool success = false;
                 try
                 {
-                    eventLoop = new WorkerEventLoop(this);
+                    eventLoop = new WorkerEventLoop(this, threadFactory, rejectedHandler, breakoutInterval);
                     success = eventLoop.ConnectTask.Wait(StartTimeout);
                     if (!success)
                     {
@@ -78,12 +130,12 @@ namespace DotNetty.Transport.Libuv
                 terminationTasks[i] = eventLoop.TerminationCompletion;
             }
 
+            _chooser = chooserFactory.NewChooser(_eventLoops);
+
             TerminationCompletion = Task.WhenAll(terminationTasks);
         }
 
         internal string PipeName { get; }
-
-        IEnumerable<IEventLoop> IEventLoopGroup.Items => _eventLoops;
 
         internal void Accept(NativeHandle handle)
         {
@@ -91,13 +143,9 @@ namespace DotNetty.Transport.Libuv
             _dispatcherLoop.Accept(handle);
         }
 
-        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)GetNext();
+        IEventLoop IEventLoopGroup.GetNext() => _chooser.GetNext();
 
-        public override IEventExecutor GetNext()
-        {
-            int id = Interlocked.Increment(ref _requestId);
-            return _eventLoops[Math.Abs(id % _eventLoops.Length)];
-        }
+        public override WorkerEventLoop GetNext() => _chooser.GetNext();
 
         public Task RegisterAsync(IChannel channel)
         {
@@ -129,6 +177,23 @@ namespace DotNetty.Transport.Libuv
             return TerminationCompletion;
         }
 
-        protected override IEnumerable<IEventExecutor> GetItems() => _eventLoops;
+        public override bool WaitTermination(TimeSpan timeout)
+        {
+            PreciseTimeSpan deadline = PreciseTimeSpan.Deadline(timeout);
+
+            for (int i = 0; i < _eventLoops.Length; i++)
+            {
+                var executor = _eventLoops[i];
+                for (; ; )
+                {
+                    PreciseTimeSpan timeLeft = deadline - PreciseTimeSpan.FromStart;
+                    if (timeLeft <= PreciseTimeSpan.Zero) { goto LoopEnd; }
+
+                    if (executor.WaitTermination(timeLeft.ToTimeSpan())) { break; }
+                }
+            }
+        LoopEnd:
+            return IsTerminated;
+        }
     }
 }

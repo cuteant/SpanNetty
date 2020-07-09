@@ -2,7 +2,6 @@
 {
     using System;
     using System.Threading.Tasks;
-    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Groups;

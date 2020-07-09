@@ -15,6 +15,8 @@ namespace DotNetty.Common.Concurrency
         /// <inheritdoc />
         public abstract bool IsTerminated { get; }
 
+        public abstract bool WaitTermination(TimeSpan timeout);
+
         /// <inheritdoc />
         public Task<T> SubmitAsync<T>(Func<T> func) => SubmitAsync(func, CancellationToken.None);
 
@@ -42,11 +44,7 @@ namespace DotNetty.Common.Concurrency
             SubmitAsync(func, context, state, CancellationToken.None);
 
         /// <inheritdoc />
-        public Task<T> SubmitAsync<T>(
-            Func<object, object, T> func,
-            object context,
-            object state,
-            CancellationToken cancellationToken)
+        public Task<T> SubmitAsync<T>(Func<object, object, T> func, object context, object state, CancellationToken cancellationToken)
         {
             var node = new StateFuncWithContextSubmitQueueNode<T>(func, context, state, cancellationToken);
             Execute(node);

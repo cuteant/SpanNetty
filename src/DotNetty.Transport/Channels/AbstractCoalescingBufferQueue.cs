@@ -36,9 +36,9 @@ namespace DotNetty.Transport.Channels
         {
             if (promise is object && !promise.IsVoid)
             {
-                _bufAndListenerPairs.AddToFront(promise);
+                _bufAndListenerPairs.AddFirst​(promise);
             }
-            _bufAndListenerPairs.AddToFront(buf);
+            _bufAndListenerPairs.AddFirst​(buf);
             IncrementReadableBytes(buf.ReadableBytes);
         }
 
@@ -61,10 +61,10 @@ namespace DotNetty.Transport.Channels
         {
             // buffers are added before promises so that we naturally 'consume' the entire buffer during removal
             // before we complete it's promise.
-            _bufAndListenerPairs.AddToBack(buf);
+            _bufAndListenerPairs.AddLast​(buf);
             if (promise is object && !promise.IsVoid)
             {
-                _bufAndListenerPairs.AddToBack(promise);
+                _bufAndListenerPairs.AddLast​(promise);
             }
             IncrementReadableBytes(buf.ReadableBytes);
         }
@@ -76,7 +76,7 @@ namespace DotNetty.Transport.Channels
         /// <returns>the first <see cref="IByteBuffer"/> from the queue.</returns>
         public IByteBuffer RemoveFirst(IPromise aggregatePromise)
         {
-            if (!_bufAndListenerPairs.TryRemoveFromFront(out var entry)) { return null; }
+            if (!_bufAndListenerPairs.TryRemoveFirst(out var entry)) { return null; }
             Debug.Assert(entry is IByteBuffer);
             var result = (IByteBuffer)entry;
 
@@ -87,7 +87,7 @@ namespace DotNetty.Transport.Channels
             if (entry is IPromise promise)
             {
                 aggregatePromise.Task.CascadeTo(promise, Logger);
-                _ = _bufAndListenerPairs.RemoveFromFront();
+                _ = _bufAndListenerPairs.RemoveFirst();
             }
             return result;
         }
@@ -119,7 +119,7 @@ namespace DotNetty.Transport.Channels
             int originalBytes = bytes;
             try
             {
-                while (_bufAndListenerPairs.TryRemoveFromFront(out var entry))
+                while (_bufAndListenerPairs.TryRemoveFirst(out var entry))
                 {
                     if (entry is IPromise promise)
                     {
@@ -130,7 +130,7 @@ namespace DotNetty.Transport.Channels
                     if (entryBuffer.ReadableBytes > bytes)
                     {
                         // Add the buffer back to the queue as we can't consume all of it.
-                        _bufAndListenerPairs.AddToFront(entryBuffer);
+                        _bufAndListenerPairs.AddFirst​(entryBuffer);
                         if (bytes > 0)
                         {
                             // Take a slice of what we can consume and retain it.
@@ -194,7 +194,7 @@ namespace DotNetty.Transport.Channels
             var bufAndListenerPairs = _bufAndListenerPairs;
             for (int idx = 0; idx < bufAndListenerPairs.Count; idx++)
             {
-                dest._bufAndListenerPairs.AddToBack(bufAndListenerPairs[idx]);
+                dest._bufAndListenerPairs.AddLast​(bufAndListenerPairs[idx]);
             }
             dest.IncrementReadableBytes(_readableBytes);
         }
@@ -210,7 +210,7 @@ namespace DotNetty.Transport.Channels
             IByteBuffer previousBuf = null;
             while (true)
             {
-                _ = _bufAndListenerPairs.TryRemoveFromFront(out var entry);
+                _ = _bufAndListenerPairs.TryRemoveFirst(out var entry);
                 try
                 {
                     switch (entry)
@@ -352,7 +352,7 @@ namespace DotNetty.Transport.Channels
         {
             DecrementReadableBytes(_readableBytes);
             Exception pending = null;
-            while (_bufAndListenerPairs.TryRemoveFromFront(out var entry))
+            while (_bufAndListenerPairs.TryRemoveFirst(out var entry))
             {
                 try
                 {

@@ -17,194 +17,709 @@ namespace DotNetty.Common.Concurrency
     /// <summary>
     /// <see cref="IOrderedEventExecutor"/> backed by a single thread.
     /// </summary>
-    public class SingleThreadEventExecutor : AbstractScheduledEventExecutor, IOrderedEventExecutor
+    public abstract class SingleThreadEventExecutor : AbstractScheduledEventExecutor, IOrderedEventExecutor
     {
-        private const int ST_NOT_STARTED = 1;
-        private const int ST_STARTED = 2;
-        private const int ST_SHUTTING_DOWN = 3;
-        private const int ST_SHUTDOWN = 4;
-        private const int ST_TERMINATED = 5;
-        private const string DefaultWorkerThreadName = "SingleThreadEventExecutor worker";
+        #region @@ Fields @@
 
-        private static readonly IInternalLogger Logger =
+        protected const int NotStartedState = 1;
+        protected const int StartedState = 2;
+        protected const int ShuttingDownState = 3;
+        protected const int ShutdownState = 4;
+        protected const int TerminatedState = 5;
+
+        internal static readonly int DefaultMaxPendingExecutorTasks = Math.Max(16,
+                SystemPropertyUtil.GetInt("io.netty.eventexecutor.maxPendingTasks", int.MaxValue));
+        protected static readonly IInternalLogger Logger =
             InternalLoggerFactory.GetInstance<SingleThreadEventExecutor>();
 
-        private readonly XParameterizedThreadStart _loopAction;
-        private readonly Action _loopCoreAciton;
-
-        private readonly IQueue<IRunnable> _taskQueue;
         private readonly Thread _thread;
-        private int v_executionState = ST_NOT_STARTED;
-        private readonly PreciseTimeSpan _preciseBreakoutInterval;
-        private PreciseTimeSpan _lastExecutionTime;
-        private readonly ManualResetEventSlim _emptyEvent;
-        private readonly TaskScheduler _scheduler;
+        private readonly TaskScheduler _taskScheduler;
+        private readonly CountdownEvent _threadLock;
         private readonly IPromise _terminationCompletionSource;
-        private PreciseTimeSpan _gracefulShutdownStartTime;
-        private PreciseTimeSpan _gracefulShutdownQuietPeriod;
-        private PreciseTimeSpan _gracefulShutdownTimeout;
-        private readonly ISet<Action> _shutdownHooks;
-        private long v_progress;
+        private int v_executionState = NotStartedState;
 
+        protected readonly IQueue<IRunnable> _taskQueue;
+        private readonly IBlockingQueue<IRunnable> _blockingTaskQueue;
+        private readonly IRejectedExecutionHandler _rejectedExecutionHandler;
+        private readonly ISet<Action> _shutdownHooks;
+        private readonly bool _addTaskWakesUp;
+        private readonly int _maxPendingTasks;
+
+        private long _lastExecutionTime;
+        private long _gracefulShutdownStartTime;
+        private long v_gracefulShutdownQuietPeriod;
+        private long v_gracefulShutdownTimeout;
+        //private long v_progress;
         private bool _firstTask; // 不需要设置 volatile
 
+        #endregion
+
+        #region @@ Constructors @@
+
         /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
-        public SingleThreadEventExecutor(string threadName, TimeSpan breakoutInterval)
-            : this(null, threadName, breakoutInterval, new CompatibleConcurrentQueue<IRunnable>())
+        /// <param name="threadFactory">the <see cref="IThreadFactory"/> which will be used for the used <see cref="Thread"/>.</param>
+        /// <param name="addTaskWakesUp"><c>true</c> if and only if invocation of <see cref="AddTask(IRunnable)"/> will wake up the executor thread.</param>
+        public SingleThreadEventExecutor(IThreadFactory threadFactory, bool addTaskWakesUp)
+            : this(null, threadFactory, addTaskWakesUp, DefaultMaxPendingExecutorTasks)
         {
         }
 
         /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
-        public SingleThreadEventExecutor(IEventExecutorGroup parent, string threadName, TimeSpan breakoutInterval)
-            : this(parent, threadName, breakoutInterval, new CompatibleConcurrentQueue<IRunnable>())
+        /// <param name="threadFactory">the <see cref="IThreadFactory"/> which will be used for the used <see cref="Thread"/>.</param>
+        /// <param name="addTaskWakesUp"><c>true</c> if and only if invocation of <see cref="AddTask(IRunnable)"/> will wake up the executor thread.</param>
+        /// <param name="maxPendingTasks">the maximum number of pending tasks before new tasks will be rejected.</param>
+        public SingleThreadEventExecutor(IThreadFactory threadFactory, bool addTaskWakesUp, int maxPendingTasks)
+            : this(null, threadFactory, addTaskWakesUp, maxPendingTasks)
         {
         }
 
-        protected SingleThreadEventExecutor(string threadName, TimeSpan breakoutInterval, IQueue<IRunnable> taskQueue)
-            : this(null, threadName, breakoutInterval, taskQueue)
-        { }
+        /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
+        /// <param name="threadFactory">the <see cref="IThreadFactory"/> which will be used for the used <see cref="Thread"/>.</param>
+        /// <param name="addTaskWakesUp"><c>true</c> if and only if invocation of <see cref="AddTask(IRunnable)"/> will wake up the executor thread.</param>
+        /// <param name="rejectedHandler">the <see cref="IRejectedExecutionHandler"/> to use.</param>
+        protected SingleThreadEventExecutor(IThreadFactory threadFactory, bool addTaskWakesUp, IRejectedExecutionHandler rejectedHandler)
+            : this(null, threadFactory, addTaskWakesUp, rejectedHandler)
+        {
+        }
 
-        protected SingleThreadEventExecutor(IEventExecutorGroup parent, string threadName, TimeSpan breakoutInterval, IQueue<IRunnable> taskQueue)
+        /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
+        /// <param name="parent">the <see cref="IEventExecutorGroup"/> which is the parent of this instance and belongs to it.</param>
+        /// <param name="threadFactory">the <see cref="IThreadFactory"/> which will be used for the used <see cref="Thread"/>.</param>
+        /// <param name="addTaskWakesUp"><c>true</c> if and only if invocation of <see cref="AddTask(IRunnable)"/> will wake up the executor thread.</param>
+        public SingleThreadEventExecutor(IEventExecutorGroup parent, IThreadFactory threadFactory, bool addTaskWakesUp)
+            : this(parent, threadFactory, addTaskWakesUp, DefaultMaxPendingExecutorTasks)
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
+        /// <param name="parent">the <see cref="IEventExecutorGroup"/> which is the parent of this instance and belongs to it.</param>
+        /// <param name="threadFactory">the <see cref="IThreadFactory"/> which will be used for the used <see cref="Thread"/>.</param>
+        /// <param name="addTaskWakesUp"><c>true</c> if and only if invocation of <see cref="AddTask(IRunnable)"/> will wake up the executor thread.</param>
+        /// <param name="maxPendingTasks">the maximum number of pending tasks before new tasks will be rejected.</param>
+        public SingleThreadEventExecutor(IEventExecutorGroup parent, IThreadFactory threadFactory, bool addTaskWakesUp, int maxPendingTasks)
+            : this(parent, threadFactory, addTaskWakesUp, maxPendingTasks, RejectedExecutionHandlers.Reject())
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
+        /// <param name="parent">the <see cref="IEventExecutorGroup"/> which is the parent of this instance and belongs to it.</param>
+        /// <param name="threadFactory">the <see cref="IThreadFactory"/> which will be used for the used <see cref="Thread"/>.</param>
+        /// <param name="addTaskWakesUp"><c>true</c> if and only if invocation of <see cref="AddTask(IRunnable)"/> will wake up the executor thread.</param>
+        /// <param name="rejectedHandler">the <see cref="IRejectedExecutionHandler"/> to use.</param>
+        public SingleThreadEventExecutor(IEventExecutorGroup parent, IThreadFactory threadFactory, bool addTaskWakesUp, IRejectedExecutionHandler rejectedHandler)
+            : this(parent, threadFactory, addTaskWakesUp, DefaultMaxPendingExecutorTasks, rejectedHandler)
+        {
+        }
+
+
+        /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
+        /// <param name="parent">the <see cref="IEventExecutorGroup"/> which is the parent of this instance and belongs to it.</param>
+        /// <param name="threadFactory">the <see cref="IThreadFactory"/> which will be used for the used <see cref="Thread"/>.</param>
+        /// <param name="addTaskWakesUp"><c>true</c> if and only if invocation of <see cref="AddTask(IRunnable)"/> will wake up the executor thread.</param>
+        /// <param name="maxPendingTasks">the maximum number of pending tasks before new tasks will be rejected.</param>
+        /// <param name="rejectedHandler">the <see cref="IRejectedExecutionHandler"/> to use.</param>
+        protected SingleThreadEventExecutor(IEventExecutorGroup parent, IThreadFactory threadFactory, bool addTaskWakesUp,
+            int maxPendingTasks, IRejectedExecutionHandler rejectedHandler)
+            : this(parent, addTaskWakesUp, rejectedHandler)
+        {
+            if (threadFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.threadFactory); }
+
+            _maxPendingTasks = Math.Max(16, maxPendingTasks);
+            _taskQueue = NewTaskQueue(_maxPendingTasks);
+            _blockingTaskQueue = _taskQueue as IBlockingQueue<IRunnable>;
+
+            _thread = NewThread(threadFactory);
+        }
+
+        /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
+        /// <param name="parent">the <see cref="IEventExecutorGroup"/> which is the parent of this instance and belongs to it.</param>
+        /// <param name="threadFactory">the <see cref="IThreadFactory"/> which will be used for the used <see cref="Thread"/>.</param>
+        /// <param name="addTaskWakesUp"><c>true</c> if and only if invocation of <see cref="AddTask(IRunnable)"/> will wake up the executor thread.</param>
+        /// <param name="taskQueue">The pending task queue.</param>
+        /// <param name="rejectedHandler">the <see cref="IRejectedExecutionHandler"/> to use.</param>
+        protected SingleThreadEventExecutor(IEventExecutorGroup parent, IThreadFactory threadFactory, bool addTaskWakesUp,
+            IQueue<IRunnable> taskQueue, IRejectedExecutionHandler rejectedHandler)
+            : this(parent, addTaskWakesUp, rejectedHandler)
+        {
+            if (threadFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.threadFactory); }
+            if (taskQueue is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.taskQueue); }
+
+            _maxPendingTasks = DefaultMaxPendingExecutorTasks;
+            _taskQueue = taskQueue;
+            _blockingTaskQueue = taskQueue as IBlockingQueue<IRunnable>;
+
+            _thread = NewThread(threadFactory);
+        }
+
+        private SingleThreadEventExecutor(IEventExecutorGroup parent, bool addTaskWakesUp, IRejectedExecutionHandler rejectedHandler)
             : base(parent)
         {
+            if (rejectedHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.rejectedHandler); }
+
             _firstTask = true;
-            _emptyEvent = new ManualResetEventSlim(false, 1);
-            _shutdownHooks = new HashSet<Action>();
 
             _loopAction = Loop;
             _loopCoreAciton = LoopCore;
 
+            _addTaskWakesUp = addTaskWakesUp;
+            _rejectedExecutionHandler = rejectedHandler;
+
+            _shutdownHooks = new HashSet<Action>();
             _terminationCompletionSource = NewPromise();
-            _taskQueue = taskQueue;
-            _preciseBreakoutInterval = PreciseTimeSpan.FromTimeSpan(breakoutInterval);
-            _scheduler = new ExecutorTaskScheduler(this);
-            _thread = new Thread(_loopAction);
-            if (string.IsNullOrEmpty(threadName))
-            {
-                _thread.Name = DefaultWorkerThreadName;
-            }
-            else
-            {
-                _thread.Name = threadName;
-            }
-            _thread.Start();
+            _threadLock = new CountdownEvent(1);
+
+            _taskScheduler = new ExecutorTaskScheduler(this);
         }
 
-        /// <summary>
-        ///     Task Scheduler that will post work to this executor's queue.
-        /// </summary>
-        public TaskScheduler Scheduler => _scheduler;
+        #endregion
+
+        #region -- Properties --
 
         /// <summary>
-        ///     Allows to track whether executor is progressing through its backlog. Useful for diagnosing / mitigating stalls due to blocking calls in conjunction with IsBacklogEmpty property.
+        /// Task Scheduler that will post work to this executor's queue.
         /// </summary>
-        public long Progress => Volatile.Read(ref v_progress);
+        public TaskScheduler Scheduler => _taskScheduler;
+
+        protected Thread InnerThread => _thread;
+
+        ///// <summary>
+        ///// Allows to track whether executor is progressing through its backlog. Useful for diagnosing / mitigating stalls due to blocking calls in conjunction with IsBacklogEmpty property.
+        ///// </summary>
+        //public long Progress => Volatile.Read(ref v_progress);
 
         /// <summary>
-        ///     Indicates whether executor's backlog is empty. Useful for diagnosing / mitigating stalls due to blocking calls in conjunction with Progress property.
+        /// Indicates whether executor's backlog is empty. Useful for diagnosing / mitigating stalls due to blocking calls in conjunction with Progress property.
         /// </summary>
-        public bool IsBacklogEmpty => _taskQueue.IsEmpty;
+        public bool IsBacklogEmpty => HasTasks;
 
         /// <summary>
-        ///     Gets length of backlog of tasks queued for immediate execution.
+        /// Gets length of backlog of tasks queued for immediate execution.
         /// </summary>
-        public int BacklogLength => _taskQueue.Count;
+        public int BacklogLength => PendingTasks;
 
-        void Loop(object s)
-        {
-            SetCurrentExecutor(this);
+        /// <summary>
+        /// TBD
+        /// </summary>
+        protected virtual bool HasTasks => _taskQueue.NonEmpty;
 
-            _ = Task.Factory.StartNew(_loopCoreAciton, CancellationToken.None, TaskCreationOptions.None, _scheduler);
-        }
-
-        void LoopCore()
-        {
-            try
-            {
-                _ = Interlocked.CompareExchange(ref v_executionState, ST_STARTED, ST_NOT_STARTED);
-                while (!ConfirmShutdown())
-                {
-                    _ = RunAllTasks(_preciseBreakoutInterval);
-                }
-                CleanupAndTerminate(true);
-            }
-            catch (Exception ex)
-            {
-                Logger.ExecutionLoopFailed(_thread, ex);
-                _ = Interlocked.Exchange(ref v_executionState, ST_TERMINATED);
-                _ = _terminationCompletionSource.TrySetException(ex);
-            }
-        }
+        /// <summary>
+        /// Gets the number of tasks that are pending for processing.
+        /// </summary>
+        /// <remarks>Be aware that this operation may be expensive as it depends on the internal implementation of the
+        /// <see cref="SingleThreadEventExecutor"/>. So use it with care!</remarks>
+        public virtual int PendingTasks => _taskQueue.Count;
 
         /// <inheritdoc />
-        public override bool IsShuttingDown => (uint)Volatile.Read(ref v_executionState) >= ST_SHUTTING_DOWN;
+        public override bool IsShuttingDown => (uint)Volatile.Read(ref v_executionState) >= ShuttingDownState;
+
+        /// <inheritdoc />
+        public override bool IsShutdown => (uint)Volatile.Read(ref v_executionState) >= ShutdownState;
+
+        /// <inheritdoc />
+        public override bool IsTerminated => (uint)Volatile.Read(ref v_executionState) >=/*==*/ TerminatedState;
 
         /// <inheritdoc />
         public override Task TerminationCompletion => _terminationCompletionSource.Task;
 
         /// <inheritdoc />
-        public override bool IsShutdown => (uint)Volatile.Read(ref v_executionState) >= ST_SHUTDOWN;
-
-        /// <inheritdoc />
-        public override bool IsTerminated => (uint)Volatile.Read(ref v_executionState) >=/*==*/ ST_TERMINATED;
-
-        /// <inheritdoc />
         public override bool IsInEventLoop(Thread t) => _thread == t;
-
-        /// <inheritdoc />
-        public override void Execute(IRunnable task)
-        {
-            if (!(task is ILazyRunnable))
-            {
-                InternalExecute(task, true);
-            }
-            else
-            {
-                LazyExecute(task);
-            }
-        }
-
-        public override void LazyExecute(IRunnable task)
-        {
-            // netty 第一个任务进来，不管是否延迟任务，都会启动线程
-            var firstTask = _firstTask;
-            if (firstTask) { _firstTask = false; }
-            InternalExecute(task, firstTask);
-        }
-
-        [MethodImpl(InlineMethod.AggressiveOptimization)]
-        private void InternalExecute(IRunnable task, bool immediate)
-        {
-            AddTask(task);
-
-            if (!InEventLoop)
-            {
-                if (IsShutdown) { ThrowHelper.ThrowRejectedExecutionException_Terminated(); }
-
-                if (immediate) { _emptyEvent.Set(); }
-            }
-        }
-
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        private void AddTask(IRunnable task)
-        {
-            if (IsShutdown)
-            {
-                ThrowHelper.ThrowRejectedExecutionException_Shutdown();
-            }
-            if (!_taskQueue.TryEnqueue(task))
-            {
-                ThrowHelper.ThrowRejectedExecutionException_Queue();
-            }
-        }
 
         protected override IEnumerable<IEventExecutor> GetItems() => new[] { this };
 
-        protected void WakeUp(bool inEventLoop)
+        protected long GracefulShutdownStartTime => _gracefulShutdownStartTime;
+
+        protected int ExecutionState => Volatile.Read(ref v_executionState);
+
+        #endregion
+
+        #region -- Thread --
+
+        protected virtual Thread NewThread(IThreadFactory threadFactory)
         {
-            if (!inEventLoop || (Volatile.Read(ref v_executionState) == ST_SHUTTING_DOWN))
+            return threadFactory.NewThread(_loopAction);
+        }
+
+        protected virtual void Start()
+        {
+            _thread.Start();
+        }
+
+        private readonly XParameterizedThreadStart _loopAction;
+        private void Loop(object s)
+        {
+            SetCurrentExecutor(this);
+
+            _ = Task.Factory.StartNew(_loopCoreAciton, CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
+        }
+
+        private readonly Action _loopCoreAciton;
+        private void LoopCore()
+        {
+            try
             {
-                Execute(WakeupTask);
+                _ = Interlocked.CompareExchange(ref v_executionState, StartedState, NotStartedState);
+
+                bool success = false;
+                UpdateLastExecutionTime();
+                try
+                {
+                    Run();
+                    success = true;
+                }
+                catch (Exception exc)
+                {
+                    Logger.UnexpectedExceptionFromAnEventExecutor(exc);
+                }
+                finally
+                {
+                    CleanupAndTerminate(success);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.ExecutionLoopFailed(_thread, ex);
+                _ = Interlocked.Exchange(ref v_executionState, TerminatedState);
+                _ = _terminationCompletionSource.TrySetException(ex);
+            }
+        }
+
+        #endregion
+
+        #region -- Utilities --
+
+        protected virtual long GetTimeFromStart()
+        {
+            return PreciseTime.NanoTime();
+        }
+
+        protected virtual long ToPreciseTime(TimeSpan time)
+        {
+            return PreciseTime.TicksToPreciseTicks(time.Ticks);
+        }
+
+        protected virtual void TaskDelay(int millisecondsTimeout)
+        {
+            Thread.Sleep(millisecondsTimeout);
+        }
+
+        protected bool CompareAndSetExecutionState(int currentState, int newState)
+        {
+            return currentState == Interlocked.CompareExchange(ref v_executionState, newState, currentState);
+        }
+
+        protected void SetExecutionState(int newState)
+        {
+            var currentState = Volatile.Read(ref v_executionState);
+            int oldState;
+            do
+            {
+                oldState = currentState;
+
+                if ((uint)oldState >= newState) { break; }
+
+                currentState = Interlocked.CompareExchange(ref v_executionState, newState, oldState);
+            } while (currentState != oldState);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        protected static void Reject()
+        {
+            ThrowHelper.ThrowRejectedExecutionException_Terminated();
+        }
+
+        /// <summary>
+        /// Offers the task to the associated <see cref="IRejectedExecutionHandler"/>.
+        /// </summary>
+        /// <param name="task">The task to reject.</param>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        protected void Reject(IRunnable task)
+        {
+            _rejectedExecutionHandler.Rejected(task, this);
+        }
+
+        #endregion
+
+        protected static IQueue<IRunnable> NewBlockingTaskQueue(int maxPendingTasks)
+        {
+            maxPendingTasks = Math.Max(16, maxPendingTasks);
+            return int.MaxValue == maxPendingTasks
+                ? new CompatibleBlockingQueue<IRunnable>()
+                : new CompatibleBlockingQueue<IRunnable>(maxPendingTasks);
+        }
+
+        protected virtual IQueue<IRunnable> NewTaskQueue(int maxPendingTasks)
+        {
+            return NewBlockingTaskQueue(maxPendingTasks);
+        }
+
+        protected virtual IRunnable PollTask()
+        {
+            Debug.Assert(InEventLoop);
+            return PollTaskFrom(_taskQueue);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected static IRunnable PollTaskFrom(IQueue<IRunnable> taskQueue)
+        {
+            if (!taskQueue.TryDequeue(out IRunnable task)) { return null; }
+
+            if (task != WakeupTask) { return task; }
+
+            return PollTaskFromSlow(taskQueue);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static IRunnable PollTaskFromSlow(IQueue<IRunnable> taskQueue)
+        {
+            for (; ; )
+            {
+                if (!taskQueue.TryDequeue(out IRunnable task)) { return null; }
+                if (task != WakeupTask) { return task; }
+            }
+        }
+
+        /// <summary>
+        /// Take the next <see cref="IRunnable"/> from the task queue and so will block if no task is currently present.
+        /// 
+        /// <para>Be aware that this method will throw an <see cref="NotSupportedException"/> if the task queue
+        /// does not implement <see cref="IBlockingQueue{T}"/>.</para>
+        /// </summary>
+        /// <returns><c>null</c> if the executor thread has been interrupted or waken up.</returns>
+        protected IRunnable TakeTask()
+        {
+            Debug.Assert(InEventLoop);
+            if (_blockingTaskQueue is null) { ThrowHelper.ThrowNotSupportedException(); }
+
+            if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
+            {
+                if (TryTakeTask(scheduledTask.DelayNanos, out IRunnable task)) { return task; }
+            }
+            else
+            {
+                var task = _blockingTaskQueue.Take();
+                if (task == WakeupTask) { task = null; }
+                return task;
+            }
+
+            return TakeTaskSlow();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private IRunnable TakeTaskSlow()
+        {
+            for (; ; )
+            {
+                if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
+                {
+                    if (TryTakeTask(scheduledTask.DelayNanos, out IRunnable task)) { return task; }
+                }
+                else
+                {
+                    var task = _blockingTaskQueue.Take();
+                    if (task == WakeupTask) { task = null; }
+                    return task;
+                }
+            }
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private bool TryTakeTask(long delayNanos, out IRunnable task)
+        {
+            const long MaxDelayMilliseconds = int.MaxValue - 1;
+
+            if ((ulong)delayNanos > 0UL) // delayNanos >= 0
+            {
+                var timeout = PreciseTime.ToMilliseconds(delayNanos);
+                if (_blockingTaskQueue.TryTake(out task, (int)Math.Min(timeout, MaxDelayMilliseconds)))
+                {
+                    return true;
+                }
+            }
+
+            // We need to fetch the scheduled tasks now as otherwise there may be a chance that
+            // scheduled tasks are never executed if there is always one task in the taskQueue.
+            // This is for example true for the read task of OIO Transport
+            // See https://github.com/netty/netty/issues/1614
+            _ = FetchFromScheduledTaskQueue();
+            return _blockingTaskQueue.TryTake(out task, 0);
+        }
+
+        protected bool FetchFromScheduledTaskQueue()
+        {
+            if (ScheduledTaskQueue.IsEmpty) { return true; }
+
+            var nanoTime = PreciseTime.NanoTime();
+            var scheduledTask = PollScheduledTask(nanoTime);
+            var taskQueue = _taskQueue;
+            while (scheduledTask is object)
+            {
+                if (!taskQueue.TryEnqueue(scheduledTask))
+                {
+                    // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
+                    _ = ScheduledTaskQueue.TryEnqueue(scheduledTask);
+                    return false;
+                }
+                scheduledTask = PollScheduledTask(nanoTime);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Return <c>true</c> if at least one scheduled task was executed.
+        /// </summary>
+        private bool ExecuteExpiredScheduledTasks()
+        {
+            if (ScheduledTaskQueue.IsEmpty) { return false; }
+
+            var nanoTime = PreciseTime.NanoTime();
+            var scheduledTask = PollScheduledTask(nanoTime);
+            if (scheduledTask is null) { return false; }
+            do
+            {
+                SafeExecute(scheduledTask);
+            } while ((scheduledTask = PollScheduledTask(nanoTime)) is object);
+            return true;
+        }
+
+        protected IRunnable PeekTask()
+        {
+            Debug.Assert(InEventLoop);
+            return _taskQueue.TryPeek(out var task) ? task : null;
+        }
+
+        protected bool TryPeekTask(out IRunnable task)
+        {
+            Debug.Assert(InEventLoop);
+            return _taskQueue.TryPeek(out task);
+        }
+
+        /// <summary>
+        /// Add a task to the task queue, or throws a <see cref="RejectedExecutionException"/> if this instance was shutdown before.
+        /// </summary>
+        /// <param name="task"></param>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected void AddTask(IRunnable task)
+        {
+#if DEBUG
+            if (task is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
+#endif
+
+            if (!OfferTask(task)) { Reject(task); }
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        internal bool OfferTask(IRunnable task)
+        {
+            if (IsShutdown) { Reject(); }
+
+            return _taskQueue.TryEnqueue(task);
+        }
+
+        /// <summary>
+        /// Poll all tasks from the task queue and run them via <see cref="IRunnable.Run()"/> method.
+        /// </summary>
+        /// <returns><c>true</c> if and only if at least one task was run</returns>
+        protected bool RunAllTasks()
+        {
+            Debug.Assert(InEventLoop);
+
+            OnBeginRunningAllTasks();
+
+            bool fetchedAll;
+            bool ranAtLeastOne = false;
+            var taskQueue = _taskQueue;
+            do
+            {
+                fetchedAll = FetchFromScheduledTaskQueue();
+                if (RunAllTasksFrom(taskQueue))
+                {
+                    ranAtLeastOne = true;
+                }
+            } while (!fetchedAll);  // keep on processing until we fetched all scheduled tasks.
+
+            if (ranAtLeastOne)
+            {
+                UpdateLastExecutionTime();
+            }
+
+            OnEndRunningAllTasks();
+
+            AfterRunningAllTasks();
+
+            return ranAtLeastOne;
+        }
+
+        /// <summary>
+        /// Execute all expired scheduled tasks and all current tasks in the executor queue until both queues are empty,
+        /// or <paramref name="maxDrainAttempts"/> has been exceeded.
+        /// </summary>
+        /// <param name="maxDrainAttempts">The maximum amount of times this method attempts to drain from queues. This is to prevent
+        /// continuous task execution and scheduling from preventing the EventExecutor thread to
+        /// make progress and return to the selector mechanism to process inbound I/O events.</param>
+        /// <returns><c>true</c> if at least one task was run.</returns>
+        protected bool RunScheduledAndExecutorTasks(int maxDrainAttempts)
+        {
+            Debug.Assert(InEventLoop);
+
+            OnBeginRunningAllTasks();
+
+            bool ranAtLeastOneTask;
+            int drainAttempt = 0;
+            var taskQueue = _taskQueue;
+            do
+            {
+                // We must run the taskQueue tasks first, because the scheduled tasks from outside the EventLoop are queued
+                // here because the taskQueue is thread safe and the scheduledTaskQueue is not thread safe.
+                ranAtLeastOneTask = RunExistingTasksFrom(taskQueue) | ExecuteExpiredScheduledTasks();
+            } while (ranAtLeastOneTask && ++drainAttempt < maxDrainAttempts);
+
+            if (drainAttempt > 0)
+            {
+                UpdateLastExecutionTime();
+            }
+
+            OnEndRunningAllTasks();
+
+            AfterRunningAllTasks();
+
+            return drainAttempt > 0;
+        }
+
+        /// <summary>
+        /// Runs all tasks from the passed <paramref name="taskQueue"/>.
+        /// </summary>
+        /// <param name="taskQueue">To poll and execute all tasks.</param>
+        /// <returns><c>true</c> if at least one task was executed.</returns>
+        protected bool RunAllTasksFrom(IQueue<IRunnable> taskQueue)
+        {
+            IRunnable task = PollTaskFrom(taskQueue);
+            if (task is null) { return false; }
+
+            for (; ; )
+            {
+                //Volatile.Write(ref v_progress, v_progress + 1); // volatile write is enough as this is the only thread ever writing
+                SafeExecute(task);
+                task = PollTaskFrom(taskQueue);
+                if (task is null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// What ever tasks are present in <paramref name="taskQueue"/> when this method is invoked will be <see cref="IRunnable.Run()"/>.
+        /// </summary>
+        /// <param name="taskQueue">the task queue to drain.</param>
+        /// <returns><c>true</c> if at least <see cref="IRunnable.Run()"/> was called.</returns>
+        private bool RunExistingTasksFrom(IQueue<IRunnable> taskQueue)
+        {
+            IRunnable task = PollTaskFrom(taskQueue);
+            if (task is null) { return false; }
+
+            int remaining = Math.Min(_maxPendingTasks, taskQueue.Count);
+            SafeExecute(task);
+            // Use taskQueue.poll() directly rather than pollTaskFrom() since the latter may
+            // silently consume more than one item from the queue (skips over WAKEUP_TASK instances)
+            while (remaining-- > 0 && taskQueue.TryDequeue(out task))
+            {
+                SafeExecute(task);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Poll all tasks from the task queue and run them via <see cref="IRunnable.Run()"/> method.  This method stops running
+        /// the tasks in the task queue and returns if it ran longer than <paramref name="timeout"/>.
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <returns></returns>
+        protected bool RunAllTasks(long timeout)
+        {
+            _ = FetchFromScheduledTaskQueue();
+            IRunnable task = PollTask();
+            if (task is null)
+            {
+                AfterRunningAllTasks();
+                return false;
+            }
+
+            OnBeginRunningAllTasks();
+
+            long deadline = timeout > 0L ? GetTimeFromStart() + timeout : 0L;
+            long runTasks = 0;
+            long executionTime;
+            while (true)
+            {
+                SafeExecute(task);
+
+                runTasks++;
+
+                // Check timeout every 64 tasks because nanoTime() is relatively expensive.
+                // XXX: Hard-coded value - will make it configurable if it is really a problem.
+                if (0ul >= (ulong)(runTasks & 0x3F))
+                {
+                    executionTime = GetTimeFromStart();
+                    if (executionTime >= deadline) { break; }
+                }
+
+                task = PollTask();
+                if (task is null)
+                {
+                    executionTime = GetTimeFromStart();
+                    break;
+                }
+            }
+
+            OnEndRunningAllTasks();
+
+            AfterRunningAllTasks();
+
+            _lastExecutionTime = executionTime;
+            return true;
+        }
+
+        protected virtual void OnBeginRunningAllTasks() { }
+        protected virtual void OnEndRunningAllTasks() { }
+
+        /// <summary>
+        /// Invoked before returning from <see cref="RunAllTasks()"/> and <see cref="RunAllTasks(long)"/>.
+        /// </summary>
+        protected virtual void AfterRunningAllTasks() { }
+
+        /// <summary>
+        /// Updates the internal timestamp that tells when a submitted task was executed most recently.
+        /// <see cref="RunAllTasks()"/> and <see cref="RunAllTasks(long)"/> updates this timestamp automatically, and thus there's
+        /// usually no need to call this method.  However, if you take the tasks manually using <see cref="TakeTask()"/> or
+        /// <see cref="PollTask()"/>, you have to call this method at the end of task execution loop for accurate quiet period
+        /// checks.
+        /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected void UpdateLastExecutionTime()
+        {
+            _lastExecutionTime = GetTimeFromStart();
+        }
+
+        /// <summary>
+        /// Run the tasks in the <c>taskQueue</c>
+        /// </summary>
+        protected abstract void Run();
+
+        /// <summary>
+        /// Do nothing, sub-classes may override
+        /// </summary>
+        protected virtual void Cleanup()
+        {
+            // NOOP
+        }
+
+        protected internal virtual void WakeUp(bool inEventLoop)
+        {
+            if (!inEventLoop/* || (Volatile.Read(ref v_executionState) == ST_SHUTTING_DOWN)*/)
+            {
+                // Use offer as we actually only need this to unblock the thread and if offer fails we do not care as there
+                // is already something in the queue.
+                _ = _taskQueue.TryEnqueue(WakeupTask);
             }
         }
 
@@ -224,8 +739,8 @@ namespace DotNetty.Common.Concurrency
             }
         }
 
-        static readonly Action<object, object> AddShutdownHookAction = OnAddShutdownHook;
-        static void OnAddShutdownHook(object s, object a)
+        private static readonly Action<object, object> AddShutdownHookAction = OnAddShutdownHook;
+        private static void OnAddShutdownHook(object s, object a)
         {
             _ = ((ISet<Action>)s).Add((Action)a);
         }
@@ -247,8 +762,8 @@ namespace DotNetty.Common.Concurrency
             }
         }
 
-        static readonly Action<object, object> RemoveShutdownHookAction = OnRemoveShutdownHook;
-        static void OnRemoveShutdownHook(object s, object a)
+        private static readonly Action<object, object> RemoveShutdownHookAction = OnRemoveShutdownHook;
+        private static void OnRemoveShutdownHook(object s, object a)
         {
             _ = ((ISet<Action>)s).Remove((Action)a);
         }
@@ -282,7 +797,7 @@ namespace DotNetty.Common.Concurrency
 
             if (ran)
             {
-                _lastExecutionTime = PreciseTimeSpan.FromStart;
+                UpdateLastExecutionTime();
             }
 
             return ran;
@@ -294,10 +809,9 @@ namespace DotNetty.Common.Concurrency
             if (quietPeriod < TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_MustBeGreaterThanOrEquelToZero(quietPeriod); }
             if (timeout < quietPeriod) { ThrowHelper.ThrowArgumentException_MustBeGreaterThanQuietPeriod(timeout, quietPeriod); }
 
-            if (IsShuttingDown)
-            {
-                return TerminationCompletion;
-            }
+            if (IsShuttingDown) { return TerminationCompletion; }
+
+            OnBeginShutdownGracefully();
 
             bool inEventLoop = InEventLoop;
             bool wakeup;
@@ -305,24 +819,22 @@ namespace DotNetty.Common.Concurrency
             int oldState;
             do
             {
-                if (IsShuttingDown)
-                {
-                    return TerminationCompletion;
-                }
+                if (IsShuttingDown) { return TerminationCompletion; }
+
                 int newState;
                 wakeup = true;
                 oldState = thisState;
                 if (inEventLoop)
                 {
-                    newState = ST_SHUTTING_DOWN;
+                    newState = ShuttingDownState;
                 }
                 else
                 {
                     switch (oldState)
                     {
-                        case ST_NOT_STARTED:
-                        case ST_STARTED:
-                            newState = ST_SHUTTING_DOWN;
+                        case NotStartedState:
+                        case StartedState:
+                            newState = ShuttingDownState;
                             break;
                         default:
                             newState = oldState;
@@ -331,25 +843,37 @@ namespace DotNetty.Common.Concurrency
                     }
                 }
                 thisState = Interlocked.CompareExchange(ref v_executionState, newState, oldState);
-            } while (thisState != oldState);
-            _gracefulShutdownQuietPeriod = PreciseTimeSpan.FromTimeSpan(quietPeriod);
-            _gracefulShutdownTimeout = PreciseTimeSpan.FromTimeSpan(timeout);
+            } while ((uint)(thisState - oldState) > 0u);
 
-            // TODO: revisit
-            //if (ensureThreadStarted(oldState))
+            _ = Interlocked.Exchange(ref v_gracefulShutdownQuietPeriod, ToPreciseTime(quietPeriod));
+            _ = Interlocked.Exchange(ref v_gracefulShutdownTimeout, ToPreciseTime(timeout));
+
+            //if (EnsureThreadStarted(oldState))
             //{
-            //    return terminationFuture;
+            //    return _terminationCompletionSource.Task;
             //}
 
             if (wakeup)
             {
-                WakeUp(inEventLoop);
+                _taskQueue.TryEnqueue(WakeupTask);
+                if (!_addTaskWakesUp)
+                {
+                    WakeUp(inEventLoop);
+                }
             }
 
             return TerminationCompletion;
         }
 
-        protected bool ConfirmShutdown()
+        protected virtual void OnBeginShutdownGracefully()
+        {
+        }
+
+        /// <summary>
+        /// Confirm that the shutdown if the instance should be done now!
+        /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected virtual bool ConfirmShutdown()
         {
             if (!IsShuttingDown) { return false; }
 
@@ -357,15 +881,15 @@ namespace DotNetty.Common.Concurrency
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        protected bool ConfirmShutdownSlow()
+        private bool ConfirmShutdownSlow()
         {
-            Debug.Assert(InEventLoop, "must be invoked from an event loop");
+            if (!InEventLoop) { ThrowHelper.ThrowInvalidOperationException_Must_be_invoked_from_an_event_loop(); }
 
             CancelScheduledTasks();
 
-            if (_gracefulShutdownStartTime == PreciseTimeSpan.Zero)
+            if (0ul >= (ulong)_gracefulShutdownStartTime)
             {
-                _gracefulShutdownStartTime = PreciseTimeSpan.FromStart;
+                _gracefulShutdownStartTime = GetTimeFromStart();
             }
 
             if (RunAllTasks() || RunShutdownHooks())
@@ -379,28 +903,28 @@ namespace DotNetty.Common.Concurrency
                 // There were tasks in the queue. Wait a little bit more until no tasks are queued for the quiet period or
                 // terminate if the quiet period is 0.
                 // See https://github.com/netty/netty/issues/4241
-                if (_gracefulShutdownQuietPeriod == PreciseTimeSpan.Zero)
+                if (0ul >= (ulong)Volatile.Read(ref v_gracefulShutdownQuietPeriod))
                 {
                     return true;
                 }
-                WakeUp(true);
+                _taskQueue.TryEnqueue(WakeupTask);
                 return false;
             }
 
-            PreciseTimeSpan nanoTime = PreciseTimeSpan.FromStart;
+            long nanoTime = GetTimeFromStart();
 
-            if (IsShutdown || (nanoTime - _gracefulShutdownStartTime > _gracefulShutdownTimeout))
+            if (IsShutdown || (nanoTime - _gracefulShutdownStartTime > Volatile.Read(ref v_gracefulShutdownTimeout)))
             {
                 return true;
             }
 
-            if (nanoTime - _lastExecutionTime <= _gracefulShutdownQuietPeriod)
+            if (nanoTime - _lastExecutionTime <= Volatile.Read(ref v_gracefulShutdownQuietPeriod))
             {
                 // Check if any tasks were added to the queue every 100ms.
                 // TODO: Change the behavior of takeTask() so that it returns on timeout.
-                // todo: ???
-                WakeUp(true);
-                Thread.Sleep(100);
+                _taskQueue.TryEnqueue(WakeupTask);
+
+                TaskDelay(100);
 
                 return false;
             }
@@ -412,53 +936,37 @@ namespace DotNetty.Common.Concurrency
 
         protected void CleanupAndTerminate(bool success)
         {
-            var thisState = Volatile.Read(ref v_executionState);
-            int oldState;
-            do
-            {
-                oldState = thisState;
-
-                if ((uint)oldState >= ST_SHUTTING_DOWN) { break; }
-
-                thisState = Interlocked.CompareExchange(ref v_executionState, ST_SHUTTING_DOWN, oldState);
-            } while (thisState != oldState);
+            SetExecutionState(ShuttingDownState);
 
             // Check if confirmShutdown() was called at the end of the loop.
-            if (success && (_gracefulShutdownStartTime == PreciseTimeSpan.Zero))
+            if (success && (0ul >= (ulong)_gracefulShutdownStartTime))
             {
-                Logger.BuggyImplementation();
-                //$"Buggy {typeof(IEventExecutor).Name} implementation; {typeof(SingleThreadEventExecutor).Name}.ConfirmShutdown() must be called "
-                //+ "before run() implementation terminates.");
+                Logger.BuggyImplementation(this);
             }
 
             try
             {
-                // Run all remaining tasks and shutdown hooks. At this point the event loop
-                // is in ST_SHUTTING_DOWN state still accepting tasks which is needed for
-                // graceful shutdown with quietPeriod.
-                while (true)
+                if (!IsTerminated)
                 {
-                    if (ConfirmShutdown())
+                    // Run all remaining tasks and shutdown hooks. At this point the event loop
+                    // is in ST_SHUTTING_DOWN state still accepting tasks which is needed for
+                    // graceful shutdown with quietPeriod.
+                    while (true)
                     {
-                        break;
+                        if (ConfirmShutdown())
+                        {
+                            break;
+                        }
                     }
+
+                    // Now we want to make sure no more tasks can be added from this point. This is
+                    // achieved by switching the state. Any new tasks beyond this point will be rejected.
+                    SetExecutionState(ShutdownState);
+
+                    // We have the final set of tasks in the queue now, no more can be added, run all remaining.
+                    // No need to loop here, this is the final pass.
+                    _ = ConfirmShutdown();
                 }
-
-                // Now we want to make sure no more tasks can be added from this point. This is
-                // achieved by switching the state. Any new tasks beyond this point will be rejected.
-                thisState = Volatile.Read(ref v_executionState);
-                do
-                {
-                    oldState = thisState;
-
-                    if ((uint)oldState >= ST_SHUTDOWN) { break; }
-
-                    thisState = Interlocked.CompareExchange(ref v_executionState, ST_SHUTDOWN, oldState);
-                } while (thisState != oldState);
-
-                // We have the final set of tasks in the queue now, no more can be added, run all remaining.
-                // No need to loop here, this is the final pass.
-                _ = ConfirmShutdown();
             }
             finally
             {
@@ -468,20 +976,20 @@ namespace DotNetty.Common.Concurrency
                 }
                 finally
                 {
-                    _ = Interlocked.Exchange(ref v_executionState, ST_TERMINATED);
+                    _ = Interlocked.Exchange(ref v_executionState, TerminatedState);
+                    if (!_threadLock.IsSet) { _ = _threadLock.Signal(); }
                     int numUserTasks = DrainTasks();
                     if ((uint)numUserTasks > 0u && Logger.WarnEnabled)
                     {
                         Logger.AnEventExecutorTerminatedWithNonEmptyTaskQueue(numUserTasks);
                     }
 
-                    //firstRun = true;
-                    _terminationCompletionSource.Complete();
+                    _terminationCompletionSource.TryComplete();
                 }
             }
         }
 
-        private int DrainTasks()
+        internal int DrainTasks()
         {
             int numTasks = 0;
             while (_taskQueue.TryDequeue(out var runnable))
@@ -496,138 +1004,103 @@ namespace DotNetty.Common.Concurrency
             return numTasks;
         }
 
-        protected virtual void Cleanup()
+        public override bool WaitTermination(TimeSpan timeout)
         {
-            // NOOP
-        }
-
-        protected bool RunAllTasks()
-        {
-            bool fetchedAll;
-            bool ranAtLeastOne;
-            do
+            if (InEventLoop)
             {
-                fetchedAll = FetchFromScheduledTaskQueue();
-                IRunnable task = PollTask();
-                if (task is null)
-                {
-                    return false;
-                }
-
-                while (true)
-                {
-                    Volatile.Write(ref v_progress, v_progress + 1); // volatile write is enough as this is the only thread ever writing
-                    SafeExecute(task);
-                    task = PollTask();
-                    if (task is null)
-                    {
-                        ranAtLeastOne = true;
-                        break;
-                    }
-                }
-            } while (!fetchedAll);  // keep on processing until we fetched all scheduled tasks.
-
-            if (ranAtLeastOne)
-            {
-                _lastExecutionTime = PreciseTimeSpan.FromStart;
-            }
-            return true;
-        }
-
-        private bool RunAllTasks(PreciseTimeSpan timeout)
-        {
-            _ = FetchFromScheduledTaskQueue();
-            IRunnable task = PollTask();
-            if (task is null)
-            {
-                AfterRunningAllTasks();
-                return false;
+                ThrowHelper.ThrowInvalidOperationException_Cannot_await_termination_of_the_current_thread();
             }
 
-            PreciseTimeSpan deadline = PreciseTimeSpan.Deadline(timeout);
-            long runTasks = 0;
-            PreciseTimeSpan executionTime;
-            while (true)
-            {
-                SafeExecute(task);
+            _threadLock.Wait(timeout);
 
-                runTasks++;
-
-                // Check timeout every 64 tasks because nanoTime() is relatively expensive.
-                // XXX: Hard-coded value - will make it configurable if it is really a problem.
-                if (0ul >= (ulong)(runTasks & 0x3F))
-                {
-                    executionTime = PreciseTimeSpan.FromStart;
-                    if (executionTime >= deadline)
-                    {
-                        break;
-                    }
-                }
-
-                task = PollTask();
-                if (task is null)
-                {
-                    executionTime = PreciseTimeSpan.FromStart;
-                    break;
-                }
-            }
-
-            AfterRunningAllTasks();
-            _lastExecutionTime = executionTime;
-            return true;
+            return IsTerminated;
         }
 
+        /// <inheritdoc />
+        public override void Execute(IRunnable task)
+        {
+            if (!(task is ILazyRunnable)
+#if DEBUG
+                && WakesUpForTask(task)
+#endif
+                )
+            {
+                InternalExecute(task, true);
+            }
+            else
+            {
+                InternalLazyExecute(task);
+            }
+        }
+
+        public override void LazyExecute(IRunnable task)
+        {
+            InternalExecute(task, false);
+        }
+
+        protected virtual void InternalLazyExecute(IRunnable task)
+        {
+            // netty 第一个任务进来，不管是否延迟任务，都会启动线程
+            // 防止线程启动后，第一个进来的就是 lazy task
+            var firstTask = _firstTask;
+            if (firstTask) { _firstTask = false; }
+            InternalExecute(task, firstTask);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private void InternalExecute(IRunnable task, bool immediate)
+        {
+            bool inEventLoop = InEventLoop;
+
+            AddTask(task);
+            //if (!inEventLoop)
+            //{
+            //    //StartThread();
+            //    if (IsShutdown)
+            //    {
+            //        bool reject = false;
+            //        try
+            //        {
+            //            if (removeTask(task))
+            //            {
+            //                reject = true;
+            //            }
+            //        }
+            //        catch (UnsupportedOperationException e)
+            //        {
+            //            // The task queue does not support removal so the best thing we can do is to just move on and
+            //            // hope we will be able to pick-up the task before its completely terminated.
+            //            // In worst case we will log on termination.
+            //        }
+            //        if (reject)
+            //        {
+            //            Reject();
+            //        }
+            //    }
+            //}
+
+            if (!_addTaskWakesUp && immediate)
+            {
+                WakeUp(inEventLoop);
+            }
+        }
+
+#if DEBUG
         /// <summary>
-        /// Invoked before returning from <see cref="RunAllTasks()"/> and <see cref="RunAllTasks(PreciseTimeSpan)"/>.
+        /// Can be overridden to control which tasks require waking the <see cref="IEventExecutor"/> thread
+        /// if it is waiting so that they can be run immediately.
         /// </summary>
-        protected virtual void AfterRunningAllTasks() { }
-
-        private bool FetchFromScheduledTaskQueue()
+        /// <param name="task"></param>
+        /// <returns></returns>
+        protected virtual bool WakesUpForTask(IRunnable task)
         {
-            if (ScheduledTaskQueue.IsEmpty) { return true; }
-
-            PreciseTimeSpan nanoTime = PreciseTimeSpan.FromStart;
-            IScheduledRunnable scheduledTask = PollScheduledTask(nanoTime);
-            while (scheduledTask is object)
-            {
-                if (!_taskQueue.TryEnqueue(scheduledTask))
-                {
-                    // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
-                    _ = ScheduledTaskQueue.TryEnqueue(scheduledTask);
-                    return false;
-                }
-                scheduledTask = PollScheduledTask(nanoTime);
-            }
             return true;
         }
+#endif
 
-        private IRunnable PollTask()
-        {
-            Debug.Assert(InEventLoop);
-
-            if (!_taskQueue.TryDequeue(out IRunnable task))
-            {
-                _emptyEvent.Reset();
-                if (!_taskQueue.TryDequeue(out task) && !IsShuttingDown) // revisit queue as producer might have put a task in meanwhile
-                {
-                    if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
-                    {
-                        PreciseTimeSpan wakeupTimeout = nextScheduledTask.Deadline - PreciseTimeSpan.FromStart;
-                        if (wakeupTimeout.Ticks > 0L) // 此处不要 ulong 转换
-                        {
-                            double timeout = wakeupTimeout.ToTimeSpan().TotalMilliseconds;
-                            _ = _emptyEvent.Wait((int)Math.Min(timeout, int.MaxValue - 1));
-                        }
-                    }
-                    else
-                    {
-                        _emptyEvent.Wait();
-                        _ = _taskQueue.TryDequeue(out task);
-                    }
-                }
-            }
-
-            return task;
-        }
+        //protected virtual bool EnsureThreadStarted(int oldState)
+        //{
+        //    return true;
+        //}
     }
 }

@@ -88,12 +88,12 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
             var latch = new CountdownEvent(2);
             Task future = ch.EventLoop.ScheduleAsync(() => latch.Signal(), TimeSpan.FromSeconds(1));
             future.ContinueWith(t => latch.Signal());
-            PreciseTimeSpan next = ch.RunScheduledPendingTasks();
-            Assert.True(next > PreciseTimeSpan.Zero);
+            var next = ch.RunScheduledPendingTasks();
+            Assert.True(next > PreciseTime.Zero);
             // Sleep for the nanoseconds but also give extra 50ms as the clock my not be very precise and so fail the test
             // otherwise.
-            Thread.Sleep(next.ToTimeSpan() + TimeSpan.FromMilliseconds(50));
-            Assert.Equal(PreciseTimeSpan.MinusOne, ch.RunScheduledPendingTasks());
+            Thread.Sleep(PreciseTime.ToTimeSpan(next) + TimeSpan.FromMilliseconds(50));
+            Assert.Equal(PreciseTime.MinusOne, ch.RunScheduledPendingTasks());
             latch.Wait();
         }
 
@@ -253,17 +253,17 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
 
             public override void Disconnect(IChannelHandlerContext context, IPromise promise)
             {
-                this.queue.AddToBack(DISCONNECT);
+                this.queue.AddLast​(DISCONNECT);
                 promise.TryComplete();
             }
 
             public override void Close(IChannelHandlerContext context, IPromise promise)
             {
-                this.queue.AddToBack(CLOSE);
+                this.queue.AddLast​(CLOSE);
                 promise.TryComplete();
             }
 
-            public int PollEvent() => this.queue.RemoveFromFront();
+            public int PollEvent() => this.queue.RemoveFirst();
         }
 
         [Fact]

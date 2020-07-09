@@ -20,13 +20,13 @@
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             LocalHandler serverHandler = new LocalHandler("SERVER");
             serverBootstrap
-                .Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup(1))
+                .Group(new DefaultEventLoopGroup(1), new DefaultEventLoopGroup())
                 .Channel<LocalServerChannel>()
                 .ChildHandler(serverHandler);
             Bootstrap clientBootstrap = new Bootstrap();
             LocalHandler clientHandler = new LocalHandler("CLIENT");
             clientBootstrap
-                .Group(new MultithreadEventLoopGroup(1))
+                .Group(new DefaultEventLoopGroup())
                 .Channel<LocalChannel>()
                 .RemoteAddress(new LocalAddress(LOCAL_CHANNEL)).Handler(clientHandler);
 

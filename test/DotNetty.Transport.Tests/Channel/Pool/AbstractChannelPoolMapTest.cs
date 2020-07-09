@@ -15,7 +15,7 @@
         [Fact]
         public async Task TestMap()
         {
-            IEventLoopGroup group = new MultithreadEventLoopGroup();
+            IEventLoopGroup group = new DefaultEventLoopGroup();
             LocalAddress addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
 
             // Start server
@@ -61,7 +61,7 @@
         [Fact]
         public async Task TestRemoveClosesChannelPool()
         {
-            IEventLoopGroup group = new MultithreadEventLoopGroup();
+            IEventLoopGroup group = new DefaultEventLoopGroup();
             LocalAddress addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
 
             // Start server
@@ -89,7 +89,7 @@
         [Fact]
         public async Task TestCloseClosesPoolsImmediately()
         {
-            IEventLoopGroup group = new MultithreadEventLoopGroup();
+            IEventLoopGroup group = new DefaultEventLoopGroup();
             LocalAddress addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
 
             // Start server

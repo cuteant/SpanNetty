@@ -72,10 +72,14 @@ namespace DotNetty.Transport.Libuv.Native
             return NativeMethods.uv_backend_timeout(_handle);
         }
 
-        public int ActiveHandleCount() => 
-            _handle != IntPtr.Zero
-            ? (int)((uv_loop_t*)_handle)->active_handles 
-            : 0;
+        public int ActiveHandleCount()
+        {
+            if (_handle != IntPtr.Zero)
+            {
+                return (int)((uv_loop_t*)_handle)->active_handles;
+            }
+            return 0;
+        }
 
         public int Run(uv_run_mode mode)
         {
@@ -91,7 +95,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         void Validate()
         {
             if (_handle == IntPtr.Zero)

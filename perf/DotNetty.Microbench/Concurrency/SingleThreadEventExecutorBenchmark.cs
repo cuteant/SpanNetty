@@ -9,6 +9,7 @@ namespace DotNetty.Microbench.Concurrency
     using BenchmarkDotNet.Jobs;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
+    using DotNetty.Transport.Channels;
 
     [SimpleJob(RuntimeMoniker.Net48)]
     [SimpleJob(RuntimeMoniker.NetCoreApp31)]
@@ -17,30 +18,36 @@ namespace DotNetty.Microbench.Concurrency
     public class SingleThreadEventExecutorBenchmark
     {
         const int Iterations = 10 * 1000 * 1000;
-        TestExecutor concurrentQueueExecutor;
-        TestExecutor fixedMpscQueueExecutor;
+        ITestExecutor _singleThreadEventLoop;
+        ITestExecutor _concurrentQueueExecutor;
+        ITestExecutor _fixedMpscQueueExecutor;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.concurrentQueueExecutor = new TestExecutor("CompatibleConcurrentQueue", TimeSpan.FromSeconds(1), new CompatibleConcurrentQueue<IRunnable>());
-            this.fixedMpscQueueExecutor = new TestExecutor("FixedMpscQueue", TimeSpan.FromSeconds(1), PlatformDependent.NewFixedMpscQueue<IRunnable>(1 * 1000 * 1000));
+            _singleThreadEventLoop = new NewTestExecutor("SingleThreadEventLoop", TimeSpan.FromSeconds(1));
+            _concurrentQueueExecutor = new TestExecutor("CompatibleConcurrentQueue", TimeSpan.FromSeconds(1), new CompatibleConcurrentQueue<IRunnable>());
+            _fixedMpscQueueExecutor = new TestExecutor("FixedMpscQueue", TimeSpan.FromSeconds(1), PlatformDependent.NewFixedMpscQueue<IRunnable>(1 * 1000 * 1000));
         }
 
         [GlobalCleanup]
         public void GlobalCleanup()
         {
-            this.concurrentQueueExecutor?.ShutdownGracefullyAsync();
-            this.fixedMpscQueueExecutor?.ShutdownGracefullyAsync();
+            _singleThreadEventLoop?.ShutdownGracefullyAsync();
+            _concurrentQueueExecutor?.ShutdownGracefullyAsync();
+            _fixedMpscQueueExecutor?.ShutdownGracefullyAsync();
         }
 
-        [Benchmark]
-        public void ConcurrentQueue() => Run(this.concurrentQueueExecutor);
+        [Benchmark(Baseline = true)]
+        public void LoopConcurrentQueue() => Run(_singleThreadEventLoop);
 
         [Benchmark]
-        public void FixedMpscQueue() => Run(this.fixedMpscQueueExecutor);
+        public void ConcurrentQueue() => Run(_concurrentQueueExecutor);
 
-        static void Run(TestExecutor executor)
+        [Benchmark]
+        public void FixedMpscQueue() => Run(_fixedMpscQueueExecutor);
+
+        static void Run(ITestExecutor executor)
         {
             var mre = new ManualResetEvent(false);
             var actionIn = new BenchActionIn(executor, mre);
@@ -67,55 +74,71 @@ namespace DotNetty.Microbench.Concurrency
         sealed class BenchActionIn : IRunnable
         {
             int value;
-            readonly IEventExecutor executor;
-            readonly ManualResetEvent evt;
+            readonly IEventExecutor _executor;
+            readonly ManualResetEvent _evt;
 
             public BenchActionIn(IEventExecutor executor, ManualResetEvent evt)
             {
-                this.executor = executor;
-                this.evt = evt;
+                _executor = executor;
+                _evt = evt;
             }
 
             public void Run()
             {
-                if (++this.value < Iterations)
+                if (++value < Iterations)
                 {
-                    this.executor.Execute(this);
+                    _executor.Execute(this);
                 }
                 else
                 {
-                    this.evt.Set();
+                    _evt.Set();
                 }
             }
         }
 
         sealed class BenchActionOut : IRunnable
         {
-            int value;
-            readonly ManualResetEvent evt;
+            int _value;
+            readonly ManualResetEvent _evt;
 
             public BenchActionOut(ManualResetEvent evt)
             {
-                this.evt = evt;
+                _evt = evt;
             }
 
             public void Run()
             {
-                if (++this.value >= Iterations)
+                if (++_value >= Iterations)
                 {
-                    this.evt.Set();
+                    _evt.Set();
                 }
             }
         }
 
-        sealed class TestExecutor : SingleThreadEventExecutor
+        interface ITestExecutor : IEventExecutor
+        {
+            string Name { get; }
+        }
+
+        sealed class NewTestExecutor : SingleThreadEventLoop, ITestExecutor
+        {
+            public NewTestExecutor(string threadName, TimeSpan breakoutInterval)
+                : base(null, breakoutInterval)
+            {
+                Name = threadName;
+            }
+
+            public string Name { get; }
+        }
+
+        sealed class TestExecutor : SingleThreadEventExecutorOld, ITestExecutor
         {
             public string Name { get; }
 
             public TestExecutor(string threadName, TimeSpan breakoutInterval, IQueue<IRunnable> queue)
                 : base(threadName, breakoutInterval, queue)
             {
-                this.Name = threadName;
+                Name = threadName;
             }
         }
     }

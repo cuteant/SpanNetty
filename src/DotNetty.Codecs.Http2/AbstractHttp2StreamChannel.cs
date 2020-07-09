@@ -323,7 +323,7 @@
                 {
                     _inboundBuffer = new Deque<object>(4);
                 }
-                _inboundBuffer.AddToBack(frame);
+                _inboundBuffer.AddLast​(frame);
             }
         }
 

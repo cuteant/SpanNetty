@@ -96,7 +96,7 @@ namespace DotNetty.Transport.Channels.Local
 
         //protected override IChannelUnsafe NewUnsafe() => new LocalUnsafe(this);
 
-        protected override bool IsCompatible(IEventLoop loop) => loop is SingleThreadEventLoop;
+        protected override bool IsCompatible(IEventLoop loop) => loop is SingleThreadEventLoopBase;
 
         protected override EndPoint LocalAddressInternal => Volatile.Read(ref v_localAddress);
 

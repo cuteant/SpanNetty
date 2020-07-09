@@ -307,10 +307,10 @@ namespace DotNetty.Transport.Channels.Embedded
         ///     Run all pending scheduled tasks in the <see cref="IEventLoop" /> for this <see cref="IChannel" />.
         /// </summary>
         /// <returns>
-        ///     The <see cref="PreciseTimeSpan" /> when the next scheduled task is ready to run. If no other task is
-        ///     scheduled then it will return <see cref="PreciseTimeSpan.Zero" />.
+        ///     The nanoseconds when the next scheduled task is ready to run. If no other task is
+        ///     scheduled then it will return <see cref="PreciseTime.MinusOne" />.
         /// </returns>
-        public PreciseTimeSpan RunScheduledPendingTasks()
+        public long RunScheduledPendingTasks()
         {
             try
             {
@@ -544,7 +544,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
             if (queue.IsEmpty) { return false; }
 
-            while (queue.TryRemoveFromFront(out var msg))
+            while (queue.TryRemoveFirst(out var msg))
             {
                 _ = ReferenceCountUtil.Release(msg);
             }
@@ -648,21 +648,21 @@ namespace DotNetty.Transport.Channels.Embedded
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         static object Poll(Deque<object> queue)
         {
-            return queue.TryRemoveFromFront(out var result) ? result : null;
+            return queue.TryRemoveFirst(out var result) ? result : null;
         }
 
         /// <summary>Called for each outbound message.</summary>
         /// <param name="msg"></param>
         protected virtual void HandleOutboundMessage(object msg)
         {
-            _outboundMessages.AddToBack(msg);
+            _outboundMessages.AddLast​(msg);
         }
 
         /// <summary>Called for each inbound message.</summary>
         /// <param name="msg"></param>
         protected virtual void HandleInboundMessage(object msg)
         {
-            _inboundMessages.AddToBack(msg);
+            _inboundMessages.AddLast​(msg);
         }
 
         protected override WrappingEmbeddedUnsafe NewUnsafe()

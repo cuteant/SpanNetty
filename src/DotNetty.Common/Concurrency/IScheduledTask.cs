@@ -8,11 +8,17 @@ namespace DotNetty.Common.Concurrency
 
     public interface IScheduledTask
     {
-        bool Cancel();
+        long Id { get; }
+
+        long DelayNanos { get; }
+
+        long DeadlineNanos { get; }
 
         PreciseTimeSpan Deadline { get; }
 
         Task Completion { get; }
+
+        bool Cancel();
 
         TaskAwaiter GetAwaiter();
     }

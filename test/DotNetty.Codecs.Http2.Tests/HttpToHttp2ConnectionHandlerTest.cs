@@ -66,13 +66,13 @@ namespace DotNetty.Codecs.Http2.Tests
 
         protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
         {
-            bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
+            bootstrap.Group(new DefaultEventLoopGroup(1), new DefaultEventLoopGroup())
                      .Channel<LocalServerChannel>();
         }
 
         protected override void SetupBootstrap(Bootstrap bootstrap)
         {
-            bootstrap.Group(new MultithreadEventLoopGroup()).Channel<LocalChannel>();
+            bootstrap.Group(new DefaultEventLoopGroup()).Channel<LocalChannel>();
         }
 
         protected override void StartBootstrap()
@@ -131,9 +131,9 @@ namespace DotNetty.Codecs.Http2.Tests
                 this.serverConnectedChannel = null;
             }
             Task.WaitAll(
-                this.sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
-                this.sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
-                this.cb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
+                this.sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                this.sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                this.cb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
         }
 
         [Fact]

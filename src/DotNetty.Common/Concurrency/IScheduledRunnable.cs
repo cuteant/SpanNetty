@@ -5,7 +5,7 @@ namespace DotNetty.Common.Concurrency
 {
     using System;
     using System.ComponentModel;
-    using DotNetty.Common.Utilities;
+    using DotNetty.Common.Internal;
 
     public interface IScheduledRunnable : IRunnable, IScheduledTask, IComparable<IScheduledRunnable>, IPriorityQueueNode<IScheduledRunnable>
     {
@@ -14,5 +14,8 @@ namespace DotNetty.Common.Concurrency
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         void SetConsumed();
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        bool CancelWithoutRemove();
     }
 }

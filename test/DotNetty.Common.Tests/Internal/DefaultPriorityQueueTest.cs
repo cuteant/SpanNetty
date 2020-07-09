@@ -1,19 +1,122 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace DotNetty.Common.Tests.Utilities
+namespace DotNetty.Common.Tests.Internal
 {
     using System;
     using System.Collections.Generic;
-    using DotNetty.Common.Utilities;
+    using DotNetty.Common.Internal;
     using Xunit;
 
-    public class PriorityQueueTest
+    public class DefaultPriorityQueueTest
     {
+        [Fact]
+        public void EnqueueTest()
+        {
+            var queue = new DefaultPriorityQueue<TestNode>(TestNodeComparer.Instance, 0);
+            AssertEmptyQueue(queue);
+
+            TestNode a = new TestNode(5);
+            TestNode b = new TestNode(10);
+            TestNode c = new TestNode(2);
+            TestNode d = new TestNode(7);
+            TestNode e = new TestNode(6);
+
+            AssertEnqueue(queue, a);
+            AssertEnqueue(queue, b);
+            AssertEnqueue(queue, c);
+            AssertEnqueue(queue, d);
+
+            // Remove the first element
+            Assert.Same(c, queue.Peek());
+            Assert.Same(c, queue.Dequeue());
+            Assert.Equal(3, queue.Count);
+
+            // Test that offering another element preserves the priority queue semantics.
+            AssertEnqueue(queue, e);
+            Assert.Equal(4, queue.Count);
+            Assert.Same(a, queue.Peek());
+            Assert.Same(a, queue.Dequeue());
+            Assert.Equal(3, queue.Count);
+
+            // Keep removing the remaining elements
+            Assert.Same(e, queue.Peek());
+            Assert.Same(e, queue.Dequeue());
+            Assert.Equal(2, queue.Count);
+
+            Assert.Same(d, queue.Peek());
+            Assert.Same(d, queue.Dequeue());
+            Assert.Equal(1, queue.Count);
+
+            Assert.Same(b, queue.Peek());
+            Assert.Same(b, queue.Dequeue());
+            AssertEmptyQueue(queue);
+        }
+
+        [Fact]
+        public void ClearTest()
+        {
+            var queue = new DefaultPriorityQueue<TestNode>(TestNodeComparer.Instance, 0);
+            AssertEmptyQueue(queue);
+
+            TestNode a = new TestNode(5);
+            TestNode b = new TestNode(10);
+            TestNode c = new TestNode(2);
+            TestNode d = new TestNode(6);
+
+            AssertEnqueue(queue, a);
+            AssertEnqueue(queue, b);
+            AssertEnqueue(queue, c);
+            AssertEnqueue(queue, d);
+
+            queue.Clear();
+            AssertEmptyQueue(queue);
+
+            // Test that elements can be re-inserted after the clear operation
+            AssertEnqueue(queue, a);
+            Assert.Same(a, queue.Peek());
+
+            AssertEnqueue(queue, b);
+            Assert.Same(a, queue.Peek());
+
+            AssertEnqueue(queue, c);
+            Assert.Same(c, queue.Peek());
+
+            AssertEnqueue(queue, d);
+            Assert.Same(c, queue.Peek());
+        }
+
+        [Fact]
+        public void ClearIgnoringIndexesTest()
+        {
+            var queue = new DefaultPriorityQueue<TestNode>(TestNodeComparer.Instance, 0);
+            AssertEmptyQueue(queue);
+
+            TestNode a = new TestNode(5);
+            TestNode b = new TestNode(10);
+            TestNode c = new TestNode(2);
+            TestNode d = new TestNode(6);
+            TestNode e = new TestNode(11);
+
+            AssertEnqueue(queue, a);
+            AssertEnqueue(queue, b);
+            AssertEnqueue(queue, c);
+            AssertEnqueue(queue, d);
+
+            queue.ClearIgnoringIndexes();
+            AssertEmptyQueue(queue);
+
+            // Elements cannot be re-inserted but new ones can.
+            Assert.Throws<ArgumentException>(() => queue.TryEnqueue(a));
+
+            AssertEnqueue(queue, e);
+            Assert.Same(e, queue.Peek());
+        }
+
         [Fact]
         public void PriorityQueueRemoveTest()
         {
-            var queue = new PriorityQueue<TestNode>(TestNodeComparer.Instance);
+            var queue = new DefaultPriorityQueue<TestNode>(TestNodeComparer.Instance, 4);
             AssertEmptyQueue(queue);
 
             TestNode a = new TestNode(5);
@@ -60,6 +163,20 @@ namespace DotNetty.Common.Tests.Utilities
             AssertEmptyQueue(queue);
         }
 
+        [Fact]
+        public void TestZeroInitialSize()
+        {
+            var queue = new DefaultPriorityQueue<TestNode>(TestNodeComparer.Instance, 0);
+            AssertEmptyQueue(queue);
+            TestNode e = new TestNode(1);
+            AssertEnqueue(queue, e);
+            Assert.Same(e, queue.Peek());
+            Assert.Equal(1, queue.Count);
+            Assert.False(queue.IsEmpty);
+            Assert.Same(e, queue.Dequeue());
+            AssertEmptyQueue(queue);
+        }
+
         [Theory]
         [InlineData(new[] { 1, 2, 3, 4 }, new[] { 1, 2, 3, 4 })]
         [InlineData(new[] { 4, 3, 2, 1 }, new[] { 1, 2, 3, 4 })]
@@ -69,7 +186,7 @@ namespace DotNetty.Common.Tests.Utilities
         [InlineData(new[] { 2, 1 }, new[] { 1, 2 })]
         public void PriorityQueueOrderTest(int[] input, int[] expectedOutput)
         {
-            var queue = new PriorityQueue<TestNode>(TestNodeComparer.Instance);
+            var queue = new DefaultPriorityQueue<TestNode>(TestNodeComparer.Instance);
             foreach (int value in input)
             {
                 queue.TryEnqueue(new TestNode(value));
@@ -84,85 +201,9 @@ namespace DotNetty.Common.Tests.Utilities
         }
 
         [Fact]
-        public void ClearTest()
-        {
-            var queue = new PriorityQueue<TestNode>(TestNodeComparer.Instance);
-            AssertEmptyQueue(queue);
-
-            TestNode a = new TestNode(5);
-            TestNode b = new TestNode(10);
-            TestNode c = new TestNode(2);
-            TestNode d = new TestNode(6);
-
-            AssertEnqueue(queue, a);
-            AssertEnqueue(queue, b);
-            AssertEnqueue(queue, c);
-            AssertEnqueue(queue, d);
-
-            queue.Clear();
-            AssertEmptyQueue(queue);
-
-            // Test that elements can be re-inserted after the clear operation
-            AssertEnqueue(queue, a);
-            Assert.Same(a, queue.Peek());
-
-            AssertEnqueue(queue, b);
-            Assert.Same(a, queue.Peek());
-
-            AssertEnqueue(queue, c);
-            Assert.Same(c, queue.Peek());
-
-            AssertEnqueue(queue, d);
-            Assert.Same(c, queue.Peek());
-        }
-
-        [Fact]
-        public void EnqueueTest()
-        {
-            var queue = new PriorityQueue<TestNode>(TestNodeComparer.Instance);
-            AssertEmptyQueue(queue);
-
-            TestNode a = new TestNode(5);
-            TestNode b = new TestNode(10);
-            TestNode c = new TestNode(2);
-            TestNode d = new TestNode(7);
-            TestNode e = new TestNode(6);
-
-            AssertEnqueue(queue, a);
-            AssertEnqueue(queue, b);
-            AssertEnqueue(queue, c);
-            AssertEnqueue(queue, d);
-
-            // Remove the first element
-            Assert.Same(c, queue.Peek());
-            Assert.Same(c, queue.Dequeue());
-            Assert.Equal(3, queue.Count);
-
-            // Test that offering another element preserves the priority queue semantics.
-            AssertEnqueue(queue, e);
-            Assert.Equal(4, queue.Count);
-            Assert.Same(a, queue.Peek());
-            Assert.Same(a, queue.Dequeue());
-            Assert.Equal(3, queue.Count);
-
-            // Keep removing the remaining elements
-            Assert.Same(e, queue.Peek());
-            Assert.Same(e, queue.Dequeue());
-            Assert.Equal(2, queue.Count);
-
-            Assert.Same(d, queue.Peek());
-            Assert.Same(d, queue.Dequeue());
-            Assert.Equal(1, queue.Count);
-
-            Assert.Same(b, queue.Peek());
-            Assert.Same(b, queue.Dequeue());
-            AssertEmptyQueue(queue);
-        }
-
-        [Fact]
         public void PriorityChangeTest()
         {
-            var queue = new PriorityQueue<TestNode>(TestNodeComparer.Instance);
+            var queue = new DefaultPriorityQueue<TestNode>(TestNodeComparer.Instance, 0);
             AssertEmptyQueue(queue);
             TestNode a = new TestNode(10);
             TestNode b = new TestNode(20);
@@ -203,7 +244,7 @@ namespace DotNetty.Common.Tests.Utilities
             AssertEmptyQueue(queue);
         }
 
-        private static void AssertEnqueue(PriorityQueue<TestNode> queue, TestNode item)
+        private static void AssertEnqueue(DefaultPriorityQueue<TestNode> queue, TestNode item)
         {
             Assert.True(queue.TryEnqueue(item));
             Assert.True(queue.Contains(item));
@@ -211,7 +252,7 @@ namespace DotNetty.Common.Tests.Utilities
             Assert.Throws<ArgumentException>(() => queue.Enqueue(item));
         }
 
-        private static void AssertEmptyQueue(PriorityQueue<TestNode> queue)
+        private static void AssertEmptyQueue(DefaultPriorityQueue<TestNode> queue)
         {
             Assert.False(queue.TryPeek(out _));
             Assert.False(queue.TryDequeue(out _));
@@ -231,7 +272,7 @@ namespace DotNetty.Common.Tests.Utilities
 
         class TestNode : IPriorityQueueNode<TestNode>
         {
-            int queueIndex = PriorityQueue<TestNode>.IndexNotInQueue;
+            int _queueIndex = DefaultPriorityQueue<TestNode>.IndexNotInQueue;
 
             public TestNode(int item1)
             {
@@ -240,19 +281,19 @@ namespace DotNetty.Common.Tests.Utilities
 
             public int Value { get; set; }
 
-            public int GetPriorityQueueIndex(IPriorityQueue<TestNode> queue) => this.queueIndex;
+            public int GetPriorityQueueIndex(IPriorityQueue<TestNode> queue) => _queueIndex;
 
-            public void SetPriorityQueueIndex(IPriorityQueue<TestNode> queue, int i) => this.queueIndex = i;
+            public void SetPriorityQueueIndex(IPriorityQueue<TestNode> queue, int i) => _queueIndex = i;
 
             public override bool Equals(object obj)
             {
                 if (ReferenceEquals(this, obj)) { return true; }
-                return obj is TestNode other && this.Value == other.Value;
+                return obj is TestNode other && Value == other.Value;
             }
 
             public override int GetHashCode()
             {
-                return this.Value.GetHashCode();
+                return Value.GetHashCode();
             }
         }
     }

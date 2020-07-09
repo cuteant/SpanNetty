@@ -701,7 +701,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<IPromise>()))
                 .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((ctx, streamId, headers, streamDependency, endOfStream, p) =>
                 {
-                    writePromises.AddToBack(p);
+                    writePromises.AddLast​(p);
                     return p.Task;
                 });
 
@@ -713,7 +713,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 channelActive.Value = childChannel.IsActive;
             }, TaskContinuationOptions.ExecuteSynchronously);
 
-            var first = writePromises.RemoveFromFront();
+            var first = writePromises.RemoveFirst();
             first.SetException(new ClosedChannelException());
             try
             {

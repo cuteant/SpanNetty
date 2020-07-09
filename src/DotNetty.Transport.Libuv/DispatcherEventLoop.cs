@@ -4,19 +4,23 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Threading.Tasks;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    sealed class DispatcherEventLoop : LoopExecutor, IEventLoop
+    public sealed class DispatcherEventLoop : LoopExecutor
     {
-        PipeListener _pipeListener;
-        IServerNativeUnsafe _nativeUnsafe;
+        private PipeListener _pipeListener;
+        private IServerNativeUnsafe _nativeUnsafe;
 
-        internal DispatcherEventLoop(IEventLoopGroup parent, string threadName = null)
-            : base(parent, threadName)
+        internal DispatcherEventLoop(IEventLoopGroup parent)
+            : this(parent, DefaultThreadFactory<DispatcherEventLoop>.Instance)
+        {
+        }
+
+        internal DispatcherEventLoop(IEventLoopGroup parent, IThreadFactory threadFactory)
+            : base(parent, threadFactory, RejectedExecutionHandlers.Reject(), DefaultBreakoutInterval)
         {
             if (parent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
 
@@ -62,13 +66,5 @@ namespace DotNetty.Transport.Libuv
         }
 
         internal void Accept(NativeHandle handle) => _nativeUnsafe.Accept(handle);
-
-        public new IEventLoop GetNext() => (IEventLoop)base.GetNext();
-
-        public Task RegisterAsync(IChannel channel) => channel.Unsafe.RegisterAsync(this);
-
-        public new IEventLoopGroup Parent => (IEventLoopGroup)base.Parent;
-
-        public new IEnumerable<IEventLoop> Items => new[] { this };
     }
 }

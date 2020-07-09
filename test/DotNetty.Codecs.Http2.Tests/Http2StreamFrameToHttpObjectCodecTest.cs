@@ -3,20 +3,18 @@ namespace DotNetty.Codecs.Http2.Tests
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
+    using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Tls;
     using DotNetty.Tests.Common;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
-    using DotNetty.Common.Utilities;
     using Xunit;
-    using DotNetty.Common.Concurrency;
-    using System.Net.Security;
-    using System.Security.Authentication;
-    using System.Security.Cryptography.X509Certificates;
 
     public class Http2StreamFrameToHttpObjectCodecTest
     {

@@ -975,7 +975,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 else
                 {
-                    _pendingEvents.AddToBack(() => AddToActiveStreams(stream));
+                    _pendingEvents.AddLast​(() => AddToActiveStreams(stream));
                 }
             }
 
@@ -987,7 +987,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 else
                 {
-                    _pendingEvents.AddToBack(() => RemoveFromActiveStreams(stream));
+                    _pendingEvents.AddLast​(() => RemoveFromActiveStreams(stream));
                 }
             }
 
@@ -1081,7 +1081,7 @@ namespace DotNetty.Codecs.Http2
                 --_pendingIterations;
                 if (AllowModifications())
                 {
-                    while (_pendingEvents.TryRemoveFromFront(out Action evt))
+                    while (_pendingEvents.TryRemoveFirst(out Action evt))
                     {
                         try
                         {

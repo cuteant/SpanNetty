@@ -24,17 +24,17 @@
 
         public LocalChannelTest()
         {
-            _group1 = new MultithreadEventLoopGroup(2);
-            _group2 = new MultithreadEventLoopGroup(2);
-            _sharedGroup = new MultithreadEventLoopGroup(1);
+            _group1 = new DefaultEventLoopGroup(2);
+            _group2 = new DefaultEventLoopGroup(2);
+            _sharedGroup = new DefaultEventLoopGroup(1);
         }
 
         public void Dispose()
         {
             Task.WaitAll(
-                _group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
-                _group2.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
-                _sharedGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1))
+                _group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                _group2.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                _sharedGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5))
             );
         }
 
@@ -972,7 +972,7 @@
                 await cc.ConnectAsync(sc.LocalAddress);
                 promise.TryComplete();
 
-                await assertPromise.Task; ;
+                await assertPromise.Task;
                 Assert.True(promise.IsSuccess);
             }
             finally

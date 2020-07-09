@@ -14,12 +14,17 @@ namespace DotNetty.Common.Utilities
         /// <summary>
         /// Compare two timespan objects
         /// </summary>
-        /// <param name="t1">first timespan object</param>
-        /// <param name="t2">two timespan object</param>
+        /// <param name="first">first timespan object</param>
+        /// <param name="second">two timespan object</param>
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static TimeSpan Max(TimeSpan t1, TimeSpan t2)
+        public static TimeSpan Max(TimeSpan first, TimeSpan second)
         {
-            return t1 > t2 ? t1 : t2;
+            return first >= second ? first : second;
+        }
+
+        public static TimeSpan Min(TimeSpan first, TimeSpan second)
+        {
+            return first < second ? first : second;
         }
 
         /// <summary>
@@ -31,7 +36,43 @@ namespace DotNetty.Common.Utilities
         {
             return TimeSpan.FromMilliseconds(Environment.TickCount);
         }
-    
+
+        public static TimeSpan Multiply(this TimeSpan timeSpan, double value)
+        {
+            double ticksD = checked((double)timeSpan.Ticks * value);
+            long ticks = checked((long)ticksD);
+            return TimeSpan.FromTicks(ticks);
+        }
+
+        public static TimeSpan Divide(this TimeSpan timeSpan, double value)
+        {
+            double ticksD = checked((double)timeSpan.Ticks / value);
+            long ticks = checked((long)ticksD);
+            return TimeSpan.FromTicks(ticks);
+        }
+
+        public static double Divide(this TimeSpan first, TimeSpan second)
+        {
+            double ticks1 = (double)first.Ticks;
+            double ticks2 = (double)second.Ticks;
+            return ticks1 / ticks2;
+        }
+
+        public static TimeSpan NextTimeSpan(this SafeRandom random, TimeSpan timeSpan)
+        {
+            if (timeSpan <= TimeSpan.Zero) { ThrowHelper.ArgumentOutOfRangeException_NextTimeSpan_Positive(timeSpan, ExceptionArgument.timeSpan); }
+            double ticksD = ((double)timeSpan.Ticks) * random.NextDouble();
+            long ticks = checked((long)ticksD);
+            return TimeSpan.FromTicks(ticks);
+        }
+
+        public static TimeSpan NextTimeSpan(this SafeRandom random, TimeSpan minValue, TimeSpan maxValue)
+        {
+            if (minValue <= TimeSpan.Zero) { ThrowHelper.ArgumentOutOfRangeException_NextTimeSpan_Positive(minValue, ExceptionArgument.minValue); }
+            if (minValue >= maxValue) { ThrowHelper.ArgumentOutOfRangeException_NextTimeSpan_minValue(minValue); }
+            var span = maxValue - minValue;
+            return minValue + random.NextTimeSpan(span);
+        }
     }
 }
 

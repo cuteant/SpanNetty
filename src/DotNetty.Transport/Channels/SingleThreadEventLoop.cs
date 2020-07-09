@@ -4,74 +4,172 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
+    using System.Diagnostics;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
+    using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
 
     /// <summary>
-    /// <see cref="IEventLoop"/> implementation based on <see cref="SingleThreadEventExecutor"/>.
+    /// Default <see cref="SingleThreadEventLoopBase"/> implementation which just execute all submitted task in a serial fashion.
     /// </summary>
-    public class SingleThreadEventLoop : SingleThreadEventExecutor, IEventLoop
+    public class SingleThreadEventLoop : SingleThreadEventLoopBase
     {
-        static readonly TimeSpan DefaultBreakoutInterval = TimeSpan.FromMilliseconds(100);
+        protected static readonly TimeSpan DefaultBreakoutInterval = TimeSpan.FromMilliseconds(100);
 
-        /// <summary>Creates a new instance of <see cref="SingleThreadEventLoop"/>.</summary>
-        public SingleThreadEventLoop()
-            : this(null, DefaultBreakoutInterval)
-        {
-        }
+        private readonly long _breakoutNanosInterval;
+        private readonly ManualResetEventSlim _emptyEvent;
+        private bool _firstTask; // 不需要设置 volatile
 
-        /// <summary>Creates a new instance of <see cref="SingleThreadEventLoop"/>.</summary>
-        public SingleThreadEventLoop(string threadName)
-            : this(threadName, DefaultBreakoutInterval)
-        {
-        }
-
-        /// <summary>Creates a new instance of <see cref="SingleThreadEventLoop"/>.</summary>
-        public SingleThreadEventLoop(string threadName, TimeSpan breakoutInterval)
-            : base(threadName, breakoutInterval)
-        {
-        }
-
-        /// <summary>Creates a new instance of <see cref="SingleThreadEventLoop"/>.</summary>
         public SingleThreadEventLoop(IEventLoopGroup parent)
-            : this(parent, null, DefaultBreakoutInterval)
+            : this(parent, DefaultBreakoutInterval)
         {
         }
 
-        /// <summary>Creates a new instance of <see cref="SingleThreadEventLoop"/>.</summary>
-        public SingleThreadEventLoop(IEventLoopGroup parent, string threadName)
-            : this(parent, threadName, DefaultBreakoutInterval)
+        public SingleThreadEventLoop(IEventLoopGroup parent, TimeSpan breakoutInterval)
+            : this(parent, RejectedExecutionHandlers.Reject(), breakoutInterval)
         {
         }
 
-        /// <summary>Creates a new instance of <see cref="SingleThreadEventLoop"/>.</summary>
-        public SingleThreadEventLoop(IEventLoopGroup parent, string threadName, TimeSpan breakoutInterval)
-            : base(parent, threadName, breakoutInterval)
+        public SingleThreadEventLoop(IEventLoopGroup parent, IRejectedExecutionHandler rejectedHandler)
+            : this(parent, rejectedHandler, DefaultBreakoutInterval)
         {
         }
 
-        /// <summary>Creates a new instance of <see cref="SingleThreadEventLoop"/>.</summary>
-        protected SingleThreadEventLoop(string threadName, TimeSpan breakoutInterval, IQueue<IRunnable> taskQueue)
-            : base(null, threadName, breakoutInterval, taskQueue)
+        public SingleThreadEventLoop(IEventLoopGroup parent, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : this(parent, DefaultThreadFactory<SingleThreadEventLoop>.Instance, rejectedHandler, breakoutInterval)
         {
         }
 
-        /// <summary>Creates a new instance of <see cref="SingleThreadEventLoop"/>.</summary>
-        protected SingleThreadEventLoop(IEventLoopGroup parent, string threadName, TimeSpan breakoutInterval, IQueue<IRunnable> taskQueue)
-            : base(parent, threadName, breakoutInterval, taskQueue)
+        public SingleThreadEventLoop(IEventLoopGroup parent, IThreadFactory threadFactory)
+            : this(parent, threadFactory, DefaultBreakoutInterval)
         {
         }
 
-        public new IEventLoop GetNext() => this;
+        public SingleThreadEventLoop(IEventLoopGroup parent, IThreadFactory threadFactory, TimeSpan breakoutInterval)
+            : this(parent, threadFactory, RejectedExecutionHandlers.Reject(), breakoutInterval)
+        {
+        }
+
+        public SingleThreadEventLoop(IEventLoopGroup parent, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler)
+            : this(parent, threadFactory, rejectedHandler, DefaultBreakoutInterval)
+        {
+        }
+
+        public SingleThreadEventLoop(IEventLoopGroup parent, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : base(parent, threadFactory, false, int.MaxValue, rejectedHandler)
+        {
+            _firstTask = true;
+            _emptyEvent = new ManualResetEventSlim(false, 1);
+            _breakoutNanosInterval = PreciseTime.ToDelayNanos(breakoutInterval);
+            Start();
+        }
+
+        protected sealed override IQueue<IRunnable> NewTaskQueue(int maxPendingTasks)
+        {
+            // This event loop never calls takeTask()
+            return new CompatibleConcurrentQueue<IRunnable>();
+        }
+
+        protected override void Run()
+        {
+            while (true)
+            {
+                if (!IsShuttingDown)
+                {
+                    RunAllTasks(_breakoutNanosInterval);
+                }
+                else
+                {
+                    if (ConfirmShutdown()) { break; }
+                }
+            }
+        }
 
         /// <inheritdoc />
-        public Task RegisterAsync(IChannel channel) => channel.Unsafe.RegisterAsync(this);
+        public sealed override void Execute(IRunnable task)
+        {
+            if (!(task is ILazyRunnable)
+#if DEBUG
+                && WakesUpForTask(task)
+#endif
+                )
+            {
+                InternalExecute(task, true);
+            }
+            else
+            {
+                InternalLazyExecute(task);
+            }
+        }
 
-        /// <inheritdoc />
-        public new IEventLoopGroup Parent => (IEventLoopGroup)base.Parent;
+        public sealed override void LazyExecute(IRunnable task)
+        {
+            InternalExecute(task, false);
+        }
 
-        public new IEnumerable<IEventLoop> Items => new[] { this };
+        protected override void InternalLazyExecute(IRunnable task)
+        {
+            // netty 第一个任务进来，不管是否延迟任务，都会启动线程
+            // 防止线程启动后，第一个进来的就是 lazy task
+            var firstTask = _firstTask;
+            if (firstTask) { _firstTask = false; }
+            InternalExecute(task, firstTask);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private void InternalExecute(IRunnable task, bool immediate)
+        {
+            AddTask(task);
+
+            if (immediate) { _emptyEvent.Set(); }
+        }
+
+        protected sealed override void WakeUp(bool inEventLoop)
+        {
+            if (!inEventLoop || IsShuttingDown)
+            {
+                Execute(WakeupTask);
+            }
+        }
+
+        protected sealed override IRunnable PollTask()
+        {
+            const long MaxDelayMilliseconds = int.MaxValue - 1;
+
+            Debug.Assert(InEventLoop);
+
+            if (_taskQueue.TryDequeue(out IRunnable task)) { return task; }
+#if DEBUG
+            if (_tailTasks.IsEmpty) { _emptyEvent.Reset(); }
+#else
+            _emptyEvent.Reset();
+#endif
+            if (_taskQueue.TryDequeue(out task) || IsShuttingDown) { return task; }
+
+            // revisit queue as producer might have put a task in meanwhile
+            if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
+            {
+                var delayNanos = nextScheduledTask.DelayNanos;
+                if ((ulong)delayNanos > 0UL) // delayNanos >= 0
+                {
+                    var timeout = PreciseTime.ToMilliseconds(delayNanos);
+                    if (_emptyEvent.Wait((int)Math.Min(timeout, MaxDelayMilliseconds)))
+                    {
+                        if (_taskQueue.TryDequeue(out task)) { return task; }
+                    }
+                }
+
+                FetchFromScheduledTaskQueue();
+                _taskQueue.TryDequeue(out task);
+            }
+            else
+            {
+                if (!IsShuttingDown) { _emptyEvent.Wait(); }
+                _ = _taskQueue.TryDequeue(out task);
+            }
+            return task;
+        }
     }
 }

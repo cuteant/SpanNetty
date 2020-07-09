@@ -17,7 +17,7 @@
 
         internal virtual ServerBootstrap GetLocalServerBootstrap()
         {
-            IEventLoopGroup serverGroup = new MultithreadEventLoopGroup();
+            IEventLoopGroup serverGroup = new DefaultEventLoopGroup();
             ServerBootstrap sb = new ServerBootstrap();
             sb.Group(serverGroup);
             sb.Channel<LocalServerChannel>();
@@ -29,7 +29,7 @@
 
         internal virtual Bootstrap GetLocalClientBootstrap()
         {
-            IEventLoopGroup clientGroup = new MultithreadEventLoopGroup();
+            IEventLoopGroup clientGroup = new DefaultEventLoopGroup();
             Bootstrap cb = new Bootstrap();
             cb.Channel<LocalChannel>();
             cb.Group(clientGroup);

@@ -4,21 +4,19 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    sealed class WorkerEventLoop : LoopExecutor, IEventLoop
+    public sealed class WorkerEventLoop : LoopExecutor
     {
-        readonly IPromise _connectCompletion;
-        readonly string _pipeName;
-        Pipe _pipe;
+        private readonly IPromise _connectCompletion;
+        private readonly string _pipeName;
+        private Pipe _pipe;
 
-        public WorkerEventLoop(WorkerEventLoopGroup parent)
-            : base(parent, null)
+        internal WorkerEventLoop(WorkerEventLoopGroup parent, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : base(parent, threadFactory, rejectedHandler, breakoutInterval)
         {
             if (parent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
 
@@ -101,14 +99,6 @@ namespace DotNetty.Transport.Libuv
                 ((WorkerEventLoopGroup)Parent).Accept(tcp);
             }
         }
-
-        public new IEventLoop GetNext() => (IEventLoop)base.GetNext();
-
-        public Task RegisterAsync(IChannel channel) => channel.Unsafe.RegisterAsync(this);
-
-        public new IEventLoopGroup Parent => (IEventLoopGroup)base.Parent;
-
-        IEnumerable<IEventLoop> IEventLoopGroup.Items => new[] { this };
 
         sealed class PipeConnect : ConnectRequest
         {

@@ -283,7 +283,7 @@ namespace DotNetty.Codecs.Http.Tests
         public async Task ExecutorPreserveOrdering()
         {
             var sb = new ServerBootstrap();
-            sb.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup());
+            sb.Group(new DefaultEventLoopGroup(1), new DefaultEventLoopGroup());
             sb.Channel<LocalServerChannel>();
             sb.ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
             {
@@ -297,7 +297,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var responses = new BlockingCollection<IHttpObject>();
             var bs = new Bootstrap();
-            bs.Group(new MultithreadEventLoopGroup());
+            bs.Group(new DefaultEventLoopGroup());
             bs.Channel<LocalChannel>();
             bs.Handler(new ActionChannelInitializer<IChannel>(ch =>
             {

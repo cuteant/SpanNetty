@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
+    <RootNamespace>DotNetty.TestSuite</RootNamespace>
+    <AssemblyName>DotNetty.TestSuite</AssemblyName>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNetTestSdkPackageVersion)" />
+    <PackageReference Include="xunit" Version="$(xUnitPackageVersion)" />
+    <PackageReference Include="xunit.analyzers" Version="$(xUnitAnalyzersPackageVersion)" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
+    <PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.Netstandard.csproj" />
+    <ProjectReference Include="..\DotNetty.Tests.Common.Netstandard\DotNetty.Tests.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\DotNetty.TestSuite\**\*.cs" Exclude="..\DotNetty.TestSuite\bin\**;..\DotNetty.TestSuite\obj\**" />
+    <EmbeddedResource Include="..\DotNetty.TestSuite\**\*.resx" Exclude="..\DotNetty.TestSuite\bin\**;..\DotNetty.TestSuite\obj\**;@(EmbeddedResource)" />
+  </ItemGroup>
+
+</Project>

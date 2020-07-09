@@ -26,7 +26,7 @@
 
         public DefaultChannelPipelineTest()
         {
-            _group = new MultithreadEventLoopGroup(1);
+            _group = new DefaultEventLoopGroup(1);
 
         }
 
@@ -83,7 +83,7 @@
             {
                 _self = null;
             }
-            Task.WaitAll(_group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
+            Task.WaitAll(_group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
         }
 
         [Fact]
@@ -983,8 +983,8 @@
         [Fact]
         public async Task TestHandlerAddedAndRemovedCalledInCorrectOrder()
         {
-            IEventExecutorGroup group1 = new MultithreadEventLoopGroup(1);
-            IEventExecutorGroup group2 = new MultithreadEventLoopGroup(1);
+            IEventExecutorGroup group1 = new DefaultEventExecutorGroup(1);
+            IEventExecutorGroup group2 = new DefaultEventExecutorGroup(1);
 
             try
             {
@@ -1023,8 +1023,8 @@
             finally
             {
                 Task.WaitAll(
-                    group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
-                    group2.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1))
+                    group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                    group2.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5))
                 );
             }
         }
@@ -1032,7 +1032,7 @@
         [Fact]
         public async Task TestHandlerAddedExceptionFromChildHandlerIsPropagated()
         {
-            IEventExecutorGroup group1 = new MultithreadEventLoopGroup(1);
+            IEventExecutorGroup group1 = new DefaultEventExecutorGroup(1);
             try
             {
                 var promise = group1.GetNext().NewPromise();
@@ -1047,7 +1047,7 @@
             }
             finally
             {
-                await group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+                await group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
             }
         }
 
@@ -1072,7 +1072,7 @@
         [Fact]
         public async Task TestHandlerRemovedExceptionFromChildHandlerIsPropagated()
         {
-            IEventExecutorGroup group1 = new MultithreadEventLoopGroup(1);
+            IEventExecutorGroup group1 = new DefaultEventExecutorGroup(1);
             try
             {
                 var promise = group1.GetNext().NewPromise();
@@ -1087,7 +1087,7 @@
             }
             finally
             {
-                await group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+                await group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
             }
         }
 
@@ -1106,7 +1106,7 @@
         [Fact]
         public async Task TestHandlerAddedThrowsAndRemovedThrowsException()
         {
-            IEventExecutorGroup group1 = new MultithreadEventLoopGroup(1);
+            IEventExecutorGroup group1 = new DefaultEventExecutorGroup(1);
             try
             {
                 CountdownEvent latch = new CountdownEvent(1);
@@ -1124,7 +1124,7 @@
             }
             finally
             {
-                await group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+                await group1.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
             }
         }
 
@@ -1226,7 +1226,7 @@
             IChannelPipeline pipeline1 = new LocalChannel().Pipeline;
             IChannelPipeline pipeline2 = new LocalChannel().Pipeline;
 
-            IEventLoopGroup defaultGroup = new MultithreadEventLoopGroup(2);
+            IEventLoopGroup defaultGroup = new DefaultEventLoopGroup(2);
             try
             {
                 IEventLoop eventLoop1 = defaultGroup.GetNext();
@@ -1245,7 +1245,7 @@
             }
             finally
             {
-                await defaultGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+                await defaultGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
             }
         }
 
@@ -1258,7 +1258,7 @@
         [Fact]
         public Task TestAddInListenerLocal()
         {
-            return TestAddInListener(new LocalChannel(), new MultithreadEventLoopGroup(1));
+            return TestAddInListener(new LocalChannel(), new DefaultEventLoopGroup(1));
         }
 
         private static async Task TestAddInListener(IChannel channel, IEventLoopGroup group)
@@ -1284,7 +1284,7 @@
             finally
             {
                 await pipeline1.Channel.CloseAsync();
-                await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+                await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
             }
         }
 
@@ -1368,7 +1368,7 @@
         [Fact]
         public void TestPinExecutor()
         {
-            IEventExecutorGroup group = new MultithreadEventLoopGroup(2);
+            IEventExecutorGroup group = new DefaultEventExecutorGroup(2);
             IChannelPipeline pipeline = new LocalChannel().Pipeline;
             IChannelPipeline pipeline2 = new LocalChannel().Pipeline;
 
@@ -1390,7 +1390,7 @@
         [Fact]
         public void TestNotPinExecutor()
         {
-            IEventExecutorGroup group = new MultithreadEventLoopGroup(2);
+            IEventExecutorGroup group = new DefaultEventExecutorGroup(2);
             IChannelPipeline pipeline = new LocalChannel().Pipeline;
             pipeline.Channel.Configuration.SetOption(ChannelOption.SingleEventexecutorPerGroup, false);
 
@@ -1410,7 +1410,7 @@
         {
             IChannelPipeline pipeline1 = new LocalChannel().Pipeline;
 
-            IEventLoopGroup defaultGroup = new MultithreadEventLoopGroup(1);
+            IEventLoopGroup defaultGroup = new DefaultEventLoopGroup(1);
             IEventLoop eventLoop1 = defaultGroup.GetNext();
             IPromise promise = eventLoop1.NewPromise();
             Exception exception = new ArgumentException();
@@ -1432,7 +1432,7 @@
             finally
             {
                 await pipeline1.Channel.CloseAsync();
-                await defaultGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+                await defaultGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
             }
         }
 
@@ -1462,7 +1462,7 @@
         [Fact]
         public async Task TestHandlerRemovedOnlyCalledWhenHandlerAddedCalled()
         {
-            IEventLoopGroup group = new MultithreadEventLoopGroup(1);
+            IEventLoopGroup group = new DefaultEventLoopGroup(1);
             try
             {
                 AtomicReference<Exception> errorRef = new AtomicReference<Exception>();
@@ -1994,7 +1994,7 @@
 
         private void TestHandlerAddedFailedButHandlerStillRemoved0(bool lateRegister)
         {
-            IEventExecutorGroup executorGroup = new MultithreadEventLoopGroup(16);
+            IEventExecutorGroup executorGroup = new DefaultEventExecutorGroup(16);
             int numHandlers = 32;
             try
             {
@@ -2027,7 +2027,7 @@
             }
             finally
             {
-                executorGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
+                executorGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
             }
         }
 

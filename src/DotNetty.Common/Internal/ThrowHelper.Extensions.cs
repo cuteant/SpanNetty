@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using DotNetty.Common.Concurrency;
 using DotNetty.Common.Utilities;
@@ -28,6 +29,7 @@ namespace DotNetty.Common
         end,
 
         name,
+        step,
         item,
         type,
         list,
@@ -39,6 +41,7 @@ namespace DotNetty.Common
         value,
         array,
         chars,
+        delay,
         types,
         match,
         index,
@@ -69,19 +72,27 @@ namespace DotNetty.Common
         results,
         newSize,
         builder,
+        retries,
 
         comparer,
         executor,
         sequence,
         capacity,
         typeName,
+        poolName,
         assembly,
         argArray,
         fullName,
         elements,
         typeInfo,
+        maxDelay,
+        minValue,
+        minDelay,
+        timeSpan,
+        nThreads,
 
         separator,
+        taskQueue,
         fieldInfo,
         converter,
         defaultFn,
@@ -96,7 +107,6 @@ namespace DotNetty.Common
         returnType,
         memberInfo,
 
-
         destination,
         directories,
         dirEnumArgs,
@@ -109,7 +119,12 @@ namespace DotNetty.Common
         propertyInfo,
 
         attributeType,
+        threadFactory,
+
+        chooserFactory,
         parameterTypes,
+
+        rejectedHandler,
 
         aggregatePromise,
         samplingInterval,
@@ -117,11 +132,13 @@ namespace DotNetty.Common
         qualifiedTypeName,
         assemblyPredicate,
 
-        updateValueFactory,
-        includedAssemblies,
         firstNameComponent,
+        includedAssemblies,
+        updateValueFactory,
 
         secondNameComponent,
+
+        eventExecutorFactory,
     }
 
     #endregion
@@ -187,6 +204,17 @@ namespace DotNetty.Common
             static Exception GetException()
             {
                 return new Exception("Internal error: CodePoint is decoded but number of characters read is 0 or negative");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowException_InvalidUtf8CharacterBadlyEncoded()
+        {
+            throw GetException();
+
+            static Exception GetException()
+            {
+                return new Exception("Invalid UTF-8 character (badly encoded)");
             }
         }
 
@@ -358,6 +386,53 @@ namespace DotNetty.Common
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PeriodMustNotBeEquelToZero()
+        {
+            throw GetException();
+
+            static ArgumentException GetException()
+            {
+                return new ArgumentException("period: 0 (expected: != 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PeriodMustBeGreaterThanZero()
+        {
+            throw GetArgumentException_PeriodMustBeGreaterThanZero();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task FromArgumentException_PeriodMustBeGreaterThanZero()
+        {
+            return TaskUtil.FromException(GetArgumentException_PeriodMustBeGreaterThanZero());
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static ArgumentException GetArgumentException_PeriodMustBeGreaterThanZero()
+        {
+            return new ArgumentException("period: 0 (expected: > 0)");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_DelayMustBeGreaterThanZero()
+        {
+            throw GetArgumentException_DelayMustBeGreaterThanZero();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task FromArgumentException_DelayMustBeGreaterThanZero()
+        {
+            return TaskUtil.FromException(GetArgumentException_DelayMustBeGreaterThanZero());
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static ArgumentException GetArgumentException_DelayMustBeGreaterThanZero()
+        {
+            return new ArgumentException("delay: 0 (expected: > 0)");
+        }
+
         #endregion
 
         #region -- ArgumentOutOfRangeException --
@@ -468,9 +543,9 @@ namespace DotNetty.Common
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ArgumentOutOfRangeException_InvalidUnicodeChar()
         {
-            throw GetNullReferenceException();
+            throw GetArgumentOutOfRangeException();
 
-            static ArgumentOutOfRangeException GetNullReferenceException()
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException(
                    message: "Value must be between U+0000 and U+D7FF, inclusive; or value must be between U+E000 and U+FFFF, inclusive.",
@@ -481,13 +556,68 @@ namespace DotNetty.Common
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ArgumentOutOfRangeException_InvalidUnicodeValue()
         {
-            throw GetNullReferenceException();
+            throw GetArgumentOutOfRangeException();
 
-            static ArgumentOutOfRangeException GetNullReferenceException()
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException(
                     message: "Value must be between U+0000 and U+D7FF, inclusive; or value must be between U+E000 and U+10FFFF, inclusive.",
                     paramName: "value");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentOutOfRangeException_Positive(TimeSpan timeSpan, ExceptionArgument argument)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), timeSpan, $"{GetArgumentName(argument)} must be a positive number.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentOutOfRangeException_NextTimeSpan_Positive(TimeSpan timeSpan, ExceptionArgument argument)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), timeSpan, $"SafeRandom.NextTimeSpan {GetArgumentName(argument)} must be a positive number.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentOutOfRangeException_NextTimeSpan_minValue(TimeSpan minValue)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("minValue", minValue, "SafeRandom.NextTimeSpan minValue must be greater than maxValue.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentOutOfRangeException_Invalid_minValue(TimeSpan minValue)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("minValue", minValue, "max delay must be greater than min delay.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentOutOfRangeException_Invalid_minValue(TimeSpan _minDelay, TimeSpan currMax)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException($"minDelay {_minDelay}, currMax = {currMax}");
             }
         }
 
@@ -703,13 +833,34 @@ namespace DotNetty.Common
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowException_InvalidUtf8CharacterBadlyEncoded()
+        internal static void ThrowInvalidOperationException_Must_be_invoked_from_an_event_loop()
         {
-            throw GetException();
+            throw GetInvalidOperationException();
 
-            static Exception GetException()
+            static InvalidOperationException GetInvalidOperationException()
             {
-                return new Exception("Invalid UTF-8 character (badly encoded)");
+                return new InvalidOperationException("must be invoked from an event loop");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_Cannot_await_termination_of_the_current_thread()
+        {
+            throw GetInvalidOperationException();
+
+            static InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("cannot await termination of the current thread");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_FailedToCreateAChildEventLoop(Exception e)
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("failed to create a child event loop.", e);
             }
         }
 
@@ -799,6 +950,18 @@ namespace DotNetty.Common
         #region -- RejectedExecutionException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static RejectedExecutionException GetRejectedExecutionException()
+        {
+            return new RejectedExecutionException();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int ThrowRejectedExecutionException()
+        {
+            throw GetRejectedExecutionException();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static int ThrowRejectedExecutionException_TimerStopped()
         {
             throw GetException();
@@ -877,6 +1040,38 @@ namespace DotNetty.Common
             {
                 return new TimeoutException($"Task.WaitWithThrow has timed out after {timeout}.");
             }
+        }
+
+        #endregion
+
+        #region -- NotSupportedException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static NotSupportedException GetNotSupportedException()
+        {
+            return new NotSupportedException();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static NotSupportedException ThrowNotSupportedException()
+        {
+            return GetNotSupportedException();
+        }
+
+        #endregion
+
+        #region -- OverflowException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static OverflowException GetOverflowException()
+        {
+            return new OverflowException();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowOverflowException()
+        {
+            throw GetOverflowException();
         }
 
         #endregion

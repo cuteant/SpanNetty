@@ -82,7 +82,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 .Returns<IChannelHandlerContext, int, Http2Error, IByteBuffer, IPromise>((ctx, streamId, errCode, debugData, p) =>
                 {
                     ReferenceCountUtil.Release(debugData);
-                    _goAwayPromises.AddToBack(p);
+                    _goAwayPromises.AddLast​(p);
                     return p.Task;
                 });
             IHttp2Connection connection = new DefaultHttp2Connection(false);
@@ -124,7 +124,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             // Notify all goAway ChannelPromise instances now as these will also release the retained ByteBuf for the
             // debugData.
-            while (_goAwayPromises.TryRemoveFromFront(out var p))
+            while (_goAwayPromises.TryRemoveFirst(out var p))
             {
                 p.Complete();
             }

@@ -22,16 +22,16 @@ namespace DotNetty.Handlers.Tests.Flow
 
     public class FlowControlHandlerTest : IDisposable
     {
-        readonly IEventLoopGroup group;
+        readonly IEventLoopGroup _group;
 
         public FlowControlHandlerTest()
         {
-            this.group = new MultithreadEventLoopGroup();
+            _group = new MultithreadEventLoopGroup();
         }
 
         public void Dispose()
         {
-            this.group?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+            _group?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         }
 
         /**
@@ -44,7 +44,7 @@ namespace DotNetty.Handlers.Tests.Flow
             Assert.True(handlers.Length >= 1);
 
             var serverBootstrap = new ServerBootstrap();
-            serverBootstrap.Group(this.group)
+            serverBootstrap.Group(_group)
                 .Channel<TcpServerSocketChannel>()
                 .ChildOption(ChannelOption.AutoRead, autoRead)
                 .ChildHandler(
@@ -63,7 +63,7 @@ namespace DotNetty.Handlers.Tests.Flow
         {
             var bootstrap = new Bootstrap();
 
-            bootstrap.Group(this.group)
+            bootstrap.Group(_group)
                 .Channel<TcpSocketChannel>()
                 .Option(ChannelOption.ConnectTimeout, TimeSpan.FromMilliseconds(1000))
                 .Handler(new TestHandler(onRead: (ctx, m) => Assert.True(false, "In this test the client is never receiving a message from the server.")));
@@ -96,8 +96,8 @@ namespace DotNetty.Handlers.Tests.Flow
                     latch.Signal();
                 });
 
-            IChannel server = await this.NewServer(true, handler);
-            IChannel client = await this.NewClient(server.LocalAddress);
+            IChannel server = await NewServer(true, handler);
+            IChannel client = await NewClient(server.LocalAddress);
 
             try
             {
@@ -145,8 +145,8 @@ namespace DotNetty.Handlers.Tests.Flow
                 }
             );
 
-            IChannel server = await this.NewServer(false, handler);
-            IChannel client = await this.NewClient(server.LocalAddress);
+            IChannel server = await NewServer(false, handler);
+            IChannel client = await NewClient(server.LocalAddress);
 
             try
             {
@@ -183,8 +183,8 @@ namespace DotNetty.Handlers.Tests.Flow
             ChannelHandlerAdapter handler = new TestHandler(onRead: (ctx, msg) => latch.Signal());
 
             var flow = new FlowControlHandler();
-            IChannel server = await this.NewServer(true, flow, handler);
-            IChannel client = await this.NewClient(server.LocalAddress);
+            IChannel server = await NewServer(true, flow, handler);
+            IChannel client = await NewClient(server.LocalAddress);
             try
             {
                 // Write the message
@@ -260,8 +260,8 @@ namespace DotNetty.Handlers.Tests.Flow
             );
 
             var flow = new FlowControlHandler();
-            IChannel server = await this.NewServer(true, flow, handler);
-            IChannel client = await this.NewClient(server.LocalAddress);
+            IChannel server = await NewServer(true, flow, handler);
+            IChannel client = await NewClient(server.LocalAddress);
             try
             {
                 // The client connection on the server side
@@ -322,8 +322,8 @@ namespace DotNetty.Handlers.Tests.Flow
             );
 
             var flow = new FlowControlHandler();
-            IChannel server = await this.NewServer(false, flow, handler);
-            IChannel client = await this.NewClient(server.LocalAddress);
+            IChannel server = await NewServer(false, flow, handler);
+            IChannel client = await NewClient(server.LocalAddress);
             try
             {
                 // The client connection on the server side
@@ -385,8 +385,8 @@ namespace DotNetty.Handlers.Tests.Flow
             );
 
             var flow = new FlowControlHandler();
-            IChannel server = await this.NewServer(false, flow, handler);
-            IChannel client = await this.NewClient(server.LocalAddress);
+            IChannel server = await NewServer(false, flow, handler);
+            IChannel client = await NewClient(server.LocalAddress);
             try
             {
                 // The client connection on the server side
@@ -506,9 +506,9 @@ namespace DotNetty.Handlers.Tests.Flow
 
             public override void ChannelActive(IChannelHandlerContext context)
             {
-                if (this.onActive != null)
+                if (onActive != null)
                 {
-                    this.onActive(context);
+                    onActive(context);
                 }
                 else
                 {
@@ -518,9 +518,9 @@ namespace DotNetty.Handlers.Tests.Flow
 
             public override void ChannelRead(IChannelHandlerContext context, object message)
             {
-                if (this.onRead != null)
+                if (onRead != null)
                 {
-                    this.onRead(context, message);
+                    onRead(context, message);
                 }
                 else
                 {
@@ -530,9 +530,9 @@ namespace DotNetty.Handlers.Tests.Flow
 
             public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
             {
-                if (this.onExceptionCaught is object)
+                if (onExceptionCaught is object)
                 {
-                    this.onExceptionCaught(context, exception);
+                    onExceptionCaught(context, exception);
                 }
                 else
                 {

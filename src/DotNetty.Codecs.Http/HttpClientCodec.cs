@@ -104,7 +104,7 @@ namespace DotNetty.Codecs.Http
 
                 if (message is IHttpRequest request)
                 {
-                    _clientCodec._queue.AddToBack(request.Method);
+                    _clientCodec._queue.AddLast​(request.Method);
                 }
 
                 base.Encode(context, message, output);
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs.Http
                 //
                 // Even if we do not use the method to compare we still need to poll it to ensure we keep
                 // request / response pairs in sync.
-                _ = _clientCodec._queue.TryRemoveFromFront(out HttpMethod method);
+                _ = _clientCodec._queue.TryRemoveFirst(out HttpMethod method);
 
                 int statusCode = ((IHttpResponse)msg).Status.Code;
                 if (statusCode >= 100 && statusCode < 200)

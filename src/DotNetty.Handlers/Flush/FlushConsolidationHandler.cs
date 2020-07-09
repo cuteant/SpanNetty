@@ -226,7 +226,7 @@
             public FlushTask(FlushConsolidationHandler owner, CancellationTokenSource cts)
             {
                 _owner = owner;
-                _cts = cts; ;
+                _cts = cts;
             }
 
             public void Run()

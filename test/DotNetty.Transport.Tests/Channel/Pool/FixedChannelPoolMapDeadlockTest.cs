@@ -12,21 +12,22 @@
     using DotNetty.Transport.Channels.Pool;
     using Xunit;
 
+    [Collection("EventLoopTests")]
     public class FixedChannelPoolMapDeadlockTest
     {
         [Fact]
         public async Task TestDeadlockOnAcquire()
         {
-            IEventLoop threadA1 = new SingleThreadEventLoop();
+            IEventLoop threadA1 = new DefaultEventLoop();
             Bootstrap bootstrapA1 = new Bootstrap()
                    .Channel<LocalChannel>().Group(threadA1).LocalAddress(new LocalAddress("A1"));
-            IEventLoop threadA2 = new SingleThreadEventLoop();
+            IEventLoop threadA2 = new DefaultEventLoop();
             Bootstrap bootstrapA2 = new Bootstrap()
                    .Channel<LocalChannel>().Group(threadA2).LocalAddress(new LocalAddress("A2"));
-            IEventLoop threadB1 = new SingleThreadEventLoop();
+            IEventLoop threadB1 = new DefaultEventLoop();
             Bootstrap bootstrapB1 = new Bootstrap()
                    .Channel<LocalChannel>().Group(threadB1).LocalAddress(new LocalAddress("B1"));
-            IEventLoop threadB2 = new SingleThreadEventLoop();
+            IEventLoop threadB2 = new DefaultEventLoop();
             Bootstrap bootstrapB2 = new Bootstrap()
                    .Channel<LocalChannel>().Group(threadB2).LocalAddress(new LocalAddress("B2"));
 
@@ -207,10 +208,10 @@
         [Fact]
         public async Task TestDeadlockOnRemove()
         {
-            IEventLoop thread1 = new SingleThreadEventLoop();
+            IEventLoop thread1 = new DefaultEventLoop();
             Bootstrap bootstrap1 = new Bootstrap()
                    .Channel<LocalChannel>().Group(thread1).LocalAddress(new LocalAddress("#1"));
-            IEventLoop thread2 = new SingleThreadEventLoop();
+            IEventLoop thread2 = new DefaultEventLoop();
             Bootstrap bootstrap2 = new Bootstrap()
                    .Channel<LocalChannel>().Group(thread2).LocalAddress(new LocalAddress("#2"));
 

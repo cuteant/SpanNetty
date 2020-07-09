@@ -18,8 +18,8 @@
 
         public BootstrapTest()
         {
-            _groupA = new MultithreadEventLoopGroup(1);
-            _groupB = new MultithreadEventLoopGroup(1);
+            _groupA = new DefaultEventLoopGroup(1);
+            _groupB = new DefaultEventLoopGroup(1);
             _dummyHandler = new DummyHandler();
         }
 

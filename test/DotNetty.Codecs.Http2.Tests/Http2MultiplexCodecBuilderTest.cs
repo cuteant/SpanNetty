@@ -10,65 +10,67 @@ namespace DotNetty.Codecs.Http2.Tests
     using Xunit;
 
     [Collection("BootstrapEnv")]
-    public class Http2MultiplexCodecBuilderTest : IClassFixture<EventLoopGroupFixture>, IDisposable
+    public class Http2MultiplexCodecBuilderTest : IDisposable
     {
-        private readonly EventLoopGroupFixture fixture;
+        private readonly IEventLoopGroup _group;
 
-        private IChannel serverChannel;
-        private volatile IChannel serverConnectedChannel;
-        private IChannel clientChannel;
-        private LastInboundHandler serverLastInboundHandler;
+        private IChannel _serverChannel;
+        private volatile IChannel _serverConnectedChannel;
+        private IChannel _clientChannel;
+        private LastInboundHandler _serverLastInboundHandler;
 
-        public Http2MultiplexCodecBuilderTest(EventLoopGroupFixture fixture)
+        public Http2MultiplexCodecBuilderTest()
         {
-            this.fixture = fixture;
+            _group = new DefaultEventLoopGroup();
 
             var serverChannelLatch = new CountdownEvent(1);
             LocalAddress serverAddress = new LocalAddress(this.GetType().Name);
-            this.serverLastInboundHandler = new SharableLastInboundHandler();
+            this._serverLastInboundHandler = new SharableLastInboundHandler();
             ServerBootstrap sb = new ServerBootstrap()
                 .Channel<LocalServerChannel>()
-                .Group(fixture.Group)
+                .Group(_group)
                 .ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
                 {
-                    this.serverConnectedChannel = ch;
+                    this._serverConnectedChannel = ch;
                     ch.Pipeline.AddLast(new Http2MultiplexCodecBuilder(true, new ActionChannelInitializer<IChannel>(ch0 =>
                     {
                         ch0.Pipeline.AddLast(new TestServerChannelHandler());
-                        ch0.Pipeline.AddLast(this.serverLastInboundHandler);
+                        ch0.Pipeline.AddLast(this._serverLastInboundHandler);
                     })).Build());
                     serverChannelLatch.SafeSignal();
                 }));
-            this.serverChannel = sb.BindAsync(serverAddress).GetAwaiter().GetResult();
+            this._serverChannel = sb.BindAsync(serverAddress).GetAwaiter().GetResult();
             Bootstrap cb = new Bootstrap()
                 .Channel<LocalChannel>()
-                .Group(fixture.Group)
+                .Group(_group)
                 .Handler(new Http2MultiplexCodecBuilder(false, new ActionChannelInitializer<IChannel>(ch =>
                 {
                     Assert.False(true, "Should not be called for outbound streams");
                 })).Build());
-            this.clientChannel = cb.ConnectAsync(serverAddress).GetAwaiter().GetResult();
+            this._clientChannel = cb.ConnectAsync(serverAddress).GetAwaiter().GetResult();
             Assert.True(serverChannelLatch.Wait(TimeSpan.FromSeconds(5)));
         }
 
         public void Dispose()
         {
-            if (this.clientChannel != null)
+            if (this._clientChannel != null)
             {
-                this.clientChannel.CloseAsync().GetAwaiter().GetResult();
-                this.clientChannel = null;
+                this._clientChannel.CloseAsync().GetAwaiter().GetResult();
+                this._clientChannel = null;
             }
-            if (this.serverChannel != null)
+            if (this._serverChannel != null)
             {
-                this.serverChannel.CloseAsync().GetAwaiter().GetResult();
-                this.serverChannel = null;
+                this._serverChannel.CloseAsync().GetAwaiter().GetResult();
+                this._serverChannel = null;
             }
-            var serverConnectedChannel = this.serverConnectedChannel;
+            var serverConnectedChannel = this._serverConnectedChannel;
             if (serverConnectedChannel != null)
             {
                 serverConnectedChannel.CloseAsync().GetAwaiter().GetResult();
-                this.serverConnectedChannel = null;
+                this._serverConnectedChannel = null;
             }
+
+            _group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         }
 
         [Fact]
@@ -88,11 +90,11 @@ namespace DotNetty.Codecs.Http2.Tests
             childChannel2.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(headers2));
             childChannel1.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(headers1));
 
-            IHttp2HeadersFrame headersFrame2 = serverLastInboundHandler.BlockingReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame headersFrame2 = _serverLastInboundHandler.BlockingReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame2);
             Assert.Equal(3, headersFrame2.Stream.Id);
 
-            IHttp2HeadersFrame headersFrame1 = serverLastInboundHandler.BlockingReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame headersFrame1 = _serverLastInboundHandler.BlockingReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame1);
             Assert.Equal(5, headersFrame1.Stream.Id);
 
@@ -102,7 +104,7 @@ namespace DotNetty.Codecs.Http2.Tests
             childChannel1.CloseAsync();
             childChannel2.CloseAsync();
 
-            serverLastInboundHandler.CheckException();
+            _serverLastInboundHandler.CheckException();
         }
 
         [Fact]
@@ -117,12 +119,12 @@ namespace DotNetty.Codecs.Http2.Tests
             IByteBuffer data = Unpooled.Buffer(100).WriteZero(100);
             childChannel.WriteAndFlushAsync(new DefaultHttp2DataFrame(data, true));
 
-            IHttp2HeadersFrame headersFrame = serverLastInboundHandler.BlockingReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame headersFrame = _serverLastInboundHandler.BlockingReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
             Assert.Equal(3, headersFrame.Stream.Id);
             Assert.Equal(headers, headersFrame.Headers);
 
-            IHttp2DataFrame dataFrame = serverLastInboundHandler.BlockingReadInbound<IHttp2DataFrame>();
+            IHttp2DataFrame dataFrame = _serverLastInboundHandler.BlockingReadInbound<IHttp2DataFrame>();
             Assert.NotNull(dataFrame);
             Assert.Equal(3, dataFrame.Stream.Id);
             Assert.Equal(data.ResetReaderIndex(), dataFrame.Content);
@@ -131,11 +133,11 @@ namespace DotNetty.Codecs.Http2.Tests
 
             childChannel.CloseAsync();
 
-            IHttp2ResetFrame rstFrame = serverLastInboundHandler.BlockingReadInbound<IHttp2ResetFrame>();
+            IHttp2ResetFrame rstFrame = _serverLastInboundHandler.BlockingReadInbound<IHttp2ResetFrame>();
             Assert.NotNull(rstFrame);
             Assert.Equal(3, rstFrame.Stream.Id);
 
-            serverLastInboundHandler.CheckException();
+            _serverLastInboundHandler.CheckException();
         }
 
         [Fact]
@@ -153,7 +155,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
         private IHttp2StreamChannel NewOutboundStream(IChannelHandler handler)
         {
-            return new Http2StreamChannelBootstrap(clientChannel).Handler(handler).OpenAsync().GetAwaiter().GetResult();
+            return new Http2StreamChannelBootstrap(_clientChannel).Handler(handler).OpenAsync().GetAwaiter().GetResult();
         }
 
         sealed class TestServerChannelHandler : ChannelHandlerAdapter

@@ -4,10 +4,11 @@
 namespace DotNetty.Common.Concurrency
 {
     using System;
+    using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
-    using DotNetty.Common.Utilities;
+    using DotNetty.Common.Internal;
 
     abstract class ScheduledTask : IScheduledRunnable
     {
@@ -17,16 +18,31 @@ namespace DotNetty.Common.Concurrency
         protected readonly IPromise Promise;
         protected readonly AbstractScheduledEventExecutor Executor;
         private int v_cancellationState;
-        private int _queueIndex = PriorityQueue<IScheduledRunnable>.IndexNotInQueue;
+        private int _queueIndex = DefaultPriorityQueue<IScheduledRunnable>.IndexNotInQueue;
 
         // set once when added to priority queue
         private long _id;
 
-        protected ScheduledTask(AbstractScheduledEventExecutor executor, in PreciseTimeSpan deadline, IPromise promise)
+        private long _deadlineNanos;
+        /* 0 - no repeat, >0 - repeat at fixed rate, <0 - repeat with fixed delay */
+        private readonly long _periodNanos;
+
+        protected ScheduledTask(AbstractScheduledEventExecutor executor, long deadlineNanos, IPromise promise)
         {
             Executor = executor;
+            _deadlineNanos = deadlineNanos;
             Promise = promise;
-            Deadline = deadline;
+            _periodNanos = 0L;
+        }
+
+        protected ScheduledTask(AbstractScheduledEventExecutor executor, long deadlineNanos, long periodNanos, IPromise promise)
+        {
+            if (0ul >= (ulong)periodNanos) { ThrowHelper.ThrowArgumentException_PeriodMustNotBeEquelToZero(); }
+
+            Executor = executor;
+            _deadlineNanos = deadlineNanos;
+            _periodNanos = periodNanos;
+            Promise = promise;
         }
 
         IScheduledRunnable IScheduledRunnable.SetId(long id)
@@ -35,17 +51,23 @@ namespace DotNetty.Common.Concurrency
             return this;
         }
 
-        public PreciseTimeSpan Deadline { get; private set; }
+        public long Id => _id;
+
+        public long DelayNanos => PreciseTime.DeadlineToDelayNanos(_deadlineNanos);
+
+        public long DeadlineNanos => _deadlineNanos;
+
+        public PreciseTimeSpan Deadline => PreciseTimeSpan.FromTicks(_deadlineNanos);
 
         void IScheduledRunnable.SetConsumed()
         {
             // Optimization to avoid checking system clock again
             // after deadline has passed and task has been dequeued
-            //if (periodNanos == 0)
-            //{
-            //    assert nanoTime() > deadlineNanos;
-            Deadline = PreciseTimeSpan.Zero;
-            //}
+            if (0ul >= (ulong)_periodNanos)
+            {
+                Debug.Assert(PreciseTime.NanoTime() >= _deadlineNanos);
+                _deadlineNanos = 0L;
+            }
         }
 
         public bool Cancel()
@@ -63,6 +85,11 @@ namespace DotNetty.Common.Concurrency
             return canceled;
         }
 
+        bool IScheduledRunnable.CancelWithoutRemove()
+        {
+            return Promise.TrySetCanceled();
+        }
+
         public Task Completion => Promise.Task;
 
         public TaskAwaiter GetAwaiter() => Completion.GetAwaiter();
@@ -71,44 +98,82 @@ namespace DotNetty.Common.Concurrency
         {
             if (other is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
-            return Deadline.CompareTo(other.Deadline);
+            if (ReferenceEquals(this, other)) { return 0; }
+
+            ulong diff = (ulong)(_deadlineNanos - other.DeadlineNanos);
+            if (diff > 0ul)
+            {
+                if (SharedConstants.TooBigOrNegative64 >= diff) { return 1; }
+                return -1;
+            }
+
+            if ((ulong)_id > (ulong)other.Id) { return 1; }
+
+            Debug.Assert(_id != other.Id);
+            return -1;
         }
 
         public virtual void Run()
         {
-            if (Deadline > PreciseTimeSpan.Zero)
+            Debug.Assert(Executor.InEventLoop);
+            try
             {
-                // Not yet expired, need to add or remove from queue
-                if (Promise.IsCanceled)
+                if ((ulong)DelayNanos > 0UL) // DelayNanos >= 0
                 {
-                    _ = Executor.ScheduledTaskQueue.TryRemove(this);
+                    // Not yet expired, need to add or remove from queue
+                    if (Promise.IsCanceled)
+                    {
+                        _ = Executor.ScheduledTaskQueue.TryRemove(this);
+                    }
+                    else
+                    {
+                        Executor.ScheduleFromEventLoop(this);
+                    }
+                    return;
+                }
+                if (0ul >= (ulong)_periodNanos)
+                {
+                    if (TrySetUncancelable())
+                    {
+                        Execute();
+                        _ = Promise.TryComplete();
+                    }
                 }
                 else
                 {
-                    Executor.ScheduleFromEventLoop(this);
+                    // check if is done as it may was cancelled
+                    if (!Promise.IsCanceled)
+                    {
+                        Execute();
+                        if (!Executor.IsShutdown)
+                        {
+                            if (_periodNanos > 0)
+                            {
+                                _deadlineNanos += _periodNanos;
+                            }
+                            else
+                            {
+                                _deadlineNanos = PreciseTime.NanoTime() - _periodNanos;
+                            }
+                            if (!Promise.IsCanceled)
+                            {
+                                _ = Executor.ScheduledTaskQueue.TryEnqueue(this);
+                            }
+                        }
+                    }
                 }
-                return;
             }
-            if (TrySetUncancelable())
+            catch (Exception exc)
             {
-                try
-                {
-                    Execute();
-                    _ = Promise.TryComplete();
-                }
-                catch (Exception ex)
-                {
-                    // todo: check for fatal
-                    _ = Promise.TrySetException(ex);
-                }
+                _ = Promise.TrySetException(exc);
             }
         }
 
         protected abstract void Execute();
 
-        bool TrySetUncancelable() => AtomicCancellationStateUpdate(CancellationProhibited, CancellationRequested);
+        private bool TrySetUncancelable() => AtomicCancellationStateUpdate(CancellationProhibited, CancellationRequested);
 
-        bool AtomicCancellationStateUpdate(int newBits, int illegalBits)
+        private bool AtomicCancellationStateUpdate(int newBits, int illegalBits)
         {
             int cancellationState = Volatile.Read(ref v_cancellationState);
             int oldCancellationState;

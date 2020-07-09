@@ -331,7 +331,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var req = channel.InboundMessages;
             Assert.True(req.Count >= 1);
-            object o = req.Peek();
+            object o = req.FirstOrDefault;
             Assert.IsAssignableFrom<IHttpRequest>(o);
             var request = (IHttpRequest)o;
             if (request.Headers.TryGet(HttpHeaderNames.ContentLength, out ICharSequence v))
@@ -391,7 +391,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var resp = channel.InboundMessages;
             Assert.True(resp.Count >= 1);
-            object o = resp.Peek();
+            object o = resp.FirstOrDefault;
             Assert.IsAssignableFrom<IHttpResponse>(o);
             var r = (IHttpResponse)o;
 

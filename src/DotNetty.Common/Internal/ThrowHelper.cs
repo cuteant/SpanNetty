@@ -1,7 +1,9 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using DotNetty.Common.Internal;
+using DotNetty.Common.Utilities;
 
 namespace DotNetty.Common
 {
@@ -114,6 +116,18 @@ namespace DotNetty.Common
 
 
         #region -- Throw ArgumentNullException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task FromArgumentNullException(ExceptionArgument argument)
+        {
+            return TaskUtil.FromException(GetArgumentNullException(argument));
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task<T> FromArgumentNullException<T>(ExceptionArgument argument)
+        {
+            return TaskUtil.FromException<T>(GetArgumentNullException(argument));
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentNullException(ExceptionArgument argument)

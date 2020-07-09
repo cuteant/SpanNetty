@@ -103,7 +103,7 @@ namespace DotNetty.Codecs.Http
                 {
                     if (output[i] is IHttpRequest request)
                     {
-                        this.serverCodec.queue.AddToBack(request.Method);
+                        this.serverCodec.queue.AddLast​(request.Method);
                     }
                 }
             }
@@ -135,7 +135,7 @@ namespace DotNetty.Codecs.Http
 
             protected override bool IsContentAlwaysEmpty(IHttpResponse msg)
             {
-                _ = this.serverCodec.queue.TryRemoveFromFront(out this.method);
+                _ = this.serverCodec.queue.TryRemoveFirst(out this.method);
                 return HttpMethod.Head.Equals(this.method) || base.IsContentAlwaysEmpty(msg);
             }
         }

@@ -4,108 +4,93 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Runtime.CompilerServices;
-    using System.Threading.Tasks;
-    using DotNetty.Common.Concurrency;
-    using DotNetty.Transport.Channels;
-    using DotNetty.Common.Internal.Logging;
-    using DotNetty.Common.Internal;
     using System.Threading;
+    using System.Threading.Tasks;
     using DotNetty.Common;
+    using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
+    using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
     using Timer = Native.Timer;
 
-    class LoopExecutor : AbstractScheduledEventExecutor, IOrderedEventExecutor
+    public abstract class LoopExecutor : SingleThreadEventLoopBase
     {
+        #region @@ Fields @@
+
         private const int DefaultBreakoutTime = 100; //ms
 
-        private static readonly TimeSpan DefaultBreakoutInterval = TimeSpan.FromMilliseconds(DefaultBreakoutTime);
+        private static long s_initialTime;
+        private static long s_startTimeInitialized;
+
+        internal static readonly TimeSpan DefaultBreakoutInterval = TimeSpan.FromMilliseconds(DefaultBreakoutTime);
         private static readonly Func<ThreadLocalPool.Handle, WriteRequest> s_valueFactory = handle => new WriteRequest(handle);
-
-        protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<LoopExecutor>();
-
-        private static readonly XParameterizedThreadStart RunAction = s => Run(s);
-        private static readonly Action<object> OnCallbackAction = s => OnCallback(s);
-
-        private const int NotStartedState = 1;
-        private const int StartedState = 2;
-        private const int ShuttingDownState = 3;
-        private const int ShutdownState = 4;
-        private const int TerminatedState = 5;
 
         private readonly ThreadLocalPool<WriteRequest> _writeRequestPool;
         private readonly long _preciseBreakoutInterval;
-        private readonly IQueue<IRunnable> _taskQueue;
-        private readonly XThread _thread;
-        private readonly TaskScheduler _scheduler;
         private readonly ManualResetEventSlim _loopRunStart;
-        private readonly IPromise _terminationCompletionSource;
         private readonly Loop _loop;
         private readonly Async _asyncHandle;
         private readonly Timer _timerHandle;
 
-        private int v_executionState = NotStartedState;
-
-        private long _lastExecutionTime;
-        private long _gracefulShutdownStartTime;
-        private long _gracefulShutdownQuietPeriod;
-        private long _gracefulShutdownTimeout;
-
         // Flag to indicate whether async handle should be used to wake up 
         // the loop, only accessed when InEventLoop is true
-        private int v_wakeUp = SharedConstants.True;
+        private bool _wakeUp = true;
 
-        private bool _firstTask; // 不需要设置 volatile
+        #endregion
 
-        public LoopExecutor(string threadName)
-            : this(null, threadName, DefaultBreakoutInterval)
+        #region @@ Constructor @@
+
+        protected LoopExecutor(IEventLoopGroup parent, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : base(parent, threadFactory, false, int.MaxValue, rejectedHandler)
         {
-        }
-
-        public LoopExecutor(IEventLoopGroup parent, string threadName)
-            : this(parent, threadName, DefaultBreakoutInterval)
-        {
-        }
-
-        public LoopExecutor(IEventLoopGroup parent, string threadName, TimeSpan breakoutInterval) : base(parent)
-        {
-            _firstTask = true;
             _writeRequestPool = new ThreadLocalPool<WriteRequest>(s_valueFactory);
 
-            _preciseBreakoutInterval = (long)breakoutInterval.TotalMilliseconds;
-            _terminationCompletionSource = NewPromise();
-            _taskQueue = PlatformDependent.NewMpscQueue<IRunnable>();
-            _scheduler = new ExecutorTaskScheduler(this);
+            _preciseBreakoutInterval = ToPreciseTime(breakoutInterval);
 
             _loop = new Loop();
             _asyncHandle = new Async(_loop, OnCallbackAction, this);
             _timerHandle = new Timer(_loop, OnCallbackAction, this);
-            string name = $"{GetType().Name}:{_loop.Handle}";
-            if (!string.IsNullOrEmpty(threadName))
-            {
-                name = $"{name}({threadName})";
-            }
-            _thread = new XThread(RunAction) { Name = name };
             _loopRunStart = new ManualResetEventSlim(false, 1);
+
+            if (SharedConstants.False >= (uint)Interlocked.Exchange(ref s_startTimeInitialized, SharedConstants.True))
+            {
+                _loop.UpdateTime();
+                s_initialTime = _loop.Now;
+            }
         }
+
+        #endregion
+
+        #region -- Properties --
 
         internal ThreadLocalPool<WriteRequest> WriteRequestPool => _writeRequestPool;
 
-        protected void Start()
+        internal Loop UnsafeLoop => _loop;
+
+        internal int LoopThreadId => InnerThread.Id;
+
+        #endregion
+
+        #region -- Thread --
+
+        private static readonly XParameterizedThreadStart RunAction = s => Run(s);
+        private static readonly Action<object> OnCallbackAction = s => OnCallback(s);
+
+        protected sealed override XThread NewThread(IThreadFactory threadFactory)
         {
-            var currState = Volatile.Read(ref v_executionState);
+            return threadFactory.NewThread(RunAction);
+        }
+
+        protected override void Start()
+        {
+            var currState = ExecutionState;
             if (currState > NotStartedState)
             {
                 ThrowHelper.ThrowInvalidOperationException_ExecutionState(currState);
             }
-            _thread.Start(this);
+            InnerThread.Start(this);
         }
-
-        internal Loop UnsafeLoop => _loop;
-
-        internal int LoopThreadId => _thread.Id;
 
         private static void Run(object state)
         {
@@ -116,23 +101,64 @@ namespace DotNetty.Transport.Libuv
                 executor => ((LoopExecutor)executor).StartLoop(), state,
                 CancellationToken.None,
                 TaskCreationOptions.AttachedToParent,
-                loopExecutor._scheduler);
+                loopExecutor.Scheduler);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void OnCallback(object state) => ((LoopExecutor)state).OnCallback();
-
-        private void OnCallback()
+        private void StartLoop()
         {
-            if (IsShuttingDown)
+            IntPtr handle = _loop.Handle;
+            try
             {
-                ShuttingDown();
+                UpdateLastExecutionTime();
+                Initialize();
+                if (!CompareAndSetExecutionState(NotStartedState, StartedState))
+                {
+                    ThrowHelper.ThrowInvalidOperationException_ExecutionState0(NotStartedState);
+                }
+                _loopRunStart.Set();
+                _ = _loop.Run(uv_run_mode.UV_RUN_DEFAULT);
             }
-            else
+            catch (Exception ex)
             {
-                RunAllTasks(_preciseBreakoutInterval);
+                _loopRunStart.Set();
+                SetExecutionState(TerminatedState);
+                Logger.LoopRunDefaultError(InnerThread, handle, ex);
+            }
+            finally
+            {
+                if (Logger.InfoEnabled) Logger.LoopThreadFinished(InnerThread, handle);
+                try
+                {
+                    CleanupAndTerminate(false);
+                }
+                catch { }
             }
         }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private static void OnCallback(object state) => ((LoopExecutor)state).Run();
+
+        #endregion
+
+        #region -- Utilities --
+
+        protected sealed override long GetTimeFromStart()
+        {
+            _loop.UpdateTime();
+            return _loop.Now - s_initialTime;
+        }
+
+        protected sealed override long ToPreciseTime(TimeSpan time)
+        {
+            return (long)time.TotalMilliseconds;
+        }
+
+        protected override void TaskDelay(int millisecondsTimeout)
+        {
+            _ = _timerHandle.Start(millisecondsTimeout, 0);
+        }
+
+        #endregion
 
         /// <summary>
         /// Called before run the loop in the loop thread.
@@ -150,34 +176,139 @@ namespace DotNetty.Transport.Libuv
             // NOOP
         }
 
+        protected sealed override IQueue<IRunnable> NewTaskQueue(int maxPendingTasks)
+        {
+            // This event loop never calls takeTask()
+            return new CompatibleConcurrentQueue<IRunnable>();
+        }
+
+        protected override void WakeUp(bool inEventLoop)
+        {
+            // If the executor is not in the event loop, wake up the loop by async handle immediately.
+            //
+            // If the executor is in the event loop and in the middle of RunAllTasks, no need to 
+            // wake up the loop again because this is normally called by the current running task.
+            if (!inEventLoop || _wakeUp)
+            {
+                _asyncHandle.Send();
+            }
+        }
+
+        protected override void OnBeginRunningAllTasks()
+        {
+            _wakeUp = false;
+        }
+
+        protected override void OnEndRunningAllTasks()
+        {
+            _wakeUp = true;
+        }
+
+        protected override void AfterRunningAllTasks()
+        {
+            const long MaxDelayMilliseconds = int.MaxValue - 1;
+
+#if DEBUG
+            base.AfterRunningAllTasks();
+#endif
+
+            if (IsShuttingDown)
+            {
+                // Immediate shutdown
+                WakeUp(true);
+                return;
+            }
+
+            long nextTimeout = DefaultBreakoutTime;
+            if (HasTasks)
+            {
+                _ = _timerHandle.Start(nextTimeout, 0);
+            }
+            else
+            {
+                if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
+                {
+                    long delayNanos = nextScheduledTask.DelayNanos;
+                    if ((ulong)delayNanos > 0UL) // delayNanos >= 0
+                    {
+                        var timeout = PreciseTime.ToMilliseconds(delayNanos);
+                        nextTimeout = Math.Min(timeout, MaxDelayMilliseconds);
+                    }
+                    _ = _timerHandle.Start(nextTimeout, 0);
+                }
+            }
+        }
+
+        protected override void Run()
+        {
+            if (!IsShuttingDown)
+            {
+                RunAllTasks(_preciseBreakoutInterval);
+            }
+            else
+            {
+                DoShutdown();
+            }
+        }
+
         internal void WaitForLoopRun(TimeSpan timeout) => _loopRunStart.Wait(timeout);
 
-        private void StartLoop()
+        protected override void OnBeginShutdownGracefully()
+        {
+            // In case of Shutdown called before the loop run
+            _loopRunStart.Wait();
+        }
+
+        private void DoShutdown()
+        {
+            if (ConfirmShutdown())
+            {
+                StopLoop();
+                return;
+            }
+
+            SetExecutionState(ShuttingDownState);
+
+            // Run all remaining tasks and shutdown hooks. At this point the event loop
+            // is in ST_SHUTTING_DOWN state still accepting tasks which is needed for
+            // graceful shutdown with quietPeriod.
+            while (true)
+            {
+                if (ConfirmShutdown())
+                {
+                    break;
+                }
+            }
+
+            // Now we want to make sure no more tasks can be added from this point. This is
+            // achieved by switching the state. Any new tasks beyond this point will be rejected.
+            SetExecutionState(ShutdownState);
+
+            // We have the final set of tasks in the queue now, no more can be added, run all remaining.
+            // No need to loop here, this is the final pass.
+            if (ConfirmShutdown())
+            {
+                StopLoop();
+            }
+        }
+
+        protected override void Cleanup()
         {
             IntPtr handle = _loop.Handle;
+
             try
             {
-                UpdateLastExecutionTime();
-                Initialize();
-                var oldState = Interlocked.CompareExchange(ref v_executionState, StartedState, NotStartedState);
-                if (oldState != NotStartedState)
-                {
-                    ThrowHelper.ThrowInvalidOperationException_ExecutionState0(oldState);
-                }
-                _loopRunStart.Set();
-                _ = _loop.Run(uv_run_mode.UV_RUN_DEFAULT);
+                Release();
             }
             catch (Exception ex)
             {
-                _loopRunStart.Set();
-                Logger.LoopRunDefaultError(_thread, handle, ex);
-                _ = _terminationCompletionSource.TrySetException(ex);
+                if (Logger.WarnEnabled) Logger.LoopReleaseError(InnerThread, handle, ex);
             }
-            finally
-            {
-                if (Logger.InfoEnabled) Logger.LoopThreadFinished(_thread, handle);
-                CleanupAndTerminate();
-            }
+
+            SafeDispose(_timerHandle);
+            SafeDispose(_asyncHandle);
+            SafeDispose(_loop);
+            if (Logger.InfoEnabled) Logger.LoopDisposed(InnerThread, handle);
         }
 
         private void StopLoop()
@@ -195,88 +326,13 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        private void ShuttingDown()
-        {
-            Debug.Assert(InEventLoop);
-
-            CancelScheduledTasks();
-
-            if (0ul >= (ulong)_gracefulShutdownStartTime)
-            {
-                _gracefulShutdownStartTime = GetLoopTime();
-            }
-
-            bool runTask;
-            do
-            {
-                runTask = RunAllTasks();
-
-                // Terminate if the quiet period is 0.
-                if (0ul >= (ulong)_gracefulShutdownQuietPeriod)
-                {
-                    StopLoop();
-                    return;
-                }
-            }
-            while (runTask);
-
-            long nanoTime = GetLoopTime();
-
-            // Shutdown timed out
-            if (nanoTime - _gracefulShutdownStartTime <= _gracefulShutdownTimeout
-                && nanoTime - _lastExecutionTime <= _gracefulShutdownQuietPeriod)
-            {
-                // Wait for quiet period passed
-                _ = _timerHandle.Start(DefaultBreakoutTime, 0); // 100ms
-            }
-            else
-            {
-                // No tasks were added for last quiet period
-                StopLoop();
-            }
-        }
-
-        private void CleanupAndTerminate()
-        {
-            try
-            {
-                Cleanup();
-            }
-            finally
-            {
-                _ = Interlocked.Exchange(ref v_executionState, TerminatedState);
-                if (_taskQueue.NonEmpty && Logger.WarnEnabled)
-                {
-                    Logger.TerminatedWithNonEmptyTaskQueue(_taskQueue.Count);
-                }
-                _ = _terminationCompletionSource.TryComplete();
-            }
-        }
-
-        private void Cleanup()
-        {
-            IntPtr handle = _loop.Handle;
-
-            try
-            {
-                Release();
-            }
-            catch (Exception ex)
-            {
-                if (Logger.WarnEnabled) Logger.LoopReleaseError(_thread, handle, ex);
-            }
-
-            SafeDispose(_timerHandle);
-            SafeDispose(_asyncHandle);
-            SafeDispose(_loop);
-            if (Logger.InfoEnabled) Logger.LoopDisposed(_thread, handle);
-        }
-
         private static void SafeDispose(IDisposable handle)
         {
             try
             {
-                if (Logger.InfoEnabled) Logger.LoopDisposing(handle);
+#if DEBUG
+                if (Logger.DebugEnabled) Logger.LoopDisposing(handle);
+#endif
                 handle.Dispose();
             }
             catch (Exception ex)
@@ -284,294 +340,5 @@ namespace DotNetty.Transport.Libuv
                 if (Logger.WarnEnabled) Logger.LoopDisposeError(handle, ex);
             }
         }
-
-        private void UpdateLastExecutionTime() => _lastExecutionTime = GetLoopTime();
-
-        private long GetLoopTime()
-        {
-            _loop.UpdateTime();
-            return _loop.Now;
-        }
-
-        private void RunAllTasks(long timeout)
-        {
-            _ = FetchFromScheduledTaskQueue();
-            IRunnable task = PollTask();
-            if (task is null)
-            {
-                AfterRunningAllTasks();
-                return;
-            }
-
-            long start = GetLoopTime();
-            long runTasks = 0;
-            long executionTime;
-            _ = Interlocked.Exchange(ref v_wakeUp, SharedConstants.False);
-            while (true)
-            {
-                SafeExecute(task);
-
-                runTasks++;
-
-                // Check timeout every 64 tasks because nanoTime() is relatively expensive.
-                // XXX: Hard-coded value - will make it configurable if it is really a problem.
-                if (0ul >= (ulong)(runTasks & 0x3F))
-                {
-                    executionTime = GetLoopTime();
-                    if ((executionTime - start) >= timeout)
-                    {
-                        break;
-                    }
-                }
-
-                task = PollTask();
-                if (task is null)
-                {
-                    executionTime = GetLoopTime();
-                    break;
-                }
-            }
-            _ = Interlocked.Exchange(ref v_wakeUp, SharedConstants.True);
-
-            AfterRunningAllTasks();
-            _lastExecutionTime = executionTime;
-        }
-
-        private void AfterRunningAllTasks()
-        {
-            if (IsShuttingDown)
-            {
-                // Immediate shutdown
-                WakeUp(true);
-                return;
-            }
-
-            long nextTimeout = DefaultBreakoutTime;
-            if (_taskQueue.NonEmpty)
-            {
-                _ = _timerHandle.Start(nextTimeout, 0);
-            }
-            else
-            {
-                if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
-                {
-                    PreciseTimeSpan wakeUpTimeout = nextScheduledTask.Deadline - PreciseTimeSpan.FromStart;
-                    if ((ulong)wakeUpTimeout.Ticks > 0UL)
-                    {
-                        nextTimeout = (long)wakeUpTimeout.ToTimeSpan().TotalMilliseconds;
-                    }
-                    _ = _timerHandle.Start(nextTimeout, 0);
-                }
-            }
-        }
-
-        private bool FetchFromScheduledTaskQueue()
-        {
-            if (ScheduledTaskQueue.IsEmpty) { return true; }
-
-            PreciseTimeSpan nanoTime = PreciseTimeSpan.FromStart;
-            IScheduledRunnable scheduledTask = PollScheduledTask(nanoTime);
-            while (scheduledTask is object)
-            {
-                if (!_taskQueue.TryEnqueue(scheduledTask))
-                {
-                    // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
-                    _ = ScheduledTaskQueue.TryEnqueue(scheduledTask);
-                    return false;
-                }
-                scheduledTask = PollScheduledTask(nanoTime);
-            }
-            return true;
-        }
-
-        IRunnable PollTask() => PollTaskFrom(_taskQueue);
-
-        private bool RunAllTasks()
-        {
-            bool fetchedAll;
-            bool ranAtLeastOne = false;
-            do
-            {
-                fetchedAll = FetchFromScheduledTaskQueue();
-                if (RunAllTasksFrom(_taskQueue))
-                {
-                    ranAtLeastOne = true;
-                }
-            }
-            while (!fetchedAll); // keep on processing until we fetched all scheduled tasks.
-            if (ranAtLeastOne)
-            {
-                _lastExecutionTime = GetLoopTime();
-            }
-            return ranAtLeastOne;
-        }
-
-        private static bool RunAllTasksFrom(IQueue<IRunnable> taskQueue)
-        {
-            IRunnable task = PollTaskFrom(taskQueue);
-            if (task is null)
-            {
-                return false;
-            }
-            while (true)
-            {
-                SafeExecute(task);
-                task = PollTaskFrom(taskQueue);
-                if (task is null)
-                {
-                    return true;
-                }
-            }
-        }
-
-        [MethodImpl(InlineMethod.AggressiveOptimization)]
-        private static IRunnable PollTaskFrom(IQueue<IRunnable> taskQueue) =>
-            taskQueue.TryDequeue(out IRunnable task) ? task : null;
-
-        public override Task TerminationCompletion => _terminationCompletionSource.Task;
-
-        public override bool IsShuttingDown => (uint)Volatile.Read(ref v_executionState) >= ShuttingDownState;
-
-        public override bool IsShutdown => (uint)Volatile.Read(ref v_executionState) >= ShutdownState;
-
-        public override bool IsTerminated => (uint)Volatile.Read(ref v_executionState) >=/*==*/ TerminatedState;
-
-        public override bool IsInEventLoop(XThread t) => _thread == t;
-
-        private void WakeUp(bool inEventLoop)
-        {
-            // If the executor is not in the event loop, wake up the loop by async handle immediately.
-            //
-            // If the executor is in the event loop and in the middle of RunAllTasks, no need to 
-            // wake up the loop again because this is normally called by the current running task.
-            if (!inEventLoop || SharedConstants.False < (uint)Volatile.Read(ref v_wakeUp))
-            {
-                _asyncHandle.Send();
-            }
-        }
-
-        protected sealed override bool BeforeScheduledTaskSubmitted(in PreciseTimeSpan deadline)
-        {
-            return true;
-        }
-
-        public override void Execute(IRunnable task)
-        {
-            if (!(task is ILazyRunnable))
-            {
-                InternalExecute(task, true);
-            }
-            else
-            {
-                LazyExecute(task);
-            }
-        }
-
-        public override void LazyExecute(IRunnable task)
-        {
-            // netty 第一个任务进来，不管是否延迟任务，都会启动线程
-            var firstTask = _firstTask;
-            if (firstTask) { _firstTask = false; }
-            InternalExecute(task, firstTask);
-        }
-
-        [MethodImpl(InlineMethod.AggressiveOptimization)]
-        private void InternalExecute(IRunnable task, bool immediate)
-        {
-            if (task is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
-
-            AddTask(task);
-            bool inEventLoop = InEventLoop;
-            if (!inEventLoop && IsShutdown)
-            {
-                ThrowHelper.ThrowRejectedExecutionException_Terminated();
-            }
-            if (immediate)
-            {
-                WakeUp(inEventLoop);
-            }
-        }
-
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        private void AddTask(IRunnable task)
-        {
-            if (IsShutdown)
-            {
-                ThrowHelper.ThrowRejectedExecutionException_Shutdown();
-            }
-            if (!_taskQueue.TryEnqueue(task))
-            {
-                ThrowHelper.ThrowRejectedExecutionException_Queue();
-            }
-        }
-
-        public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
-        {
-            if (quietPeriod < TimeSpan.Zero) { ThrowHelper.ThrowArgumentException(); }
-            if (timeout < quietPeriod) { ThrowHelper.ThrowArgumentException(); }
-
-            if (IsShuttingDown)
-            {
-                return TerminationCompletion;
-            }
-
-            // In case of Shutdown called before the loop run
-            _loopRunStart.Wait();
-
-            bool inEventLoop = InEventLoop;
-            bool wakeUpLoop;
-            int prevState = Volatile.Read(ref v_executionState);
-            int oldState;
-            do
-            {
-                if (IsShuttingDown)
-                {
-                    return TerminationCompletion;
-                }
-                int newState;
-                wakeUpLoop = true;
-                oldState = prevState;
-                if (inEventLoop)
-                {
-                    newState = ShuttingDownState;
-                }
-                else
-                {
-                    switch (prevState)
-                    {
-                        case NotStartedState:
-                        case StartedState:
-                            newState = ShuttingDownState;
-                            break;
-                        default:
-                            newState = prevState;
-                            wakeUpLoop = false;
-                            break;
-                    }
-                }
-                prevState = Interlocked.CompareExchange(ref v_executionState, newState, prevState);
-            } while (prevState != oldState);
-
-            _gracefulShutdownQuietPeriod = (long)quietPeriod.TotalMilliseconds;
-            _gracefulShutdownTimeout = (long)timeout.TotalMilliseconds;
-
-            if (oldState == NotStartedState)
-            {
-                // If the loop is not yet running (e.g. Initialize failed) close all 
-                // handles directly because wake up callback will not be executed. 
-                CleanupAndTerminate();
-            }
-            else
-            {
-                if (wakeUpLoop)
-                {
-                    WakeUp(inEventLoop);
-                }
-            }
-
-            return TerminationCompletion;
-        }
-
-        protected override IEnumerable<IEventExecutor> GetItems() => new[] { this };
     }
 }

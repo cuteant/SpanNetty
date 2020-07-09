@@ -45,15 +45,41 @@ namespace DotNetty.Common.Concurrency
         /// </remarks>
         IScheduledTask Schedule(Action<object, object> action, object context, object state, TimeSpan delay);
 
+        IScheduledTask ScheduleAtFixedRate(IRunnable action, TimeSpan initialDelay, TimeSpan period);
+
+        IScheduledTask ScheduleAtFixedRate(Action action, TimeSpan initialDelay, TimeSpan period);
+
+        IScheduledTask ScheduleAtFixedRate(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period);
+
+        IScheduledTask ScheduleAtFixedRate(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period);
+
+        IScheduledTask ScheduleWithFixedDelay(IRunnable action, TimeSpan initialDelay, TimeSpan delay);
+
+        IScheduledTask ScheduleWithFixedDelay(Action action, TimeSpan initialDelay, TimeSpan delay);
+
+        IScheduledTask ScheduleWithFixedDelay(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay);
+
+        IScheduledTask ScheduleWithFixedDelay(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay);
+
+        Task ScheduleAsync(IRunnable action, TimeSpan delay);
+
+        Task ScheduleAsync(IRunnable action, TimeSpan delay, CancellationToken cancellationToken);
+
         /// <summary>
         ///     Schedules the given action for execution after the specified delay would pass.
         /// </summary>
         /// <remarks>
-        ///     <paramref name="state" /> parameter is useful to when repeated execution of an action against
-        ///     different objects is needed.
         ///     <para>Threading specifics are determined by <c>IEventExecutor</c> implementation.</para>
         /// </remarks>
-        Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken);
+        Task ScheduleAsync(Action action, TimeSpan delay);
+
+        /// <summary>
+        ///     Schedules the given action for execution after the specified delay would pass.
+        /// </summary>
+        /// <remarks>
+        ///     <para>Threading specifics are determined by <c>IEventExecutor</c> implementation.</para>
+        /// </remarks>
+        Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken);
 
         /// <summary>
         ///     Schedules the given action for execution after the specified delay would pass.
@@ -69,17 +95,11 @@ namespace DotNetty.Common.Concurrency
         ///     Schedules the given action for execution after the specified delay would pass.
         /// </summary>
         /// <remarks>
+        ///     <paramref name="state" /> parameter is useful to when repeated execution of an action against
+        ///     different objects is needed.
         ///     <para>Threading specifics are determined by <c>IEventExecutor</c> implementation.</para>
         /// </remarks>
-        Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken);
-
-        /// <summary>
-        ///     Schedules the given action for execution after the specified delay would pass.
-        /// </summary>
-        /// <remarks>
-        ///     <para>Threading specifics are determined by <c>IEventExecutor</c> implementation.</para>
-        /// </remarks>
-        Task ScheduleAsync(Action action, TimeSpan delay);
+        Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken);
 
         /// <summary>
         ///     Schedules the given action for execution after the specified delay would pass.
@@ -100,5 +120,37 @@ namespace DotNetty.Common.Concurrency
         ///     <para>Threading specifics are determined by <c>IEventExecutor</c> implementation.</para>
         /// </remarks>
         Task ScheduleAsync(Action<object, object> action, object context, object state, TimeSpan delay, CancellationToken cancellationToken);
+
+        Task ScheduleAtFixedRateAsync(IRunnable action, TimeSpan initialDelay, TimeSpan period);
+
+        Task ScheduleAtFixedRateAsync(IRunnable action, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken);
+
+        Task ScheduleAtFixedRateAsync(Action action, TimeSpan initialDelay, TimeSpan period);
+
+        Task ScheduleAtFixedRateAsync(Action action, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken);
+
+        Task ScheduleAtFixedRateAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period);
+
+        Task ScheduleAtFixedRateAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken);
+
+        Task ScheduleAtFixedRateAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period);
+
+        Task ScheduleAtFixedRateAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken);
+
+        Task ScheduleWithFixedDelayAsync(IRunnable action, TimeSpan initialDelay, TimeSpan delay);
+
+        Task ScheduleWithFixedDelayAsync(IRunnable action, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken);
+
+        Task ScheduleWithFixedDelayAsync(Action action, TimeSpan initialDelay, TimeSpan delay);
+
+        Task ScheduleWithFixedDelayAsync(Action action, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken);
+
+        Task ScheduleWithFixedDelayAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay);
+
+        Task ScheduleWithFixedDelayAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken);
+
+        Task ScheduleWithFixedDelayAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay);
+
+        Task ScheduleWithFixedDelayAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken);
     }
 }

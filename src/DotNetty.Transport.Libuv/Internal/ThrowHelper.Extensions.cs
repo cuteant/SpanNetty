@@ -67,6 +67,7 @@ namespace DotNetty.Transport.Libuv
         fullName,
         typeInfo,
         typeName,
+        nThreads,
 
         defaultFn,
         fieldInfo,
@@ -88,6 +89,7 @@ namespace DotNetty.Transport.Libuv
 
         attributeType,
 
+        chooserFactory,
         eventLoopGroup,
         parameterTypes,
 
@@ -303,43 +305,6 @@ namespace DotNetty.Transport.Libuv
             SocketException GetSocketException()
             {
                 return new SocketException(errorCode);
-            }
-        }
-
-        #endregion
-
-        #region -- RejectedExecutionException --
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowRejectedExecutionException_Terminated()
-        {
-            throw GetSocketException();
-
-            static RejectedExecutionException GetSocketException()
-            {
-                return new RejectedExecutionException($"{nameof(LoopExecutor)} terminated");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowRejectedExecutionException_Shutdown()
-        {
-            throw GetSocketException();
-
-            static RejectedExecutionException GetSocketException()
-            {
-                return new RejectedExecutionException($"{nameof(LoopExecutor)} already shutdown");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowRejectedExecutionException_Queue()
-        {
-            throw GetSocketException();
-
-            static RejectedExecutionException GetSocketException()
-            {
-                return new RejectedExecutionException($"{nameof(LoopExecutor)} queue task failed");
             }
         }
 

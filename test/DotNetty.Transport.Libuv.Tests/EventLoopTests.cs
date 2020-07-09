@@ -52,7 +52,7 @@ namespace DotNetty.Transport.Libuv.Tests
 
         public EventLoopTests(ITestOutputHelper output) : base(output)
         {
-            this.eventLoop = new EventLoop(null, null);
+            this.eventLoop = new EventLoop(null);
             this.noOp = new NoOp();
         }
 

@@ -17,7 +17,7 @@
 
         public DefaultChannelPipelineTailTest()
         {
-            _group = new MultithreadEventLoopGroup(1);
+            _group = new DefaultEventLoopGroup(1);
         }
 
         public void Dispose()

@@ -13,8 +13,8 @@ namespace DotNetty.Common.Tests.Concurrency
         public void ScheduleRunnableZero()
         {
             TestScheduledEventExecutor executor = new TestScheduledEventExecutor();
-            var future = executor.Schedule(() => { }, TimeSpan.FromMilliseconds(0));
-            //Assert.Equal(0, future.getDelay(TimeUnit.NANOSECONDS));
+            var future = executor.Schedule(() => { }, TimeSpan.Zero);
+            Assert.Equal(0, future.DelayNanos);
             Assert.NotNull(executor.PollScheduledTask());
             Assert.Null(executor.PollScheduledTask());
         }
@@ -24,9 +24,47 @@ namespace DotNetty.Common.Tests.Concurrency
         {
             TestScheduledEventExecutor executor = new TestScheduledEventExecutor();
             var future = executor.Schedule(() => { }, TimeSpan.FromMilliseconds(-1));
-            //assertEquals(0, future.getDelay(TimeUnit.NANOSECONDS));
+            Assert.Equal(0, future.DelayNanos);
             Assert.NotNull(executor.PollScheduledTask());
             Assert.Null(executor.PollScheduledTask());
+        }
+
+        [Fact]
+        public void TestScheduleAtFixedRateRunnableZero()
+        {
+            TestScheduledEventExecutor executor = new TestScheduledEventExecutor();
+            Assert.Throws<ArgumentException>(() => executor.ScheduleAtFixedRate(TestRunnable.Instance, TimeSpan.Zero, TimeSpan.Zero));
+        }
+
+        [Fact]
+        public void TestScheduleAtFixedRateRunnableNegative()
+        {
+            TestScheduledEventExecutor executor = new TestScheduledEventExecutor();
+            Assert.Throws<ArgumentException>(() => executor.ScheduleAtFixedRate(TestRunnable.Instance, TimeSpan.Zero, TimeSpan.FromDays(-1)));
+        }
+
+        [Fact]
+        public void TestScheduleWithFixedDelayZero()
+        {
+            TestScheduledEventExecutor executor = new TestScheduledEventExecutor();
+            Assert.Throws<ArgumentException>(() => executor.ScheduleWithFixedDelay(TestRunnable.Instance, TimeSpan.Zero, TimeSpan.Zero));
+        }
+
+        [Fact]
+        public void TestScheduleWithFixedDelayNegative()
+        {
+            TestScheduledEventExecutor executor = new TestScheduledEventExecutor();
+            Assert.Throws<ArgumentException>(() => executor.ScheduleWithFixedDelay(TestRunnable.Instance, TimeSpan.Zero, TimeSpan.FromDays(-1)));
+        }
+
+        sealed class TestRunnable : IRunnable
+        {
+            public static readonly TestRunnable Instance = new TestRunnable();
+
+            public void Run()
+            {
+                // NOOP
+            }
         }
 
         sealed class TestScheduledEventExecutor : AbstractScheduledEventExecutor
@@ -54,6 +92,11 @@ namespace DotNetty.Common.Tests.Concurrency
             public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
             {
                 throw new NotImplementedException();
+            }
+
+            public override bool WaitTermination(TimeSpan timeout)
+            {
+                return false;
             }
         }
     }

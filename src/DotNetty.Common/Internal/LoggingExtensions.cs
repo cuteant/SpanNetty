@@ -126,6 +126,12 @@ namespace DotNetty.Common
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void UnexpectedExceptionFromAnEventExecutor(this IInternalLogger logger, Exception ex)
+        {
+            logger.Error("Unexpected exception from an event executor: ", ex);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ExecutionLoopFailed(this IInternalLogger logger, XThread thread, Exception ex)
         {
             logger.Error("{}: execution loop failed", thread.Name, ex);
@@ -142,6 +148,15 @@ namespace DotNetty.Common
         {
             logger.Error(
                 $"Buggy {typeof(IEventExecutor).Name} implementation; {typeof(SingleThreadEventExecutor).Name}.ConfirmShutdown() must be called "
+                + "before run() implementation terminates.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void BuggyImplementation(this IInternalLogger logger, SingleThreadEventExecutor eventExecutor)
+        {
+            var type = eventExecutor.GetType();
+            logger.Error(
+                $"Buggy {type.Name} implementation; {type.Name}.ConfirmShutdown() must be called "
                 + "before run() implementation terminates.");
         }
     }

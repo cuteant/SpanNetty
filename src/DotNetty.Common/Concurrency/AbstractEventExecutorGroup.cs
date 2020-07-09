@@ -8,7 +8,8 @@ namespace DotNetty.Common.Concurrency
     using System.Threading;
     using System.Threading.Tasks;
 
-    public abstract class AbstractEventExecutorGroup : IEventExecutorGroup
+    public abstract class AbstractEventExecutorGroup<TEventExecutor> : IEventExecutorGroup
+        where TEventExecutor : class, IEventExecutor
     {
         static readonly TimeSpan DefaultShutdownQuietPeriod = TimeSpan.FromSeconds(2);
         static readonly TimeSpan DefaultShutdownTimeout = TimeSpan.FromSeconds(15);
@@ -21,9 +22,15 @@ namespace DotNetty.Common.Concurrency
 
         public abstract Task TerminationCompletion { get; }
 
-        public IEnumerable<IEventExecutor> Items => GetItems();
+        public abstract bool WaitTermination(TimeSpan timeout);
 
-        public abstract IEventExecutor GetNext();
+        public abstract IEnumerable<IEventExecutor> Items { get; }
+
+        public abstract IReadOnlyList<TEventExecutor> GetItems();
+
+        IEventExecutor IEventExecutorGroup.GetNext() => GetNext();
+
+        public abstract TEventExecutor GetNext();
 
         public void Execute(IRunnable task) => GetNext().Execute(task);
 
@@ -53,22 +60,72 @@ namespace DotNetty.Common.Concurrency
 
         public IScheduledTask Schedule(Action<object, object> action, object context, object state, TimeSpan delay) => GetNext().Schedule(action, context, state, delay);
 
-        public Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleAsync(action, state, delay, cancellationToken);
+        public IScheduledTask ScheduleAtFixedRate(IRunnable action, TimeSpan initialDelay, TimeSpan period) => GetNext().ScheduleAtFixedRate(action, initialDelay, period);
 
-        public Task ScheduleAsync(Action<object> action, object state, TimeSpan delay) => GetNext().ScheduleAsync(action, state, delay);
+        public IScheduledTask ScheduleAtFixedRate(Action action, TimeSpan initialDelay, TimeSpan period) => GetNext().ScheduleAtFixedRate(action, initialDelay, period);
+
+        public IScheduledTask ScheduleAtFixedRate(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period) => GetNext().ScheduleAtFixedRate(action, state, initialDelay, period);
+
+        public IScheduledTask ScheduleAtFixedRate(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period) => GetNext().ScheduleAtFixedRate(action, context, state, initialDelay, period);
+
+        public IScheduledTask ScheduleWithFixedDelay(IRunnable action, TimeSpan initialDelay, TimeSpan delay) => GetNext().ScheduleWithFixedDelay(action, initialDelay, delay);
+
+        public IScheduledTask ScheduleWithFixedDelay(Action action, TimeSpan initialDelay, TimeSpan delay) => GetNext().ScheduleWithFixedDelay(action, initialDelay, delay);
+
+        public IScheduledTask ScheduleWithFixedDelay(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay) => GetNext().ScheduleWithFixedDelay(action, state, initialDelay, delay);
+
+        public IScheduledTask ScheduleWithFixedDelay(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay) => GetNext().ScheduleWithFixedDelay(action, context, state, initialDelay, delay);
+
+        public Task ScheduleAsync(IRunnable action, TimeSpan delay) => GetNext().ScheduleAsync(action, delay);
+
+        public Task ScheduleAsync(IRunnable action, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleAsync(action, delay, cancellationToken);
+
+        public Task ScheduleAsync(Action action, TimeSpan delay) => GetNext().ScheduleAsync(action, delay);
 
         public Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleAsync(action, delay, cancellationToken);
 
-        public Task ScheduleAsync(Action action, TimeSpan delay) => GetNext().ScheduleAsync(action, delay);
+        public Task ScheduleAsync(Action<object> action, object state, TimeSpan delay) => GetNext().ScheduleAsync(action, state, delay);
+
+        public Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleAsync(action, state, delay, cancellationToken);
 
         public Task ScheduleAsync(Action<object, object> action, object context, object state, TimeSpan delay) => GetNext().ScheduleAsync(action, context, state, delay);
 
         public Task ScheduleAsync(Action<object, object> action, object context, object state, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleAsync(action, context, state, delay);
 
+        public Task ScheduleAtFixedRateAsync(IRunnable action, TimeSpan initialDelay, TimeSpan period) => GetNext().ScheduleAtFixedRateAsync(action, initialDelay, period);
+
+        public Task ScheduleAtFixedRateAsync(IRunnable action, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken) => GetNext().ScheduleAtFixedRateAsync(action, initialDelay, period, cancellationToken);
+
+        public Task ScheduleAtFixedRateAsync(Action action, TimeSpan initialDelay, TimeSpan period) => GetNext().ScheduleAtFixedRateAsync(action, initialDelay, period);
+
+        public Task ScheduleAtFixedRateAsync(Action action, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken) => GetNext().ScheduleAtFixedRateAsync(action, initialDelay, period, cancellationToken);
+
+        public Task ScheduleAtFixedRateAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period) => GetNext().ScheduleAtFixedRateAsync(action, state, initialDelay, period);
+
+        public Task ScheduleAtFixedRateAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken) => GetNext().ScheduleAtFixedRateAsync(action, state, initialDelay, period, cancellationToken);
+
+        public Task ScheduleAtFixedRateAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period) => GetNext().ScheduleAtFixedRateAsync(action, context, state, initialDelay, period);
+
+        public Task ScheduleAtFixedRateAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken) => GetNext().ScheduleAtFixedRateAsync(action, context, state, initialDelay, period, cancellationToken);
+
+        public Task ScheduleWithFixedDelayAsync(IRunnable action, TimeSpan initialDelay, TimeSpan delay) => GetNext().ScheduleWithFixedDelayAsync(action, initialDelay, delay);
+
+        public Task ScheduleWithFixedDelayAsync(IRunnable action, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleWithFixedDelayAsync(action, initialDelay, delay, cancellationToken);
+
+        public Task ScheduleWithFixedDelayAsync(Action action, TimeSpan initialDelay, TimeSpan delay) => GetNext().ScheduleWithFixedDelayAsync(action, initialDelay, delay);
+
+        public Task ScheduleWithFixedDelayAsync(Action action, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleWithFixedDelayAsync(action, initialDelay, delay, cancellationToken);
+
+        public Task ScheduleWithFixedDelayAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay) => GetNext().ScheduleWithFixedDelayAsync(action, state, initialDelay, delay);
+
+        public Task ScheduleWithFixedDelayAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleWithFixedDelayAsync(action, state, initialDelay, delay, cancellationToken);
+
+        public Task ScheduleWithFixedDelayAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay) => GetNext().ScheduleWithFixedDelayAsync(action, context, state, initialDelay, delay);
+
+        public Task ScheduleWithFixedDelayAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken) => GetNext().ScheduleWithFixedDelayAsync(action, context, state, initialDelay, delay, cancellationToken);
+
         public Task ShutdownGracefullyAsync() => ShutdownGracefullyAsync(DefaultShutdownQuietPeriod, DefaultShutdownTimeout);
 
         public abstract Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout);
-
-        protected abstract IEnumerable<IEventExecutor> GetItems();
     }
 }

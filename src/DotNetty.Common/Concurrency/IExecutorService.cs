@@ -21,6 +21,8 @@ namespace DotNetty.Common.Concurrency
         /// </remarks>
         bool IsTerminated { get; }
 
+        bool WaitTermination(TimeSpan timeout);
+
         /// <summary>
         ///     Executes the given function and returns <see cref="Task{T}" /> indicating completion status and result of
         ///     execution.

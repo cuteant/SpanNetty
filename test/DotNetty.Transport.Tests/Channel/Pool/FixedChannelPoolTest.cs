@@ -29,12 +29,12 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
         public FixedChannelPoolTest()
         {
-            _group = new MultithreadEventLoopGroup();
+            _group = new DefaultEventLoopGroup();
         }
 
         public void Dispose()
         {
-            _group?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
+            _group?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         }
 
         [Fact]

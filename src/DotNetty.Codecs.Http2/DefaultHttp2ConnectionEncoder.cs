@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Http2
 
         public IHttp2RemoteFlowController FlowController => _connection.Remote.FlowController;
 
-        public Http2Settings PollSentSettings => _outstandingLocalSettingsQueue.RemoveFromFront();
+        public Http2Settings PollSentSettings => _outstandingLocalSettingsQueue.RemoveFirst();
 
         public virtual void RemoteSettings(Http2Settings settings)
         {
@@ -299,7 +299,7 @@ namespace DotNetty.Codecs.Http2
 
         public virtual Task WriteSettingsAsync(IChannelHandlerContext ctx, Http2Settings settings, IPromise promise)
         {
-            _outstandingLocalSettingsQueue.AddToBack(settings);
+            _outstandingLocalSettingsQueue.AddLast​(settings);
             try
             {
                 var pushEnabled = settings.PushEnabled();
@@ -323,7 +323,7 @@ namespace DotNetty.Codecs.Http2
             {
                 return _frameWriter.WriteSettingsAckAsync(ctx, promise);
             }
-            Http2Settings settings = _outstandingRemoteSettingsQueue.RemoveFromFront();
+            Http2Settings settings = _outstandingRemoteSettingsQueue.RemoveFirst();
             if (settings is null)
             {
                 _ = promise.TrySetException(ThrowHelper.GetConnectionError_attempted_to_write_a_SETTINGS_ACK_with_no_pending_SETTINGS());
@@ -451,7 +451,7 @@ namespace DotNetty.Codecs.Http2
             {
                 _outstandingRemoteSettingsQueue = new Deque<Http2Settings>(2);
             }
-            _outstandingRemoteSettingsQueue.AddToBack(settings);
+            _outstandingRemoteSettingsQueue.AddLast​(settings);
         }
 
         /// <summary>

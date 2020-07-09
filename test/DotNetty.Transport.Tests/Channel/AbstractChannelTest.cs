@@ -99,8 +99,8 @@
             IOException ioException = new IOException();
             IChannel channel = new TestChannel0(ioException);
 
-            var loopGroup = new MultithreadEventLoopGroup();
-            IEventLoop loop = (IEventLoop)loopGroup.GetNext();
+            var loopGroup = new DefaultEventLoopGroup(1);
+            IEventLoop loop = loopGroup.GetNext();
             try
             {
                 RegisterChannel(loop, channel);
@@ -109,7 +109,7 @@
                 {
                     await channel.WriteAndFlushAsync("");
                 }
-                catch(Exception exc)
+                catch (Exception exc)
                 {
                     Assert.Same(ioException, exc);
                 }
@@ -121,7 +121,7 @@
             finally
             {
                 channel.CloseAsync().Ignore();
-                await loopGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+                await loopGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
             }
         }
 

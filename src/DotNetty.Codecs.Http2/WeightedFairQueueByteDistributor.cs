@@ -81,7 +81,7 @@ namespace DotNetty.Codecs.Http2
                 _stateOnlyMap = new Dictionary<int, State>(maxStateOnlySize);
                 // +2 because we may exceed the limit by 2 if a new dependency has no associated IHttp2Stream object. We need
                 // to create the State objects to put them into the dependency tree, which then impacts priority.
-                _stateOnlyRemovalQueue = new PriorityQueue<State>(StateOnlyComparator.Instance, maxStateOnlySize + 2);
+                _stateOnlyRemovalQueue = new DefaultPriorityQueue<State>(StateOnlyComparator.Instance, maxStateOnlySize + 2);
             }
 
             _maxStateOnlySize = maxStateOnlySize;
@@ -538,7 +538,7 @@ namespace DotNetty.Codecs.Http2
                 _distributor = distributor;
                 _stream = stream;
                 _streamId = streamId;
-                _pseudoTimeQueue = new PriorityQueue<State>(StatePseudoTimeComparator.Instance, initialSize);
+                _pseudoTimeQueue = new DefaultPriorityQueue<State>(StatePseudoTimeComparator.Instance, initialSize);
             }
 
             internal bool IsDescendantOf(State state)

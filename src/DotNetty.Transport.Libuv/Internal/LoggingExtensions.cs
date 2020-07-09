@@ -116,7 +116,7 @@ namespace DotNetty.Transport.Libuv
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void LoopDisposing(this IInternalLogger logger, IDisposable handle)
         {
-            logger.Info("Disposing {}", handle.GetType());
+            logger.Debug("Disposing {}", handle.GetType());
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

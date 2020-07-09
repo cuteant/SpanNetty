@@ -63,8 +63,8 @@ namespace DotNetty.Common.Tests.Internal
         public void Capacity_Set_WhenSplit_PreservesData()
         {
             var deque = new Deque<int>(new int[] { 1, 2, 3 });
-            deque.RemoveFromFront();
-            deque.AddToBack(4);
+            deque.RemoveFirst();
+            deque.AddLast​(4);
             Assert.Equal(3, deque.Capacity);
             deque.Capacity = 7;
             Assert.Equal(7, deque.Capacity);
@@ -116,7 +116,7 @@ namespace DotNetty.Common.Tests.Internal
         public void Constructor_CapacityOf0_PermitsAdd()
         {
             var deque = new Deque<int>(0);
-            deque.AddToBack(13);
+            deque.AddLast​(13);
             Assert.Equal(new[] { 13 }, deque);
         }
 
@@ -171,82 +171,82 @@ namespace DotNetty.Common.Tests.Internal
         public void IndexOf_ItemPresentAndSplit_ReturnsItemIndex()
         {
             var deque = new Deque<int>(new[] { 1, 2, 3 });
-            Assert.Equal(3, deque.RemoveFromBack());
-            deque.AddToFront(0);
+            Assert.Equal(3, deque.RemoveLast());
+            deque.AddFirst​(0);
             Assert.Equal(0, deque.IndexOf(0));
             Assert.Equal(1, deque.IndexOf(1));
             Assert.Equal(2, deque.IndexOf(2));
 
             deque = new Deque<int>(new[] { 1, 2, 3 });
-            deque.TryRemoveFromBack(out var item);
+            deque.TryRemoveLast(out var item);
             Assert.Equal(3, item);
-            deque.AddToFront(0);
+            deque.AddFirst​(0);
             Assert.Equal(0, deque.IndexOf(0));
             Assert.Equal(1, deque.IndexOf(1));
             Assert.Equal(2, deque.IndexOf(2));
 
             deque = new Deque<int>(new[] { 1, 2, 3 });
-            deque.TryRemoveFromBackIf(_ => true, out var item1);
+            deque.TryRemoveLastIf(_ => true, out var item1);
             Assert.Equal(3, item1);
-            deque.AddToFront(0);
+            deque.AddFirst​(0);
             Assert.Equal(0, deque.IndexOf(0));
             Assert.Equal(1, deque.IndexOf(1));
             Assert.Equal(2, deque.IndexOf(2));
 
             deque = new Deque<int>(new[] { 1, 2, 3 });
-            Assert.Equal(1, deque.RemoveFromFront());
-            deque.AddToBack(4);
+            Assert.Equal(1, deque.RemoveFirst());
+            deque.AddLast​(4);
             Assert.Equal(0, deque.IndexOf(2));
             Assert.Equal(1, deque.IndexOf(3));
             Assert.Equal(2, deque.IndexOf(4));
 
             deque = new Deque<int>(new[] { 1, 2, 3 });
-            deque.TryRemoveFromFront(out var item2);
+            deque.TryRemoveFirst(out var item2);
             Assert.Equal(1, item2);
-            deque.AddToBack(4);
+            deque.AddLast​(4);
             Assert.Equal(0, deque.IndexOf(2));
             Assert.Equal(1, deque.IndexOf(3));
             Assert.Equal(2, deque.IndexOf(4));
 
             deque = new Deque<int>(new[] { 1, 2, 3 });
-            deque.TryRemoveFromFrontIf(_ => true, out var item3);
+            deque.TryRemoveFirstIf(_ => true, out var item3);
             Assert.Equal(1, item3);
-            deque.AddToBack(4);
+            deque.AddLast​(4);
             Assert.Equal(0, deque.IndexOf(2));
             Assert.Equal(1, deque.IndexOf(3));
             Assert.Equal(2, deque.IndexOf(4));
 
             deque = new Deque<int>(new[] { 1, 2, 3 });
-            Assert.Equal(1, deque.PeekFromFront());
-            Assert.Equal(3, deque.PeekFromBack());
-            deque.TryPeekFromFront(out var first);
+            Assert.Equal(1, deque.GetFirst());
+            Assert.Equal(3, deque.GetLast());
+            deque.TryGetFirst(out var first);
             Assert.Equal(1, first);
-            deque.TryPeekFromBack(out var last);
+            deque.TryGetLast(out var last);
             Assert.Equal(3, last);
-            deque.RemoveFromBack();
-            deque.RemoveFromFront();
-            Assert.Equal(2, deque.PeekFromFront());
-            Assert.Equal(2, deque.PeekFromBack());
-            deque.TryPeekFromFront(out first);
+            deque.RemoveLast();
+            deque.RemoveFirst();
+            Assert.Equal(2, deque.GetFirst());
+            Assert.Equal(2, deque.GetLast());
+            deque.TryGetFirst(out first);
             Assert.Equal(2, first);
-            deque.TryPeekFromBack(out last);
+            deque.TryGetLast(out last);
             Assert.Equal(2, last);
 
             deque = new Deque<int>(new[] { 1, 2, 3, 4 });
-            deque.TryRemoveFromFrontUntil(_ => _ == 2, out first);
+            deque.TryRemoveFirstUntil(_ => _ == 2, out first);
             Assert.Equal(2, first);
-            Assert.Equal(1, deque.PeekFromFront());
-            Assert.Equal(4, deque.PeekFromBack());
-            Assert.Equal(3, deque.Count); ;
-            Assert.False(deque.TryRemoveFromFrontUntil(_ => _ == 10, out first));
+            Assert.Equal(1, deque.GetFirst());
+            Assert.Equal(4, deque.GetLast());
+            Assert.Equal(3, deque.Count);
+            Assert.False(deque.TryRemoveFirstUntil(_ => _ == 10, out first));
 
             deque = new Deque<int>(new[] { 1, 2, 3, 4 });
-            deque.TryRemoveFromBackUntil(_ => _ == 3, out last);
+            deque.TryRemoveLastUntil(_ => _ == 3, out last);
             Assert.Equal(3, last);
-            Assert.Equal(1, deque.PeekFromFront());
-            Assert.Equal(4, deque.PeekFromBack());
-            Assert.Equal(3, deque.Count); ;
-            Assert.False(deque.TryRemoveFromBackUntil(_ => _ == 10, out first));
+            Assert.Equal(1, deque.GetFirst());
+            Assert.Equal(4, deque.GetLast());
+            Assert.Equal(3, deque.Count);
+            Assert.False(deque.TryRemoveLastUntil(_ => _ == 10, out first));
         }
 
         [Fact]
@@ -267,8 +267,8 @@ namespace DotNetty.Common.Tests.Internal
         public void Contains_ItemPresentAndSplit_ReturnsTrue()
         {
             var deque = new Deque<int>(new[] { 1, 2, 3 });
-            deque.RemoveFromBack();
-            deque.AddToFront(0);
+            deque.RemoveLast();
+            deque.AddFirst​(0);
             var deq = deque as ICollection<int>;
             Assert.True(deq.Contains(0));
             Assert.True(deq.Contains(1));
@@ -282,7 +282,7 @@ namespace DotNetty.Common.Tests.Internal
             var deque1 = new Deque<int>(new[] { 1, 2 });
             var deque2 = new Deque<int>(new[] { 1, 2 });
             ((ICollection<int>)deque1).Add(3);
-            deque2.AddToBack(3);
+            deque2.AddLast​(3);
             Assert.Equal(deque1, deque2);
         }
 
@@ -371,7 +371,7 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Throws<InvalidOperationException>(() => stack.Pop());
 
             var deque = new Deque<int>();
-            Assert.Throws<InvalidOperationException>(() => deque.RemoveFromFront());
+            Assert.Throws<InvalidOperationException>(() => deque.RemoveFirst());
         }
 
         [Fact]
@@ -381,7 +381,7 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Throws<InvalidOperationException>(() => queue.Dequeue());
 
             var deque = new Deque<int>();
-            Assert.Throws<InvalidOperationException>(() => deque.RemoveFromBack());
+            Assert.Throws<InvalidOperationException>(() => deque.RemoveLast());
         }
 
         [Fact]
@@ -416,7 +416,7 @@ namespace DotNetty.Common.Tests.Internal
             var deque1 = new Deque<int>(new[] { 1, 2 });
             var deque2 = new Deque<int>(new[] { 1, 2 });
             deque1.Insert(0, 0);
-            deque2.AddToFront(0);
+            deque2.AddFirst​(0);
             Assert.Equal(deque1, deque2);
         }
 
@@ -426,7 +426,7 @@ namespace DotNetty.Common.Tests.Internal
             var deque1 = new Deque<int>(new[] { 1, 2 });
             var deque2 = new Deque<int>(new[] { 1, 2 });
             deque1.Insert(deque1.Count, 0);
-            deque2.AddToBack(0);
+            deque2.AddLast​(0);
             Assert.Equal(deque1, deque2);
         }
 
@@ -454,8 +454,8 @@ namespace DotNetty.Common.Tests.Internal
         public void RemoveAt_RemovesElementAtIndex()
         {
             var deque = new Deque<int>(new[] { 1, 2, 3 });
-            deque.RemoveFromBack();
-            deque.AddToFront(0);
+            deque.RemoveLast();
+            deque.AddFirst​(0);
             deque.RemoveAt(1);
             Assert.Equal(new[] { 0, 2 }, deque);
         }
@@ -466,7 +466,7 @@ namespace DotNetty.Common.Tests.Internal
             var deque1 = new Deque<int>(new[] { 1, 2 });
             var deque2 = new Deque<int>(new[] { 1, 2 });
             deque1.RemoveAt(0);
-            deque2.RemoveFromFront();
+            deque2.RemoveFirst();
             Assert.Equal(deque1, deque2);
         }
 
@@ -476,7 +476,7 @@ namespace DotNetty.Common.Tests.Internal
             var deque1 = new Deque<int>(new[] { 1, 2 });
             var deque2 = new Deque<int>(new[] { 1, 2 });
             deque1.RemoveAt(1);
-            deque2.RemoveFromBack();
+            deque2.RemoveLast();
             Assert.Equal(deque1, deque2);
         }
 
@@ -538,8 +538,8 @@ namespace DotNetty.Common.Tests.Internal
                     for (int i = 0; i != rotated; ++i)
                     {
                         var item = deque[0];
-                        deque.RemoveFromFront();
-                        deque.AddToBack(item);
+                        deque.RemoveFirst();
+                        deque.AddLast​(item);
                     }
 
                     // Do the insert.
@@ -577,15 +577,15 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(new[] { 1, 2, 3, 8 }, deque);
 
             deque = new Deque<int>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 });
-            Assert.Equal(9, deque.RemoveFromBack());
-            deque.AddToFront(0);
+            Assert.Equal(9, deque.RemoveLast());
+            deque.AddFirst​(0);
             Assert.Equal(5, deque.RemoveAll(_ => _ >= 4 && _ <= 7 || _ == 1));
             Assert.Equal(4, deque.Count);
             Assert.Equal(new[] { 0, 2, 3, 8 }, deque);
 
             deque = new Deque<int>(new[] { 1, 2, 3, 4, 5, 6, 7, 8 });
-            deque.RemoveFromFront();
-            deque.AddToBack(9);
+            deque.RemoveFirst();
+            deque.AddLast​(9);
             Assert.Equal(8, deque.Capacity);
             Assert.True(deque.IsSplit);
             Assert.Equal(4, deque.RemoveAll(_ => _ >= 4 && _ <= 7));
@@ -595,22 +595,22 @@ namespace DotNetty.Common.Tests.Internal
 
             var list = new List<int>();
             deque = new Deque<int>(new[] { 1, 2, 3, 4, 5, 6, 7, 8 });
-            var result = deque.TryRemoveFromFront(list, 4);
+            var result = deque.TryRemoveFirst(list, 4);
             Assert.True(result);
             Assert.Equal(new[] { 1, 2, 3, 4 }, list);
             Assert.Equal(new[] { 5, 6, 7, 8 }, deque);
             list.Clear();
 
-            result = deque.TryRemoveFromBack(list, 3);
+            result = deque.TryRemoveLast(list, 3);
             Assert.True(result);
             Assert.Equal(new[] { 8, 7, 6 }, list);
             Assert.Single(deque);
-            result = deque.TryRemoveFromBack(list, 4);
+            result = deque.TryRemoveLast(list, 4);
             Assert.True(result);
             Assert.Equal(new[] { 8, 7, 6, 5 }, list);
             Assert.Empty(deque);
-            Assert.False(deque.TryRemoveFromFront(list, 10));
-            Assert.False(deque.TryRemoveFromBack(list, 10));
+            Assert.False(deque.TryRemoveFirst(list, 10));
+            Assert.False(deque.TryRemoveLast(list, 10));
         }
 
         [Fact]
@@ -622,8 +622,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(new[] { 1, 2, 3, 8, 10, 12, 14, 8 }, deque);
 
             deque = new Deque<int>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 });
-            Assert.Equal(9, deque.RemoveFromBack());
-            deque.AddToFront(0);
+            Assert.Equal(9, deque.RemoveLast());
+            deque.AddFirst​(0);
             Assert.Equal(4, deque.UpdateAll(_ => _ % 2 == 1, _ => _ * 5));
             Assert.Equal(9, deque.Count);
             Assert.Equal(new[] { 0, 5, 2, 15, 4, 25, 6, 35, 8 }, deque);
@@ -638,8 +638,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(new[] { "1", "2", "3", "4" }, deque_str);
 
             deque = new Deque<int>(new[] { 1, 2, 3, 4 });
-            Assert.Equal(4, deque.RemoveFromBack());
-            deque.AddToFront(0);
+            Assert.Equal(4, deque.RemoveLast());
+            deque.AddFirst​(0);
             Assert.True(deque.IsSplit);
             deque_str = deque.ConvertAll(_ => _ + "");
             Assert.Equal(4, deque_str.Count);
@@ -682,8 +682,8 @@ namespace DotNetty.Common.Tests.Internal
                         for (int i = 0; i != rotated; ++i)
                         {
                             var item = deque[0];
-                            deque.RemoveFromFront();
-                            deque.AddToBack(item);
+                            deque.RemoveFirst();
+                            deque.AddLast​(item);
                         }
 
                         // Do the remove.
@@ -727,8 +727,8 @@ namespace DotNetty.Common.Tests.Internal
         public void GetItem_Split_ReadsElements()
         {
             var deque = new Deque<int>(new[] { 1, 2, 3 });
-            deque.RemoveFromBack();
-            deque.AddToFront(0);
+            deque.RemoveLast();
+            deque.AddFirst​(0);
             Assert.Equal(0, deque[0]);
             Assert.Equal(1, deque[1]);
             Assert.Equal(2, deque[2]);
@@ -768,12 +768,12 @@ namespace DotNetty.Common.Tests.Internal
         public void SetItem_Split_WritesElements()
         {
             var deque = new Deque<int>(new[] { 1, 2, 3 });
-            deque.RemoveFromBack();
-            deque.RemoveFromFront();
-            deque.RemoveFromFront();
-            deque.AddToFront(0);
-            deque.AddToBack(1);
-            deque.AddToBack(2);
+            deque.RemoveLast();
+            deque.RemoveFirst();
+            deque.RemoveFirst();
+            deque.AddFirst​(0);
+            deque.AddLast​(1);
+            deque.AddLast​(2);
             deque[0] = 7;
             deque[1] = 11;
             deque[2] = 13;
@@ -820,8 +820,8 @@ namespace DotNetty.Common.Tests.Internal
         public void NongenericIndexOf_ItemPresentAndSplit_ReturnsItemIndex()
         {
             var deque_ = new Deque<int>(new[] { 1, 2, 3 });
-            deque_.RemoveFromBack();
-            deque_.AddToFront(0);
+            deque_.RemoveLast();
+            deque_.AddFirst​(0);
             var deque = deque_ as IList;
             Assert.Equal(0, deque.IndexOf(0));
             Assert.Equal(1, deque.IndexOf(1));
@@ -866,8 +866,8 @@ namespace DotNetty.Common.Tests.Internal
         public void NongenericContains_ItemPresentAndSplit_ReturnsTrue()
         {
             var deque_ = new Deque<int>(new[] { 1, 2, 3 });
-            deque_.RemoveFromBack();
-            deque_.AddToFront(0);
+            deque_.RemoveLast();
+            deque_.AddFirst​(0);
             var deque = deque_ as IList;
             Assert.True(deque.Contains(0));
             Assert.True(deque.Contains(1));
@@ -1118,16 +1118,16 @@ namespace DotNetty.Common.Tests.Internal
         public void ToArray_CopiesToNewArray()
         {
             var deque = new Deque<int>(new[] { 0, 1 });
-            deque.AddToBack(13);
+            deque.AddLast​(13);
             var result = deque.ToArray();
             Assert.Equal(new[] { 0, 1, 13 }, result);
             result = deque.ToList().ToArray();
             Assert.Equal(new[] { 0, 1, 13 }, result);
 
             deque = new Deque<int>();
-            deque.AddToFront(1);
-            deque.AddToFront(2);
-            deque.AddToFront(3);
+            deque.AddFirst​(1);
+            deque.AddFirst​(2);
+            deque.AddFirst​(3);
             result = deque.ToArray();
             Assert.Equal(new[] { 3, 2, 1 }, result);
             result = deque.ToList().ToArray();
@@ -1161,7 +1161,7 @@ namespace DotNetty.Common.Tests.Internal
         public void DequeVsList()
         {
             var deque = new Deque<int>(new[] { 1, 2, 3, 4 });
-            deque.AddToBack(5);
+            deque.AddLast​(5);
             Assert.Equal(new[] { 1, 2, 3, 4, 5 }, deque);
 
             var queue = new Queue<int>(new[] { 1, 2, 3, 4 });
@@ -1197,27 +1197,27 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(new[] { 1, 2 }, list.ToArray());
 
             deque = new Deque<int>();
-            deque.AddToBack(1);
-            deque.AddToBack(2);
+            deque.AddLast​(1);
+            deque.AddLast​(2);
             Assert.Equal(new[] { 1, 2 }, deque);
             Assert.Equal(new[] { 1, 2 }, deque.ToArray());
             Assert.Equal(list, deque);
 
             deque = new Deque<int>(true);
-            deque.AddToBack(1);
-            deque.AddToBack(2);
+            deque.AddLast​(1);
+            deque.AddLast​(2);
             Assert.Equal(new[] { 2, 1 }, deque);
             Assert.Equal(new[] { 1, 2 }, deque.ToArray());
 
             deque = new Deque<int>();
-            deque.AddToFront(1);
-            deque.AddToFront(2);
+            deque.AddFirst​(1);
+            deque.AddFirst​(2);
             Assert.Equal(new[] { 2, 1 }, deque);
             Assert.Equal(new[] { 2, 1 }, deque.ToArray());
 
             deque = new Deque<int>(true);
-            deque.AddToFront(1);
-            deque.AddToFront(2);
+            deque.AddFirst​(1);
+            deque.AddFirst​(2);
             Assert.Equal(new[] { 1, 2 }, deque);
             Assert.Equal(new[] { 2, 1 }, deque.ToArray());
             Assert.Equal(list, deque);
@@ -1239,8 +1239,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(new[] { 1, 2 }, queue.ToArray());
 
             var deque = new Deque<int>();
-            deque.AddToBack(1);
-            deque.AddToBack(2);
+            deque.AddLast​(1);
+            deque.AddLast​(2);
             Assert.Equal(new[] { 1, 2 }, deque);
             Assert.Equal(new[] { 1, 2 }, deque.ToArray());
             Assert.Equal(queue, deque);
@@ -1249,8 +1249,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(queue, list);
 
             deque = new Deque<int>(true);
-            deque.AddToBack(1);
-            deque.AddToBack(2);
+            deque.AddLast​(1);
+            deque.AddLast​(2);
             Assert.Equal(new[] { 2, 1 }, deque);
             Assert.Equal(new[] { 1, 2 }, deque.ToArray());
             list.Clear();
@@ -1258,8 +1258,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(queue, list);
 
             deque = new Deque<int>();
-            deque.AddToFront(1);
-            deque.AddToFront(2);
+            deque.AddFirst​(1);
+            deque.AddFirst​(2);
             Assert.Equal(new[] { 2, 1 }, deque);
             Assert.Equal(new[] { 2, 1 }, deque.ToArray());
             list.Clear();
@@ -1267,8 +1267,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(queue, list);
 
             deque = new Deque<int>(true);
-            deque.AddToFront(1);
-            deque.AddToFront(2);
+            deque.AddFirst​(1);
+            deque.AddFirst​(2);
             Assert.Equal(new[] { 1, 2 }, deque);
             Assert.Equal(new[] { 2, 1 }, deque.ToArray());
             list.Clear();
@@ -1292,8 +1292,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(new[] { 2, 1 }, stack.ToArray());
 
             var deque = new Deque<int>();
-            deque.AddToBack(1);
-            deque.AddToBack(2);
+            deque.AddLast​(1);
+            deque.AddLast​(2);
             Assert.Equal(new[] { 1, 2 }, deque);
             Assert.Equal(new[] { 1, 2 }, deque.ToArray());
             list.Clear();
@@ -1301,8 +1301,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(stack, list);
 
             deque = new Deque<int>(true);
-            deque.AddToBack(1);
-            deque.AddToBack(2);
+            deque.AddLast​(1);
+            deque.AddLast​(2);
             Assert.Equal(new[] { 2, 1 }, deque);
             Assert.Equal(new[] { 1, 2 }, deque.ToArray());
             list.Clear();
@@ -1310,8 +1310,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(stack, list);
 
             deque = new Deque<int>();
-            deque.AddToFront(1);
-            deque.AddToFront(2);
+            deque.AddFirst​(1);
+            deque.AddFirst​(2);
             Assert.Equal(new[] { 2, 1 }, deque);
             Assert.Equal(new[] { 2, 1 }, deque.ToArray());
             list.Clear();
@@ -1319,8 +1319,8 @@ namespace DotNetty.Common.Tests.Internal
             Assert.Equal(stack, list);
 
             deque = new Deque<int>(true);
-            deque.AddToFront(1);
-            deque.AddToFront(2);
+            deque.AddFirst​(1);
+            deque.AddFirst​(2);
             Assert.Equal(new[] { 1, 2 }, deque);
             Assert.Equal(new[] { 2, 1 }, deque.ToArray());
             list.Clear();

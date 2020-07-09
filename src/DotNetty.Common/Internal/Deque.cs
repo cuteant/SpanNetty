@@ -333,7 +333,7 @@ namespace DotNetty.Common.Internal
             if (value is null && default(T) != null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value, ExceptionResource.Value_Cannot_Be_Null);
             if (!IsT(value)) ThrowHelper.ThrowArgumentException(ExceptionResource.Value_Is_Of_Incorrect_Type, ExceptionArgument.value);
 
-            AddToBack((T)value);
+            AddLast​((T)value);
             return _count - 1;
         }
 
@@ -974,11 +974,11 @@ namespace DotNetty.Common.Internal
 
         #endregion
 
-        #region -- AddToBack --
+        #region -- AddLast​ --
 
         /// <summary>Inserts a single element at the back of this deque.</summary>
         /// <param name="value">The element to insert.</param>
-        public void AddToBack(T value)
+        public void AddLast​(T value)
         {
             EnsureCapacityForOneElement();
             DoAddToBack(value);
@@ -986,11 +986,11 @@ namespace DotNetty.Common.Internal
 
         #endregion
 
-        #region -- AddToFront --
+        #region -- AddFirst​ --
 
         /// <summary>Inserts a single element at the front of this deque.</summary>
         /// <param name="value">The element to insert.</param>
-        public void AddToFront(T value)
+        public void AddFirst​(T value)
         {
             EnsureCapacityForOneElement();
             DoAddToFront(value);
@@ -1189,7 +1189,7 @@ namespace DotNetty.Common.Internal
             while ((uint)idx < uCount)
             {
                 var item = DoGetItem(idx);
-                if (match(item)) { list.AddToBack(item); }
+                if (match(item)) { list.AddLast​(item); }
                 idx++;
             }
             return list;
@@ -1472,7 +1472,7 @@ namespace DotNetty.Common.Internal
 
         #endregion
 
-        #region -- PeekFromBack / Last --
+        #region -- GetLast / Last --
 
         public T Last
         {
@@ -1494,14 +1494,14 @@ namespace DotNetty.Common.Internal
             }
         }
 
-        public T PeekFromBack()
+        public T GetLast()
         {
             if (IsEmpty) { ThrowInvalidOperationException(); }
 
             return DoGetItem(_count - 1);
         }
 
-        public bool TryPeekFromBack(out T result)
+        public bool TryGetLast(out T result)
         {
             if (IsEmpty) { result = default; return false; }
 
@@ -1511,12 +1511,12 @@ namespace DotNetty.Common.Internal
 
         #endregion
 
-        #region -- RemoveFromBack --
+        #region -- RemoveLast --
 
         /// <summary>Removes and returns the last element of this deque.</summary>
         /// <returns>The former last element.</returns>
         /// <exception cref="InvalidOperationException">The deque is empty.</exception>
-        public T RemoveFromBack()
+        public T RemoveLast()
         {
             if (IsEmpty) { ThrowInvalidOperationException(); }
 
@@ -1526,7 +1526,7 @@ namespace DotNetty.Common.Internal
         /// <summary>Removes and returns the last element of this deque.</summary>
         /// <param name="result">The former last element.</param>
         /// <returns>true if an item could be dequeued; otherwise, false.</returns>
-        public bool TryRemoveFromBack(out T result)
+        public bool TryRemoveLast(out T result)
         {
             if (IsEmpty) { result = default; return false; }
 
@@ -1534,7 +1534,7 @@ namespace DotNetty.Common.Internal
             return true;
         }
 
-        public bool TryRemoveFromBack(List<T> results, int count)
+        public bool TryRemoveLast(List<T> results, int count)
         {
             if (results is null) { ThrowArgumentNullException_Results(); }
             if ((uint)count > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Count(count); }
@@ -1574,7 +1574,7 @@ namespace DotNetty.Common.Internal
         /// <param name="match">The predicate that must return true for the item to be dequeued.  If null, all items implicitly return true.</param>
         /// <param name="result">The former last element.</param>
         /// <returns>true if an item could be dequeued; otherwise, false.</returns>
-        public bool TryRemoveFromBackIf(Predicate<T> match, out T result)
+        public bool TryRemoveLastIf(Predicate<T> match, out T result)
         {
             if (match is null) { ThrowArgumentNullException_Match(); }
 
@@ -1627,7 +1627,7 @@ namespace DotNetty.Common.Internal
             return false;
         }
 
-        public bool TryRemoveFromBackUntil(Predicate<T> match, out T result)
+        public bool TryRemoveLastUntil(Predicate<T> match, out T result)
         {
             if (match is null) { ThrowArgumentNullException_Match(); }
 
@@ -1655,7 +1655,7 @@ namespace DotNetty.Common.Internal
 
         #endregion
 
-        #region -- PeekFromFront / First --
+        #region -- GetFirst / First --
 
         public T First
         {
@@ -1675,13 +1675,13 @@ namespace DotNetty.Common.Internal
             }
         }
 
-        public T PeekFromFront()
+        public T GetFirst()
         {
             if (IsEmpty) { ThrowInvalidOperationException(); }
             return _buffer[_offset];
         }
 
-        public bool TryPeekFromFront(out T result)
+        public bool TryGetFirst(out T result)
         {
             if (IsEmpty) { result = default; return false; }
 
@@ -1691,12 +1691,12 @@ namespace DotNetty.Common.Internal
 
         #endregion
 
-        #region -- RemoveFromFront --
+        #region -- RemoveFirst --
 
         /// <summary>Removes and returns the first element of this deque.</summary>
         /// <returns>The former first element.</returns>
         /// <exception cref="InvalidOperationException">The deque is empty.</exception>
-        public T RemoveFromFront()
+        public T RemoveFirst()
         {
             if (IsEmpty) { ThrowInvalidOperationException(); }
 
@@ -1706,7 +1706,7 @@ namespace DotNetty.Common.Internal
         /// <summary>Removes and returns the first element of this deque.</summary>
         /// <param name="result">The former first element.</param>
         /// <returns>true if an item could be dequeued; otherwise, false.</returns>
-        public bool TryRemoveFromFront(out T result)
+        public bool TryRemoveFirst(out T result)
         {
             if (IsEmpty) { result = default; return false; }
 
@@ -1714,7 +1714,7 @@ namespace DotNetty.Common.Internal
             return true;
         }
 
-        public bool TryRemoveFromFront(List<T> results, int count)
+        public bool TryRemoveFirst(List<T> results, int count)
         {
             if (results is null) { ThrowArgumentNullException_Results(); }
             if ((uint)count > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Count(count); }
@@ -1753,7 +1753,7 @@ namespace DotNetty.Common.Internal
         /// <param name="match">The predicate that must return true for the item to be dequeued.  If null, all items implicitly return true.</param>
         /// <param name="result">The former first element.</param>
         /// <returns>true if an item could be dequeued; otherwise, false.</returns>
-        public bool TryRemoveFromFrontIf(Predicate<T> match, out T result)
+        public bool TryRemoveFirstIf(Predicate<T> match, out T result)
         {
             if (match is null) { ThrowArgumentNullException_Match(); }
 
@@ -1784,7 +1784,7 @@ namespace DotNetty.Common.Internal
             }
         }
 
-        public bool TryRemoveFromFrontUntil(Predicate<T> match, out T result)
+        public bool TryRemoveFirstUntil(Predicate<T> match, out T result)
         {
             if (match is null) { ThrowArgumentNullException_Match(); }
 

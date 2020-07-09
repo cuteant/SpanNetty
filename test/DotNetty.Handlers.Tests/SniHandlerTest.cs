@@ -32,11 +32,11 @@ namespace DotNetty.Handlers.Tests
             X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
             X509Certificate2 tlsCertificate2 = TestResourceHelper.GetTestCertificate2();
 
-//#if NETCOREAPP_3_0_GREATER
-//            SslProtocols serverProtocol = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12;
-//#else
+            //#if NETCOREAPP_3_0_GREATER
+            //            SslProtocols serverProtocol = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12;
+            //#else
             SslProtocols serverProtocol = SslProtocols.Tls12;
-//#endif
+            //#endif
             SettingMap[tlsCertificate.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate, false, false, serverProtocol);
             SettingMap[tlsCertificate2.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate2, false, false, serverProtocol);
         }
@@ -53,11 +53,11 @@ namespace DotNetty.Handlers.Tests
                 new[] { 1 }
             };
             var boolToggle = new[] { false, true };
-//#if NETCOREAPP_3_0_GREATER
-//            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
-//#else
+            //#if NETCOREAPP_3_0_GREATER
+            //            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
+            //#else
             var protocols = new[] { SslProtocols.Tls12 };
-//#endif
+            //#endif
             var writeStrategyFactories = new Func<IWriteStrategy>[]
             {
         () => new AsIsWriteStrategy()
@@ -82,7 +82,7 @@ namespace DotNetty.Handlers.Tests
             this.Output.WriteLine($"protocol: {protocol}");
             this.Output.WriteLine($"targetHost: {targetHost}");
 
-            var executor = new SingleThreadEventExecutor("test executor", TimeSpan.FromMilliseconds(10));
+            var executor = new DefaultEventExecutor();
 
             try
             {
@@ -131,11 +131,11 @@ namespace DotNetty.Handlers.Tests
                 new[] { 1 }
             };
             var boolToggle = new[] { false, true };
-//#if NETCOREAPP_3_0_GREATER
-//            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
-//#else
+            //#if NETCOREAPP_3_0_GREATER
+            //            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
+            //#else
             var protocols = new[] { SslProtocols.Tls12 };
-//#endif
+            //#endif
 
             return
                 from frameLengths in lengthVariations
@@ -154,7 +154,7 @@ namespace DotNetty.Handlers.Tests
             this.Output.WriteLine($"targetHost: {targetHost}");
 
             var writeStrategy = new AsIsWriteStrategy();
-            var executor = new SingleThreadEventExecutor("test executor", TimeSpan.FromMilliseconds(10));
+            var executor = new DefaultEventExecutor();
 
             try
             {

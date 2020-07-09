@@ -134,7 +134,7 @@
                 var inboundBuffer = ch._inboundBuffer;
                 if (inboundBuffer is object)
                 {
-                    while (inboundBuffer.TryRemoveFromFront(out var msg))
+                    while (inboundBuffer.TryRemoveFirst(out var msg))
                     {
                         _ = ReferenceCountUtil.Release(msg);
                     }
@@ -239,7 +239,7 @@
                 while (ch._readStatus != ReadStatus.Idle)
                 {
                     var inboundBuffer = ch._inboundBuffer;
-                    if (inboundBuffer is null || (!inboundBuffer.TryRemoveFromFront(out var message)))
+                    if (inboundBuffer is null || (!inboundBuffer.TryRemoveFirst(out var message)))
                     {
                         if (ReadEOS)
                         {
@@ -258,7 +258,7 @@
                     {
                         DoRead0((IHttp2Frame)message, allocHandle);
                     } while ((ReadEOS || (continueReading = allocHandle.ContinueReading())) &&
-                             inboundBuffer.TryRemoveFromFront(out message));
+                             inboundBuffer.TryRemoveFirst(out message));
 
                     if (continueReading && ch.IsParentReadInProgress && !ReadEOS)
                     {

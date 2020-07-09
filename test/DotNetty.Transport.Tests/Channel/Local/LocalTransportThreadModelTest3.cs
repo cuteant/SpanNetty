@@ -2,17 +2,12 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
-    using DotNetty.Transport.Channels.Embedded;
     using DotNetty.Transport.Channels.Local;
-    using Xunit;
 
     public class LocalTransportThreadModelTest3 : IDisposable
     {
@@ -45,7 +40,7 @@
         public LocalTransportThreadModelTest3()
         {
             // Configure a test server
-            _group = new MultithreadEventLoopGroup(1);
+            _group = new DefaultEventLoopGroup();
             ServerBootstrap sb = new ServerBootstrap();
             sb.Group(_group)
                 .Channel<LocalServerChannel>()
@@ -58,7 +53,7 @@
 
         public void Dispose()
         {
-            _group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+            _group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         public void TestConcurrentAddRemove(bool inbound)
@@ -85,7 +80,7 @@
             Deque<EventType> expectedEvents = new Deque<EventType>();
             for (int i = 0; i < size; i++)
             {
-                expectedEvents.AddToBack(events[random.Next(events.Length)]);
+                expectedEvents.AddLast​(events[random.Next(events.Length)]);
             }
             return expectedEvents;
         }

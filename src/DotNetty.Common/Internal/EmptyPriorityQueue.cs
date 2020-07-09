@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace DotNetty.Common.Utilities
+namespace DotNetty.Common.Internal
 {
     using System.Collections;
     using System.Collections.Generic;
@@ -55,6 +55,10 @@ namespace DotNetty.Common.Utilities
         public bool Contains(T item) => false;
 
         public void PriorityChanged(T item)
+        {
+        }
+
+        public void ClearIgnoringIndexes()
         {
         }
     }

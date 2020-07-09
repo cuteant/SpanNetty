@@ -9,8 +9,14 @@ namespace DotNetty.Common.Concurrency
     {
         readonly Action _action;
 
-        public ActionScheduledTask(AbstractScheduledEventExecutor executor, Action action, in PreciseTimeSpan deadline)
-            : base(executor, deadline, executor.NewPromise())
+        public ActionScheduledTask(AbstractScheduledEventExecutor executor, Action action, long deadlineNanos)
+            : base(executor, deadlineNanos, executor.NewPromise())
+        {
+            _action = action;
+        }
+
+        public ActionScheduledTask(AbstractScheduledEventExecutor executor, Action action, long deadlineNanos, long periodNanos)
+            : base(executor, deadlineNanos, periodNanos, executor.NewPromise())
         {
             _action = action;
         }

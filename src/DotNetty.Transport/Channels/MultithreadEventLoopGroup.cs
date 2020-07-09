@@ -4,114 +4,132 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
 
     /// <summary>
-    /// <see cref="IEventLoopGroup"/> backed by a set of <see cref="SingleThreadEventLoop"/> instances.
+    /// TBD
     /// </summary>
-    public sealed class MultithreadEventLoopGroup : AbstractEventExecutorGroup, IEventLoopGroup
+    public class MultithreadEventLoopGroup : MultithreadEventLoopGroup<MultithreadEventLoopGroup, SingleThreadEventLoop>
     {
-        private static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount * 2;
-        private static readonly Func<IEventLoopGroup, IEventLoop> DefaultEventLoopFactory = group => new SingleThreadEventLoop(group);
+        private static readonly Func<MultithreadEventLoopGroup, SingleThreadEventLoop> DefaultEventLoopFactory;
 
-        private readonly IEventLoop[] _eventLoops;
-        private int _requestId;
-
-        public override bool IsShutdown => _eventLoops.All(eventLoop => eventLoop.IsShutdown);
-
-        public override bool IsTerminated => _eventLoops.All(eventLoop => eventLoop.IsTerminated);
-
-        public override bool IsShuttingDown => _eventLoops.All(eventLoop => eventLoop.IsShuttingDown);
-
-        /// <inheritdoc />
-        public override Task TerminationCompletion { get; }
-
-        /// <inheritdoc />
-        protected override IEnumerable<IEventExecutor> GetItems() => _eventLoops;
-
-        /// <inheritdoc />
-        public new IEnumerable<IEventLoop> Items => _eventLoops;
+        static MultithreadEventLoopGroup()
+        {
+            DefaultEventLoopFactory = group => new SingleThreadEventLoop(group);
+        }
 
         /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
         public MultithreadEventLoopGroup()
-            : this(DefaultEventLoopFactory, DefaultEventLoopThreadCount)
+            : base(0, DefaultEventLoopFactory)
         {
         }
 
         /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
-        public MultithreadEventLoopGroup(int eventLoopCount)
-            : this(DefaultEventLoopFactory, eventLoopCount)
+        public MultithreadEventLoopGroup(int nThreads)
+            : base(nThreads, DefaultEventLoopFactory)
         {
         }
 
         /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
-        public MultithreadEventLoopGroup(Func<IEventLoopGroup, IEventLoop> eventLoopFactory)
-            : this(eventLoopFactory, DefaultEventLoopThreadCount)
+        public MultithreadEventLoopGroup(TimeSpan breakoutInterval)
+            : this(0, breakoutInterval)
         {
         }
 
         /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
-        public MultithreadEventLoopGroup(Func<IEventLoopGroup, IEventLoop> eventLoopFactory, int eventLoopCount)
+        public MultithreadEventLoopGroup(IRejectedExecutionHandler rejectedHandler)
+            : this(0, rejectedHandler)
         {
-            if (eventLoopFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoopFactory); }
-            if (eventLoopCount <= 0) { ThrowHelper.ThrowArgumentException_Positive(eventLoopCount, ExceptionArgument.eventLoopCount); }
-
-            _eventLoops = new IEventLoop[eventLoopCount];
-            var terminationTasks = new Task[eventLoopCount];
-            for (int i = 0; i < eventLoopCount; i++)
-            {
-                IEventLoop eventLoop = null;
-                bool success = false;
-                try
-                {
-                    eventLoop = eventLoopFactory(this);
-                    success = true;
-                }
-                catch (Exception ex)
-                {
-                    ThrowHelper.ThrowInvalidOperationException(ex);
-                }
-                finally
-                {
-                    if (!success)
-                    {
-                        Task.WhenAll(_eventLoops
-                                .Take(i)
-                                .Select(loop => loop.ShutdownGracefullyAsync()))
-                            .Wait();
-                    }
-                }
-
-                _eventLoops[i] = eventLoop;
-                terminationTasks[i] = eventLoop.TerminationCompletion;
-            }
-            TerminationCompletion = Task.WhenAll(terminationTasks);
         }
 
-        /// <inheritdoc />
-        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)GetNext();
 
-        /// <inheritdoc />
-        public override IEventExecutor GetNext()
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IRejectedExecutionHandler rejectedHandler)
+            : base(nThreads, group => new SingleThreadEventLoop(group, rejectedHandler))
         {
-            int id = Interlocked.Increment(ref _requestId);
-            return _eventLoops[Math.Abs(id % _eventLoops.Length)];
         }
 
-        public Task RegisterAsync(IChannel channel) => ((IEventLoop)GetNext()).RegisterAsync(channel);
-
-        /// <inheritdoc cref="IEventExecutorGroup.ShutdownGracefullyAsync(TimeSpan, TimeSpan)" />
-        public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, TimeSpan breakoutInterval)
+            : base(nThreads, group => new SingleThreadEventLoop(group, breakoutInterval))
         {
-            for (int i = 0; i < _eventLoops.Length; i++)
-            {
-                _ = _eventLoops[i].ShutdownGracefullyAsync(quietPeriod, timeout);
-            }
-            return TerminationCompletion;
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : base(nThreads, group => new SingleThreadEventLoop(group, rejectedHandler, breakoutInterval))
+        {
+        }
+
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(IThreadFactory threadFactory)
+            : this(0, threadFactory)
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IThreadFactory threadFactory)
+            : base(nThreads, group => new SingleThreadEventLoop(group, threadFactory))
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IThreadFactory threadFactory, TimeSpan breakoutInterval)
+            : base(nThreads, group => new SingleThreadEventLoop(group, threadFactory, breakoutInterval))
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler)
+            : base(nThreads, group => new SingleThreadEventLoop(group, threadFactory, rejectedHandler))
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : base(nThreads, group => new SingleThreadEventLoop(group, threadFactory, rejectedHandler, breakoutInterval))
+        {
+        }
+
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(IEventExecutorChooserFactory<SingleThreadEventLoop> chooserFactory)
+            : base(0, chooserFactory, DefaultEventLoopFactory)
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IEventExecutorChooserFactory<SingleThreadEventLoop> chooserFactory)
+            : base(nThreads, chooserFactory, DefaultEventLoopFactory)
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IEventExecutorChooserFactory<SingleThreadEventLoop> chooserFactory, TimeSpan breakoutInterval)
+            : base(nThreads, chooserFactory, group => new SingleThreadEventLoop(group, breakoutInterval))
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IEventExecutorChooserFactory<SingleThreadEventLoop> chooserFactory, IRejectedExecutionHandler rejectedHandler)
+            : base(nThreads, chooserFactory, group => new SingleThreadEventLoop(group, rejectedHandler))
+        {
+        }
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IEventExecutorChooserFactory<SingleThreadEventLoop> chooserFactory,
+            IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : base(nThreads, chooserFactory, group => new SingleThreadEventLoop(group, rejectedHandler, breakoutInterval))
+        {
+        }
+
+
+        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
+        public MultithreadEventLoopGroup(int nThreads, IThreadFactory threadFactory, IEventExecutorChooserFactory<SingleThreadEventLoop> chooserFactory,
+            IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
+            : base(nThreads, chooserFactory, group => new SingleThreadEventLoop(group, threadFactory, rejectedHandler, breakoutInterval))
+        {
         }
     }
 }

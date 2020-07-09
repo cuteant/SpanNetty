@@ -43,7 +43,7 @@ namespace DotNetty.Handlers.Streams
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            _queue.AddToBack(new PendingWrite(message, promise));
+            _queue.AddLast​(new PendingWrite(message, promise));
         }
 
         public override void Flush(IChannelHandlerContext context) => DoFlush(context);
@@ -69,7 +69,7 @@ namespace DotNetty.Handlers.Streams
         {
             while (true)
             {
-                if (!_queue.TryRemoveFromFront(out PendingWrite currentWrite))
+                if (!_queue.TryRemoveFirst(out PendingWrite currentWrite))
                 {
                     break;
                 }
@@ -157,7 +157,7 @@ namespace DotNetty.Handlers.Streams
                     // as this had to be done already by someone who resolved the
                     // promise (using ChunkedInput.close method).
                     // See https://github.com/netty/netty/issues/8700.
-                    _ = _queue.RemoveFromFront();
+                    _ = _queue.RemoveFirst();
                     continue;
                 }
 
@@ -185,7 +185,7 @@ namespace DotNetty.Handlers.Streams
                     }
                     catch (Exception exception)
                     {
-                        _ = _queue.RemoveFromFront();
+                        _ = _queue.RemoveFirst();
 
                         if (message is object)
                         {
@@ -217,7 +217,7 @@ namespace DotNetty.Handlers.Streams
                     Task future = context.WriteAndFlushAsync(message);
                     if (endOfInput)
                     {
-                        _ = _queue.RemoveFromFront();
+                        _ = _queue.RemoveFirst();
 
                         if (future.IsCompleted)
                         {
@@ -251,7 +251,7 @@ namespace DotNetty.Handlers.Streams
                 }
                 else
                 {
-                    _ = _queue.RemoveFromFront();
+                    _ = _queue.RemoveFirst();
                     _ = context.WriteAsync(pendingMessage, currentWrite.Promise);
                     requiresFlush = true;
                 }

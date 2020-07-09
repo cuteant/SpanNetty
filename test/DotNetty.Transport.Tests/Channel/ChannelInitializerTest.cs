@@ -24,7 +24,7 @@
 
         public ChannelInitializerTest()
         {
-            _group = new MultithreadEventLoopGroup(1);
+            _group = new DefaultEventLoopGroup(1);
             _server = new ServerBootstrap()
                     .Group(_group)
                     .Channel<LocalServerChannel>()
@@ -269,7 +269,7 @@
             AtomicReference<Exception> errorRef = new AtomicReference<Exception>();
             LocalAddress addr = new LocalAddress("test");
 
-            IEventExecutor executor = new TestEventLoop();
+            IEventExecutor executor = new DefaultEventLoop();
 
             CountdownEvent latch = new CountdownEvent(1);
             ServerBootstrap serverBootstrap = new ServerBootstrap()
@@ -314,22 +314,22 @@
         }
 
         // TODO review
-        class TestEventLoop : SingleThreadEventLoop
-        {
-            //public override bool IsInEventLoop(XThread t)
-            //{
-            //    return false;
-            //}
+        //class TestEventLoop : SingleThreadEventLoopBase
+        //{
+        //    //public override bool IsInEventLoop(XThread t)
+        //    //{
+        //    //    return false;
+        //    //}
 
-            //public override bool IsShuttingDown => false;
+        //    //public override bool IsShuttingDown => false;
 
-            //public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
-            //{
-            //    throw new NotSupportedException();
-            //}
+        //    //public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
+        //    //{
+        //    //    throw new NotSupportedException();
+        //    //}
 
-            //public override Task TerminationCompletion => throw new NotSupportedException();
-        }
+        //    //public override Task TerminationCompletion => throw new NotSupportedException();
+        //}
 
         class ChannelInitializer1 : ChannelInitializer<IChannel>
         {

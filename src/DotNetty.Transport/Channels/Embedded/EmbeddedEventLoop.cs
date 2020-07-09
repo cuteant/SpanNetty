@@ -9,6 +9,7 @@ namespace DotNetty.Transport.Channels.Embedded
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
+    using DotNetty.Common.Utilities;
     using Thread = DotNetty.Common.Concurrency.XThread;
 
     sealed class EmbeddedEventLoop : AbstractScheduledEventExecutor, IEventLoop
@@ -41,7 +42,7 @@ namespace DotNetty.Transport.Channels.Embedded
             {
                 ThrowHelper.ThrowNullReferenceException_Command();
             }
-            _tasks.AddToBack(command);
+            _tasks.AddLast​(command);
         }
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
@@ -49,19 +50,19 @@ namespace DotNetty.Transport.Channels.Embedded
             throw ThrowHelper.GetNotSupportedException();
         }
 
-        internal PreciseTimeSpan NextScheduledTask() => NextScheduledTaskNanos();
+        internal long NextScheduledTask() => NextScheduledTaskNanos();
 
         internal void RunTasks()
         {
-            while (_tasks.TryRemoveFromFront(out var task))
+            while (_tasks.TryRemoveFirst(out var task))
             {
                 task.Run();
             }
         }
 
-        internal PreciseTimeSpan RunScheduledTasks()
+        internal long RunScheduledTasks()
         {
-            PreciseTimeSpan time = GetNanos();
+            var time = PreciseTime.NanoTime();
             while (true)
             {
                 IRunnable task = PollScheduledTask(time);
@@ -74,5 +75,10 @@ namespace DotNetty.Transport.Channels.Embedded
         }
 
         internal new void CancelScheduledTasks() => base.CancelScheduledTasks();
+
+        public override bool WaitTermination(TimeSpan timeout)
+        {
+            return false;
+        }
     }
 }

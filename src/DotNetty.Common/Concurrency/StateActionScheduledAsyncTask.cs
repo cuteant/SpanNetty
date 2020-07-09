@@ -10,9 +10,16 @@ namespace DotNetty.Common.Concurrency
     {
         readonly Action<object> _action;
 
-        public StateActionScheduledAsyncTask(AbstractScheduledEventExecutor executor, Action<object> action, object state, in PreciseTimeSpan deadline,
-            CancellationToken cancellationToken)
-            : base(executor, deadline, executor.NewPromise(state), cancellationToken)
+        public StateActionScheduledAsyncTask(AbstractScheduledEventExecutor executor, Action<object> action, object state,
+            long deadlineNanos, CancellationToken cancellationToken)
+            : base(executor, deadlineNanos, executor.NewPromise(state), cancellationToken)
+        {
+            _action = action;
+        }
+
+        public StateActionScheduledAsyncTask(AbstractScheduledEventExecutor executor, Action<object> action, object state,
+            long deadlineNanos, long periodNanos, CancellationToken cancellationToken)
+            : base(executor, deadlineNanos, periodNanos, executor.NewPromise(state), cancellationToken)
         {
             _action = action;
         }

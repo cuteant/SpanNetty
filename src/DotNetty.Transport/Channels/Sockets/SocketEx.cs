@@ -5,7 +5,7 @@ namespace DotNetty.Transport.Channels.Sockets
 {
     public static class SocketEx
     {
-        internal static Socket CreateSocket()
+        public static Socket CreateSocket()
         {
             // .Net45+，默认为AddressFamily.InterNetworkV6，并设置 DualMode 为 true，双线绑定
             var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
@@ -13,14 +13,14 @@ namespace DotNetty.Transport.Channels.Sockets
             return socket;
         }
 
-        internal static Socket CreateSocket(AddressFamily addressFamily)
+        public static Socket CreateSocket(AddressFamily addressFamily)
         {
             var socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
             socket.EnableFastpath();
             return socket;
         }
 
-        internal static void SafeClose(this Socket socket)
+        public static void SafeClose(this Socket socket)
         {
             if (socket is null)
             {

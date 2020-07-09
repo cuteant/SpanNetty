@@ -864,7 +864,7 @@ namespace DotNetty.Buffers
             protected override bool TryGetArray(out ArraySegment<byte> segment)
             {
                 segment = new ArraySegment<byte>(_array, _offset, _length);
-                return true; ;
+                return true;
             }
 
             public unsafe override Span<byte> GetSpan()

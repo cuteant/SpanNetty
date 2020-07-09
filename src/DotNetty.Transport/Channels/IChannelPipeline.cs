@@ -157,7 +157,7 @@ namespace DotNetty.Transport.Channels
     /// <para>
     ///     and it could be represented as shown in the following example:
     ///     <code>
-    ///         static readonly <see cref="IEventExecutorGroup"/> group = new <see cref="MultithreadEventLoopGroup"/>();
+    ///         static readonly <see cref="IEventExecutorGroup"/> group = new <see cref="MultithreadEventLoopGroup{T1,T2}"/>();
     ///         ...
     ///         <see cref="IChannelPipeline"/> pipeline = ch.Pipeline;
     ///         pipeline.AddLast("decoder", new MyProtocolDecoder());

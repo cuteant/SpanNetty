@@ -16,7 +16,7 @@
         {
             CountdownEvent latch = new CountdownEvent(1);
             AtomicReference<Exception> error = new AtomicReference<Exception>();
-            var group = new MultithreadEventLoopGroup(1);
+            var group = new DefaultEventLoopGroup(1);
             try
             {
                 ServerBootstrap sb = new ServerBootstrap();
@@ -83,7 +83,7 @@
 
             IChannelHandler handler = new TestHandler(readLatch, initLatch);
 
-            IEventLoopGroup group = new MultithreadEventLoopGroup(1);
+            IEventLoopGroup group = new DefaultEventLoopGroup(1);
             IChannel sch = null;
             IChannel cch = null;
 

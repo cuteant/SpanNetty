@@ -10,8 +10,15 @@ namespace DotNetty.Common.Concurrency
         private readonly CancellationToken _cancellationToken;
         private CancellationTokenRegistration _cancellationTokenRegistration;
 
-        protected ScheduledAsyncTask(AbstractScheduledEventExecutor executor, in PreciseTimeSpan deadline, IPromise promise, CancellationToken cancellationToken)
-            : base(executor, deadline, promise)
+        protected ScheduledAsyncTask(AbstractScheduledEventExecutor executor, long deadlineNanos, IPromise promise, CancellationToken cancellationToken)
+            : base(executor, deadlineNanos, promise)
+        {
+            _cancellationToken = cancellationToken;
+            _cancellationTokenRegistration = cancellationToken.Register(s => ((ScheduledAsyncTask)s).Cancel(), this);
+        }
+
+        protected ScheduledAsyncTask(AbstractScheduledEventExecutor executor, long deadlineNanos, long periodNanos, IPromise promise, CancellationToken cancellationToken)
+            : base(executor, deadlineNanos, periodNanos, promise)
         {
             _cancellationToken = cancellationToken;
             _cancellationTokenRegistration = cancellationToken.Register(s => ((ScheduledAsyncTask)s).Cancel(), this);

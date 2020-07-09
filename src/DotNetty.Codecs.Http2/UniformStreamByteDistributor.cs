@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http2
 
             var chunkSize = Math.Max(_minAllocationChunk, maxBytes / size);
 
-            State state = _queue.RemoveFromFront();
+            State state = _queue.RemoveFirst();
             do
             {
                 state._enqueued = false;
@@ -100,7 +100,7 @@ namespace DotNetty.Codecs.Http2
                     // Stop at the first state that can't send. Add this state back to the head of the queue. Note
                     // that empty frames at the head of the queue will always be written, assuming the stream window
                     // is not negative.
-                    _queue.AddToFront(state);
+                    _queue.AddFirst​(state);
                     state._enqueued = true;
                     break;
                 }
@@ -111,7 +111,7 @@ namespace DotNetty.Codecs.Http2
 
                 // Write the allocated bytes and enqueue as necessary.
                 state.Write(chunk, writer);
-            } while (_queue.TryRemoveFromFront(out state));
+            } while (_queue.TryRemoveFirst(out state));
 
             return _totalStreamableBytes > 0L;
         }
@@ -193,7 +193,7 @@ namespace DotNetty.Codecs.Http2
                 if (!_enqueued)
                 {
                     _enqueued = true;
-                    _distributor._queue.AddToBack(this);
+                    _distributor._queue.AddLast​(this);
                 }
             }
 

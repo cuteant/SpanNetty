@@ -9,6 +9,7 @@ namespace DotNetty.Common.Concurrency
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     /// <summary>
@@ -34,15 +35,39 @@ namespace DotNetty.Common.Concurrency
         protected AbstractScheduledEventExecutor(IEventExecutorGroup parent)
             : base(parent)
         {
-            ScheduledTaskQueue = new PriorityQueue<IScheduledRunnable>();
+            ScheduledTaskQueue = new DefaultPriorityQueue<IScheduledRunnable>();
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected static PreciseTimeSpan GetNanos() => PreciseTimeSpan.FromStart;
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected static long NanoTime() => PreciseTime.NanoTime();
+
+        /// <summary>
+        /// Given an arbitrary deadline <paramref name="deadlineNanos"/>, calculate the number of nano seconds from now
+        /// <paramref name="deadlineNanos"/> would expire.
+        /// </summary>
+        /// <param name="deadlineNanos">An arbitrary deadline in nano seconds.</param>
+        /// <returns>the number of nano seconds from now <paramref name="deadlineNanos"/> would expire.</returns>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected static long DeadlineToDelayNanos(long deadlineNanos) => PreciseTime.DeadlineToDelayNanos(deadlineNanos);
+
+        /// <summary>The initial value used for delay and computations based upon a monatomic time source.</summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected static long InitialNanoTime() => PreciseTime.StartTime;
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected static bool IsNullOrEmpty<T>(IPriorityQueue<T> taskQueue)
             where T : class, IPriorityQueueNode<T>
         {
             return taskQueue is null || 0u >= (uint)taskQueue.Count;
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected static bool IsEmpty(IPriorityQueue<IScheduledRunnable> taskQueue)
+        {
+            return 0u >= (uint)taskQueue.Count;
         }
 
         /// <summary>
@@ -52,45 +77,64 @@ namespace DotNetty.Common.Concurrency
         protected virtual void CancelScheduledTasks()
         {
             Debug.Assert(InEventLoop);
+
             IPriorityQueue<IScheduledRunnable> scheduledTaskQueue = ScheduledTaskQueue;
-            if (IsNullOrEmpty(scheduledTaskQueue))
-            {
-                return;
-            }
+            if (IsEmpty(scheduledTaskQueue)) { return; }
 
             IScheduledRunnable[] tasks = scheduledTaskQueue.ToArray();
             for (int i = 0; i < tasks.Length; i++)
             {
-                _ = tasks[i].Cancel();
+                _ = tasks[i].CancelWithoutRemove();
             }
 
-            ScheduledTaskQueue.Clear();
+            ScheduledTaskQueue.ClearIgnoringIndexes();
         }
 
-        internal protected IScheduledRunnable PollScheduledTask() => PollScheduledTask(GetNanos());
+        internal protected IScheduledRunnable PollScheduledTask() => PollScheduledTask(NanoTime());
 
-        protected IScheduledRunnable PollScheduledTask(in PreciseTimeSpan nanoTime)
+        /// <summary>
+        /// Return the <see cref="IScheduledRunnable"/> which is ready to be executed with the given <paramref name="nanoTime"/>.
+        /// You should use <see cref="NanoTime()"/> to retrieve the correct <paramref name="nanoTime"/>.
+        /// </summary>
+        /// <param name="nanoTime"></param>
+        protected IScheduledRunnable PollScheduledTask(long nanoTime)
         {
             Debug.Assert(InEventLoop);
 
-            if (!ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
-            {
-                return null;
-            }
-
-            if (scheduledTask.Deadline <= nanoTime)
+            if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask) &&
+                scheduledTask.DeadlineNanos <= nanoTime)
             {
                 _ = ScheduledTaskQueue.TryDequeue(out _);
                 scheduledTask.SetConsumed();
                 return scheduledTask;
             }
+
             return null;
         }
 
-        protected PreciseTimeSpan NextScheduledTaskNanos()
+        /// <summary>
+        /// Return the nanoseconds until the next scheduled task is ready to be run or <c>-1</c> if no task is scheduled.
+        /// </summary>
+        protected long NextScheduledTaskNanos()
         {
-            IScheduledRunnable nextScheduledRunnable = PeekScheduledTask();
-            return nextScheduledRunnable?.Deadline ?? PreciseTimeSpan.MinusOne;
+            if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledRunnable))
+            {
+                return nextScheduledRunnable.DelayNanos;
+            }
+            return PreciseTime.MinusOne;
+        }
+
+        /// <summary>
+        /// Return the deadline (in nanoseconds) when the next scheduled task is ready to be run or <c>-1</c>
+        /// if no task is scheduled.
+        /// </summary>
+        protected long NextScheduledTaskDeadlineNanos()
+        {
+            if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledRunnable))
+            {
+                return nextScheduledRunnable.DeadlineNanos;
+            }
+            return PreciseTime.MinusOne;
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
@@ -101,43 +145,108 @@ namespace DotNetty.Common.Concurrency
             return ScheduledTaskQueue.TryPeek(out IScheduledRunnable task) ? task : null;
         }
 
+        /// <summary>
+        /// Returns <c>true</c> if a scheduled task is ready for processing.
+        /// </summary>
         protected bool HasScheduledTasks()
         {
-            return ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask) && scheduledTask.Deadline <= PreciseTimeSpan.FromStart;
+            return ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask) && scheduledTask.DeadlineNanos <= PreciseTime.NanoTime();
         }
 
         public override IScheduledTask Schedule(IRunnable action, TimeSpan delay)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
-            return Schedule(new RunnableScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
+            return Schedule(new RunnableScheduledTask(this, action, PreciseTime.DeadlineNanos(delay)));
         }
 
         public override IScheduledTask Schedule(Action action, TimeSpan delay)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
-            return Schedule(new ActionScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
+            return Schedule(new ActionScheduledTask(this, action, PreciseTime.DeadlineNanos(delay)));
         }
 
         public override IScheduledTask Schedule(Action<object> action, object state, TimeSpan delay)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
-            return Schedule(new StateActionScheduledTask(this, action, state, PreciseTimeSpan.Deadline(delay)));
+            return Schedule(new StateActionScheduledTask(this, action, state, PreciseTime.DeadlineNanos(delay)));
         }
 
         public override IScheduledTask Schedule(Action<object, object> action, object context, object state, TimeSpan delay)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
-            return Schedule(new StateActionWithContextScheduledTask(this, action, context, state, PreciseTimeSpan.Deadline(delay)));
+            return Schedule(new StateActionWithContextScheduledTask(this, action, context, state, PreciseTime.DeadlineNanos(delay)));
         }
 
-        public override Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
+        public override IScheduledTask ScheduleAtFixedRate(IRunnable action, TimeSpan initialDelay, TimeSpan period)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (period <= TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_PeriodMustBeGreaterThanZero(); }
 
+            return Schedule(new RunnableScheduledTask(this, action, PreciseTime.DeadlineNanos(initialDelay), PreciseTime.ToDelayNanos(period)));
+        }
+
+        public override IScheduledTask ScheduleAtFixedRate(Action action, TimeSpan initialDelay, TimeSpan period)
+        {
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (period <= TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_PeriodMustBeGreaterThanZero(); }
+
+            return Schedule(new ActionScheduledTask(this, action, PreciseTime.DeadlineNanos(initialDelay), PreciseTime.ToDelayNanos(period)));
+        }
+
+        public override IScheduledTask ScheduleAtFixedRate(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period)
+        {
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (period <= TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_PeriodMustBeGreaterThanZero(); }
+
+            return Schedule(new StateActionScheduledTask(this, action, state, PreciseTime.DeadlineNanos(initialDelay), PreciseTime.ToDelayNanos(period)));
+        }
+
+        public override IScheduledTask ScheduleAtFixedRate(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period)
+        {
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (period <= TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_PeriodMustBeGreaterThanZero(); }
+
+            return Schedule(new StateActionWithContextScheduledTask(this, action, context, state, PreciseTime.DeadlineNanos(initialDelay), PreciseTime.ToDelayNanos(period)));
+        }
+
+        public override IScheduledTask ScheduleWithFixedDelay(IRunnable action, TimeSpan initialDelay, TimeSpan delay)
+        {
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (delay <= TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_DelayMustBeGreaterThanZero(); }
+
+            return Schedule(new RunnableScheduledTask(this, action, PreciseTime.DeadlineNanos(initialDelay), -PreciseTime.ToDelayNanos(delay)));
+        }
+
+        public override IScheduledTask ScheduleWithFixedDelay(Action action, TimeSpan initialDelay, TimeSpan delay)
+        {
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (delay <= TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_DelayMustBeGreaterThanZero(); }
+
+            return Schedule(new ActionScheduledTask(this, action, PreciseTime.DeadlineNanos(initialDelay), -PreciseTime.ToDelayNanos(delay)));
+        }
+
+        public override IScheduledTask ScheduleWithFixedDelay(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay)
+        {
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (delay <= TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_DelayMustBeGreaterThanZero(); }
+
+            return Schedule(new StateActionScheduledTask(this, action, state, PreciseTime.DeadlineNanos(initialDelay), -PreciseTime.ToDelayNanos(delay)));
+        }
+
+        public override IScheduledTask ScheduleWithFixedDelay(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay)
+        {
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (delay <= TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_DelayMustBeGreaterThanZero(); }
+
+            return Schedule(new StateActionWithContextScheduledTask(this, action, context, state, PreciseTime.DeadlineNanos(initialDelay), -PreciseTime.ToDelayNanos(delay)));
+        }
+
+        public override Task ScheduleAsync(IRunnable action, TimeSpan delay, CancellationToken cancellationToken)
+        {
             if (cancellationToken.IsCancellationRequested)
             {
                 return TaskUtil.Cancelled;
@@ -148,7 +257,26 @@ namespace DotNetty.Common.Concurrency
                 return Schedule(action, delay).Completion;
             }
 
-            return Schedule(new ActionScheduledAsyncTask(this, action, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+
+            return Schedule(new RunnableScheduledAsyncTask(this, action, PreciseTime.DeadlineNanos(delay), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return Schedule(action, delay).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+
+            return Schedule(new ActionScheduledAsyncTask(this, action, PreciseTime.DeadlineNanos(delay), cancellationToken)).Completion;
         }
 
         public override Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken)
@@ -163,7 +291,9 @@ namespace DotNetty.Common.Concurrency
                 return Schedule(action, state, delay).Completion;
             }
 
-            return Schedule(new StateActionScheduledAsyncTask(this, action, state, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+
+            return Schedule(new StateActionScheduledAsyncTask(this, action, state, PreciseTime.DeadlineNanos(delay), cancellationToken)).Completion;
         }
 
         public override Task ScheduleAsync(Action<object, object> action, object context, object state, TimeSpan delay, CancellationToken cancellationToken)
@@ -178,17 +308,163 @@ namespace DotNetty.Common.Concurrency
                 return Schedule(action, context, state, delay).Completion;
             }
 
-            return Schedule(new StateActionWithContextScheduledAsyncTask(this, action, context, state, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+
+            return Schedule(new StateActionWithContextScheduledAsyncTask(this, action, context, state, PreciseTime.DeadlineNanos(delay), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleAtFixedRateAsync(IRunnable action, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return ScheduleAtFixedRate(action, initialDelay, period).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+            if (period <= TimeSpan.Zero) { return ThrowHelper.FromArgumentException_PeriodMustBeGreaterThanZero(); }
+
+            return Schedule(new RunnableScheduledAsyncTask(this, action, PreciseTime.DeadlineNanos(initialDelay), PreciseTime.ToDelayNanos(period), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleAtFixedRateAsync(Action action, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return ScheduleAtFixedRate(action, initialDelay, period).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+            if (period <= TimeSpan.Zero) { return ThrowHelper.FromArgumentException_PeriodMustBeGreaterThanZero(); }
+
+            return Schedule(new ActionScheduledAsyncTask(this, action, PreciseTime.DeadlineNanos(initialDelay), PreciseTime.ToDelayNanos(period), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleAtFixedRateAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return ScheduleAtFixedRate(action, state, initialDelay, period).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+            if (period <= TimeSpan.Zero) { return ThrowHelper.FromArgumentException_PeriodMustBeGreaterThanZero(); }
+
+            return Schedule(new StateActionScheduledAsyncTask(this, action, state, PreciseTime.DeadlineNanos(initialDelay), PreciseTime.ToDelayNanos(period), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleAtFixedRateAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return ScheduleAtFixedRate(action, context, state, initialDelay, period).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+            if (period <= TimeSpan.Zero) { return ThrowHelper.FromArgumentException_PeriodMustBeGreaterThanZero(); }
+
+            return Schedule(new StateActionWithContextScheduledAsyncTask(this, action, context, state, PreciseTime.DeadlineNanos(initialDelay), PreciseTime.ToDelayNanos(period), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleWithFixedDelayAsync(IRunnable action, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return ScheduleWithFixedDelay(action, initialDelay, delay).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+            if (delay <= TimeSpan.Zero) { return ThrowHelper.FromArgumentException_DelayMustBeGreaterThanZero(); }
+
+            return Schedule(new RunnableScheduledAsyncTask(this, action, PreciseTime.DeadlineNanos(initialDelay), -PreciseTime.ToDelayNanos(delay), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleWithFixedDelayAsync(Action action, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return ScheduleWithFixedDelay(action, initialDelay, delay).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+            if (delay <= TimeSpan.Zero) { return ThrowHelper.FromArgumentException_DelayMustBeGreaterThanZero(); }
+
+            return Schedule(new ActionScheduledAsyncTask(this, action, PreciseTime.DeadlineNanos(initialDelay), -PreciseTime.ToDelayNanos(delay), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleWithFixedDelayAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return ScheduleWithFixedDelay(action, state, initialDelay, delay).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+            if (delay <= TimeSpan.Zero) { return ThrowHelper.FromArgumentException_DelayMustBeGreaterThanZero(); }
+
+            return Schedule(new StateActionScheduledAsyncTask(this, action, state, PreciseTime.DeadlineNanos(initialDelay), -PreciseTime.ToDelayNanos(delay), cancellationToken)).Completion;
+        }
+
+        public override Task ScheduleWithFixedDelayAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return TaskUtil.Cancelled;
+            }
+
+            if (!cancellationToken.CanBeCanceled)
+            {
+                return ScheduleWithFixedDelay(action, context, state, initialDelay, delay).Completion;
+            }
+
+            if (action is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.action); }
+            if (delay <= TimeSpan.Zero) { return ThrowHelper.FromArgumentException_DelayMustBeGreaterThanZero(); }
+
+            return Schedule(new StateActionWithContextScheduledAsyncTask(this, action, context, state, PreciseTime.DeadlineNanos(initialDelay), -PreciseTime.ToDelayNanos(delay), cancellationToken)).Completion;
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        protected internal void ScheduleFromEventLoop(IScheduledRunnable task)
+        internal void ScheduleFromEventLoop(IScheduledRunnable task)
         {
             // nextTaskId a long and so there is no chance it will overflow back to 0
             _ = ScheduledTaskQueue.TryEnqueue(task.SetId(++_nextTaskId));
         }
 
-        protected virtual IScheduledRunnable Schedule(IScheduledRunnable task)
+        private IScheduledRunnable Schedule(IScheduledRunnable task)
         {
             if (InEventLoop)
             {
@@ -196,9 +472,9 @@ namespace DotNetty.Common.Concurrency
             }
             else
             {
-                var deadline = task.Deadline;
+                var deadlineNanos = task.DeadlineNanos;
                 // task will add itself to scheduled task queue when run if not expired
-                if (BeforeScheduledTaskSubmitted(deadline))
+                if (BeforeScheduledTaskSubmitted(deadlineNanos))
                 {
                     Execute(task);
                 }
@@ -206,7 +482,7 @@ namespace DotNetty.Common.Concurrency
                 {
                     LazyExecute(task);
                     // Second hook after scheduling to facilitate race-avoidance
-                    if (AfterScheduledTaskSubmitted(deadline))
+                    if (AfterScheduledTaskSubmitted(deadlineNanos))
                     {
                         Execute(WakeupTask);
                     }
@@ -233,24 +509,24 @@ namespace DotNetty.Common.Concurrency
         /// Returns <c>true</c> if the <see cref="IEventExecutor"/> thread should be woken immediately to
         /// process the scheduled task (if not already awake).
         /// 
-        /// <para>If <c>false</c> is returned, <see cref="AfterScheduledTaskSubmitted(in PreciseTimeSpan)"/> will be called with
+        /// <para>If <c>false</c> is returned, <see cref="AfterScheduledTaskSubmitted(long)"/> will be called with
         /// the same value <i>after</i> the scheduled task is enqueued, providing another opportunity
         /// to wake the <see cref="IEventExecutor"/> thread if required.</para>
         /// </summary>
-        /// <param name="deadline">deadline of the to-be-scheduled task
-        /// relative to <see cref="AbstractScheduledEventExecutor.GetNanos()"/></param>
+        /// <param name="deadlineNanos">deadline of the to-be-scheduled task
+        /// relative to <see cref="NanoTime()"/></param>
         /// <returns><c>true</c> if the <see cref="IEventExecutor"/> thread should be woken, <c>false</c> otherwise</returns>
-        protected virtual bool BeforeScheduledTaskSubmitted(in PreciseTimeSpan deadline)
+        protected virtual bool BeforeScheduledTaskSubmitted(long deadlineNanos)
         {
             return true;
         }
 
         /// <summary>
-        /// See <see cref="BeforeScheduledTaskSubmitted(in PreciseTimeSpan)"/>. Called only after that method returns false.
+        /// See <see cref="BeforeScheduledTaskSubmitted(long)"/>. Called only after that method returns false.
         /// </summary>
-        /// <param name="deadline">relative to <see cref="AbstractScheduledEventExecutor.GetNanos()"/></param>
+        /// <param name="deadlineNanos">relative to <see cref="NanoTime()"/></param>
         /// <returns><c>true</c> if the <see cref="IEventExecutor"/> thread should be woken, <c>false</c> otherwise</returns>
-        protected virtual bool AfterScheduledTaskSubmitted(in PreciseTimeSpan deadline)
+        protected virtual bool AfterScheduledTaskSubmitted(long deadlineNanos)
         {
             return true;
         }
@@ -259,6 +535,7 @@ namespace DotNetty.Common.Concurrency
         {
             public void Run()
             {
+                // NOOP
             }
         }
     }

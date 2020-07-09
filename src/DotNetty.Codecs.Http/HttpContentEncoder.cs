@@ -64,7 +64,7 @@ namespace DotNetty.Codecs.Http
                 acceptEncoding = ZeroLengthConnect;
             }
 
-            _acceptEncodingQueue.AddToBack(acceptEncoding);
+            _acceptEncodingQueue.AddLast​(acceptEncoding);
             output.Add(ReferenceCountUtil.Retain(msg));
         }
 
@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http
                         else
                         {
                             // Get the list of encodings accepted by the peer.
-                            if (!_acceptEncodingQueue.TryRemoveFromFront(out acceptEncoding))
+                            if (!_acceptEncodingQueue.TryRemoveFirst(out acceptEncoding))
                             {
                                 ThrowHelper.ThrowInvalidOperationException_CannotSendMore();
                             }

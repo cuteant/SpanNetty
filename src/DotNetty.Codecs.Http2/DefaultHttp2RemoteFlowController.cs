@@ -358,7 +358,7 @@ namespace DotNetty.Codecs.Http2
                                 // This frame has been fully written, remove this frame and notify it.
                                 // Since we remove this frame first, we're guaranteed that its error
                                 // method will not be called when we call cancel.
-                                _ = _pendingWriteQueue.TryRemoveFromFront(out _);
+                                _ = _pendingWriteQueue.TryRemoveFirst(out _);
                                 frame.WriteComplete();
                             }
                         }
@@ -455,7 +455,7 @@ namespace DotNetty.Codecs.Http2
 
             void EnqueueFrameWithoutMerge(IHttp2RemoteFlowControlled frame)
             {
-                _pendingWriteQueue.AddToBack(frame);
+                _pendingWriteQueue.AddLast​(frame);
                 // This must be called after adding to the queue in order so that hasFrame() is
                 // updated before updating the stream state.
                 IncrementPendingBytes(frame.Size, true);
@@ -483,7 +483,7 @@ namespace DotNetty.Codecs.Http2
                 // Ensure that the queue can't be modified while we are writing.
                 if (_writing) { return; }
 
-                if (_pendingWriteQueue.TryRemoveFromFront(out IHttp2RemoteFlowControlled frame))
+                if (_pendingWriteQueue.TryRemoveFirst(out IHttp2RemoteFlowControlled frame))
                 {
                     // Only create exception once and reuse to reduce overhead of filling in the stacktrace.
                     Http2Exception exception = ThrowHelper.GetStreamError_StreamClosedBeforeWriteCouldTakePlace(
@@ -491,7 +491,7 @@ namespace DotNetty.Codecs.Http2
                     do
                     {
                         WriteError(frame, exception);
-                    } while (_pendingWriteQueue.TryRemoveFromFront(out frame));
+                    } while (_pendingWriteQueue.TryRemoveFirst(out frame));
                 }
 
                 _controller._streamByteDistributor.UpdateStreamableBytes(this);

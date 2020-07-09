@@ -93,7 +93,7 @@ namespace DotNetty.Handlers.Tests
             this.Output.WriteLine($"serverProtocol: {serverProtocol}");
             this.Output.WriteLine($"clientProtocol: {clientProtocol}");
 
-            var executor = new SingleThreadEventExecutor("test executor", TimeSpan.FromMilliseconds(10));
+            var executor = new DefaultEventExecutor();
 
             try
             {
@@ -186,7 +186,7 @@ namespace DotNetty.Handlers.Tests
             var writeStrategy = new AsIsWriteStrategy();
             this.Output.WriteLine($"writeStrategy: {writeStrategy}");
 
-            var executor = new SingleThreadEventExecutor("test executor", TimeSpan.FromMilliseconds(10));
+            var executor = new DefaultEventExecutor();
 
             try
             {

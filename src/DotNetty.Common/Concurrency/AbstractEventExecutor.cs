@@ -58,25 +58,83 @@ namespace DotNetty.Common.Concurrency
         /// <inheritdoc />
         public virtual IScheduledTask Schedule(IRunnable action, TimeSpan delay)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         /// <inheritdoc />
         public virtual IScheduledTask Schedule(Action action, TimeSpan delay)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         /// <inheritdoc />
         public virtual IScheduledTask Schedule(Action<object> action, object state, TimeSpan delay)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         /// <inheritdoc />
         public virtual IScheduledTask Schedule(Action<object, object> action, object context, object state, TimeSpan delay)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IScheduledTask ScheduleAtFixedRate(IRunnable action, TimeSpan initialDelay, TimeSpan period)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IScheduledTask ScheduleAtFixedRate(Action action, TimeSpan initialDelay, TimeSpan period)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IScheduledTask ScheduleAtFixedRate(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IScheduledTask ScheduleAtFixedRate(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IScheduledTask ScheduleWithFixedDelay(IRunnable action, TimeSpan initialDelay, TimeSpan delay)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IScheduledTask ScheduleWithFixedDelay(Action action, TimeSpan initialDelay, TimeSpan delay)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IScheduledTask ScheduleWithFixedDelay(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual IScheduledTask ScheduleWithFixedDelay(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public virtual Task ScheduleAsync(IRunnable action, TimeSpan delay) =>
+            ScheduleAsync(action, delay, CancellationToken.None);
+
+        /// <inheritdoc />
+        public virtual Task ScheduleAsync(IRunnable action, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         /// <inheritdoc />
@@ -84,9 +142,9 @@ namespace DotNetty.Common.Concurrency
             ScheduleAsync(action, delay, CancellationToken.None);
 
         /// <inheritdoc />
-        public virtual Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken)
+        public virtual Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         /// <inheritdoc />
@@ -94,9 +152,9 @@ namespace DotNetty.Common.Concurrency
             ScheduleAsync(action, state, delay, CancellationToken.None);
 
         /// <inheritdoc />
-        public virtual Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
+        public virtual Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         /// <inheritdoc />
@@ -104,14 +162,73 @@ namespace DotNetty.Common.Concurrency
             ScheduleAsync(action, context, state, delay, CancellationToken.None);
 
         /// <inheritdoc />
-        public virtual Task ScheduleAsync(
-            Action<object, object> action,
-            object context,
-            object state,
-            TimeSpan delay,
-            CancellationToken cancellationToken)
+        public virtual Task ScheduleAsync(Action<object, object> action, object context, object state, TimeSpan delay, CancellationToken cancellationToken)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        public virtual Task ScheduleAtFixedRateAsync(IRunnable action, TimeSpan initialDelay, TimeSpan period) =>
+            ScheduleAtFixedRateAsync(action, initialDelay, period, CancellationToken.None);
+
+        public virtual Task ScheduleAtFixedRateAsync(IRunnable action, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        public virtual Task ScheduleAtFixedRateAsync(Action action, TimeSpan initialDelay, TimeSpan period) =>
+            ScheduleAtFixedRateAsync(action, initialDelay, period, CancellationToken.None);
+
+        public virtual Task ScheduleAtFixedRateAsync(Action action, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        public virtual Task ScheduleAtFixedRateAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period) =>
+            ScheduleAtFixedRateAsync(action, state, initialDelay, period, CancellationToken.None);
+
+        public virtual Task ScheduleAtFixedRateAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        public virtual Task ScheduleAtFixedRateAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period) =>
+            ScheduleAtFixedRateAsync(action, context, state, initialDelay, period, CancellationToken.None);
+
+        public virtual Task ScheduleAtFixedRateAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan period, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        public virtual Task ScheduleWithFixedDelayAsync(IRunnable action, TimeSpan initialDelay, TimeSpan delay) =>
+            ScheduleWithFixedDelayAsync(action, initialDelay, delay, CancellationToken.None);
+
+        public virtual Task ScheduleWithFixedDelayAsync(IRunnable action, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        public virtual Task ScheduleWithFixedDelayAsync(Action action, TimeSpan initialDelay, TimeSpan delay) =>
+            ScheduleWithFixedDelayAsync(action, initialDelay, delay, CancellationToken.None);
+
+        public virtual Task ScheduleWithFixedDelayAsync(Action action, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        public virtual Task ScheduleWithFixedDelayAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay) =>
+            ScheduleWithFixedDelayAsync(action, state, initialDelay, delay, CancellationToken.None);
+
+        public virtual Task ScheduleWithFixedDelayAsync(Action<object> action, object state, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
+        }
+
+        public virtual Task ScheduleWithFixedDelayAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay) =>
+            ScheduleWithFixedDelayAsync(action, context, state, initialDelay, delay, CancellationToken.None);
+
+        public virtual Task ScheduleWithFixedDelayAsync(Action<object, object> action, object context, object state, TimeSpan initialDelay, TimeSpan delay, CancellationToken cancellationToken)
+        {
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         /// <inheritdoc />

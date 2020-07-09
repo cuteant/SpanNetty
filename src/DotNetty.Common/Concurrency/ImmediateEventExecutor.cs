@@ -18,6 +18,11 @@
 
         public override bool IsTerminated => false;
 
+        public override bool WaitTermination(TimeSpan timeout)
+        {
+            throw new NotImplementedException();
+        }
+
         public override void Execute(IRunnable task)
         {
             throw new NotImplementedException();
