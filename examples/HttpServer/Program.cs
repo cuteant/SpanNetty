@@ -93,7 +93,7 @@ namespace HttpServer
 #if DEBUG
                     .Handler(new LoggingHandler("LSTN"))
 #endif
-                    .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
+                    .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
                         if (tlsCertificate != null)

@@ -35,7 +35,7 @@ namespace Factorial.Server
                     .Channel<TcpServerSocketChannel>()
                     .Option(ChannelOption.SoBacklog, 100)
                     .Handler(new LoggingHandler("LSTN"))
-                    .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
+                    .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
                         if (tlsCertificate != null)
