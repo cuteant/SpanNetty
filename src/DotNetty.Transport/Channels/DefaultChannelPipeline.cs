@@ -1313,11 +1313,13 @@ namespace DotNetty.Transport.Channels
                 ReadIfIsAutoRead();
             }
 
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             private void ReadIfIsAutoRead()
             {
-                if (_pipeline._channel.Configuration.IsAutoRead)
+                var channel = _pipeline._channel;
+                if (channel.Configuration.IsAutoRead)
                 {
-                    _ = _pipeline._channel.Read();
+                    _ = channel.Read();
                 }
             }
 

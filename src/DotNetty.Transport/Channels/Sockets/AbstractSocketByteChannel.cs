@@ -44,7 +44,7 @@ namespace DotNetty.Transport.Channels.Sockets
         /// <summary>
         /// Shutdown the input side of the channel.
         /// </summary>
-        protected abstract Task ShutdownInputAsync();
+        public abstract Task ShutdownInputAsync();
 
         public virtual bool IsInputShutdown => false;
 

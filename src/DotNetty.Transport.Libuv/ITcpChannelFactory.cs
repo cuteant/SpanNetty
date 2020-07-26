@@ -6,6 +6,6 @@ namespace DotNetty.Transport.Libuv
 {
     public interface ITcpChannelFactory
     {
-        ISocketChannel CreateChannel<TServerChannel>(TServerChannel channel, Tcp tcp) where TServerChannel : IServerChannel;
+        IChannel CreateChannel<TServerChannel>(TServerChannel channel, Tcp tcp) where TServerChannel : IServerChannel;
     }
 }

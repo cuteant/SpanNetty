@@ -33,8 +33,8 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Theory]
-        [InlineData(true, 8)]
-        [InlineData(false, 8)]
+        [InlineData(true, 16)]
+        [InlineData(false, 16)]
         public void BufferWithCapacity(bool preferDirect, int maxCapacity)
         {
             IByteBufferAllocator allocator = this.NewAllocator(preferDirect);
@@ -69,8 +69,8 @@ namespace DotNetty.Buffers.Tests
         protected abstract bool IsDirectExpected(bool preferDirect);
 
         [Theory]
-        [InlineData(true, 8)]
-        [InlineData(false, 8)]
+        [InlineData(true, 16)]
+        [InlineData(false, 16)]
         public void HeapBufferWithCapacity(bool preferDirect, int maxCapacity)
         {
             IByteBufferAllocator allocator = this.NewAllocator(preferDirect);
@@ -103,8 +103,8 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Theory]
-        [InlineData(true, 8)]
-        [InlineData(false, 8)]
+        [InlineData(true, 16)]
+        [InlineData(false, 16)]
         public void DirectBufferWithCapacity(bool preferDirect, int maxCapacity)
         {
             IByteBufferAllocator allocator = this.NewAllocator(preferDirect);

@@ -18,8 +18,7 @@
             IEventLoopGroup bossGroup = new MultithreadEventLoopGroup(1);
             IEventLoopGroup workerGroup = new MultithreadEventLoopGroup(1);
 
-
-            IChannelGroup allChannels = new DefaultChannelGroup(null);
+            IChannelGroup allChannels = new DefaultChannelGroup();
 
             ServerBootstrap b = new ServerBootstrap();
             b.Group(bossGroup, workerGroup);

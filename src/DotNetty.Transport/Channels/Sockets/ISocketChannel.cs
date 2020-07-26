@@ -3,7 +3,8 @@
 
 namespace DotNetty.Transport.Channels.Sockets
 {
-    public interface ISocketChannel : IChannel
+    public interface ISocketChannel : IDuplexChannel
     {
+        new ISocketChannelConfiguration Configuration { get; }
     }
 }

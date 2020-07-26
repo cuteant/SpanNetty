@@ -6,7 +6,7 @@ namespace DotNetty.Transport.Libuv
 {
     public sealed class TcpChannelFactory : ITcpChannelFactory
     {
-        public ISocketChannel CreateChannel<TServerChannel>(TServerChannel channel, Tcp tcp) where TServerChannel : IServerChannel
+        public IChannel CreateChannel<TServerChannel>(TServerChannel channel, Tcp tcp) where TServerChannel : IServerChannel
         {
             return new TcpChannel(channel, tcp);
         }

@@ -43,6 +43,7 @@ namespace DotNetty.Transport.Channels.Sockets
     {
         private static readonly Action<object, object> ShutdownOutputAction = OnShutdownOutput;
         private static readonly Action<object, object> ShutdownInputAction = OnShutdownInput;
+        private static readonly Action<object, object> ShutdownAction = OnShutdown;
 
         private static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 
@@ -92,6 +93,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public override ChannelMetadata Metadata => METADATA;
 
+        ISocketChannelConfiguration ISocketChannel.Configuration => _config;
         public override IChannelConfiguration Configuration => _config;
 
         protected override EndPoint LocalAddressInternal => Socket.LocalEndPoint;
@@ -104,19 +106,20 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public bool IsShutdown => (IsInputShutdown && IsOutputShutdown) || !IsActive;
 
-        protected override Task ShutdownInputAsync()
+        public override Task ShutdownInputAsync() => ShutdownInputAsync(NewPromise());
+
+        public Task ShutdownInputAsync(IPromise promise)
         {
-            var tcs = NewPromise();
             IEventLoop loop = EventLoop;
             if (loop.InEventLoop)
             {
-                ShutdownInput0(tcs);
+                ShutdownInput0(promise);
             }
             else
             {
-                loop.Execute(ShutdownInputAction, this, tcs);
+                loop.Execute(ShutdownInputAction, this, promise);
             }
-            return tcs.Task;
+            return promise.Task;
         }
 
         void ShutdownInput0(IPromise promise)
@@ -125,11 +128,11 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 Socket.Shutdown(SocketShutdown.Receive);
                 _ = Interlocked.Exchange(ref v_inputShutdown, SharedConstants.True);
-                promise.Complete();
+                promise.TryComplete();
             }
             catch (Exception ex)
             {
-                promise.SetException(ex);
+                promise.TrySetException(ex);
             }
         }
 
@@ -138,19 +141,20 @@ namespace DotNetty.Transport.Channels.Sockets
             ((TcpSocketChannel<TChannel>)channel).ShutdownInput0((IPromise)promise);
         }
 
-        public Task ShutdownOutputAsync()
+        public Task ShutdownOutputAsync() => ShutdownOutputAsync(NewPromise());
+
+        public Task ShutdownOutputAsync(IPromise promise)
         {
-            var tcs = NewPromise();
             IEventLoop loop = EventLoop;
             if (loop.InEventLoop)
             {
-                ShutdownOutput0(tcs);
+                ShutdownOutput0(promise);
             }
             else
             {
-                loop.Execute(ShutdownOutputAction, this, tcs);
+                loop.Execute(ShutdownOutputAction, this, promise);
             }
-            return tcs.Task;
+            return promise.Task;
         }
 
         void ShutdownOutput0(IPromise promise)
@@ -159,15 +163,51 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 Socket.Shutdown(SocketShutdown.Send);
                 _ = Interlocked.Exchange(ref v_outputShutdown, SharedConstants.True);
-                promise.Complete();
+                promise.TryComplete();
             }
             catch (Exception ex)
             {
-                promise.SetException(ex);
+                promise.TrySetException(ex);
             }
         }
 
         private static void OnShutdownOutput(object channel, object promise)
+        {
+            ((TcpSocketChannel<TChannel>)channel).ShutdownOutput0((IPromise)promise);
+        }
+
+        public Task ShutdownAsync() => ShutdownAsync(NewPromise());
+
+        public Task ShutdownAsync(IPromise promise)
+        {
+            IEventLoop loop = EventLoop;
+            if (loop.InEventLoop)
+            {
+                Shutdown0(promise);
+            }
+            else
+            {
+                loop.Execute(ShutdownAction, this, promise);
+            }
+            return promise.Task;
+        }
+
+        void Shutdown0(IPromise promise)
+        {
+            try
+            {
+                Socket.Shutdown(SocketShutdown.Both);
+                _ = Interlocked.Exchange(ref v_inputShutdown, SharedConstants.True);
+                _ = Interlocked.Exchange(ref v_outputShutdown, SharedConstants.True);
+                promise.TryComplete();
+            }
+            catch (Exception ex)
+            {
+                promise.TrySetException(ex);
+            }
+        }
+
+        private static void OnShutdown(object channel, object promise)
         {
             ((TcpSocketChannel<TChannel>)channel).ShutdownOutput0((IPromise)promise);
         }

@@ -9,6 +9,7 @@
     using DotNetty.Transport.Channels.Local;
     using Xunit;
 
+    [Collection("TestSuite")]
     public abstract class AbstractSingleThreadEventLoopTest<TServerChannel>
         where TServerChannel : IServerChannel, new()
     {

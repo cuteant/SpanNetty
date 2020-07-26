@@ -8,5 +8,6 @@ namespace DotNetty.Transport.Channels.Sockets
     /// </summary>
     public interface IServerSocketChannel : IServerChannel
     {
+        new IServerSocketChannelConfiguration Configuration { get; }
     }
 }

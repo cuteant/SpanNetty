@@ -29,9 +29,10 @@ namespace DotNetty.Buffers
         {
             _allocator = allocator;
             _arrayPool = arrayPool;
-            SetArray(AllocateArray(initialCapacity));
 
             SetMaxCapacity(maxCapacity);
+            SetArray(AllocateArray(initialCapacity), maxCapacity);
+
             SetReferenceCount(1);
             SetIndex0(0, 0);
             DiscardMarks();
@@ -41,9 +42,10 @@ namespace DotNetty.Buffers
         {
             _allocator = allocator;
             _arrayPool = arrayPool;
-            SetArray(buffer);
 
             SetMaxCapacity(maxCapacity);
+            SetArray(buffer, maxCapacity);
+
             SetReferenceCount(1);
             SetIndex0(0, length);
             DiscardMarks();
@@ -67,10 +69,10 @@ namespace DotNetty.Buffers
 #endif
         }
 
-        protected void SetArray(byte[] initialArray)
+        protected void SetArray(byte[] initialArray, int maxCapacity)
         {
             Memory = initialArray;
-            _capacity = initialArray.Length;
+            _capacity = Math.Min(initialArray.Length, maxCapacity);
         }
 
         public sealed override IByteBuffer AdjustCapacity(int newCapacity)
@@ -97,7 +99,7 @@ namespace DotNetty.Buffers
             byte[] newArray = AllocateArray(newCapacity);
             PlatformDependent.CopyMemory(oldArray, 0, newArray, 0, bytesToCopy);
 
-            SetArray(newArray);
+            SetArray(newArray, MaxCapacity);
             FreeArray(oldArray);
             return this;
         }

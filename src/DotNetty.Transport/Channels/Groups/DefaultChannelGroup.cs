@@ -24,18 +24,33 @@ namespace DotNetty.Transport.Channels.Groups
         private readonly bool _stayClosed;
         private int _closed;
 
+        public DefaultChannelGroup()
+            : this(false)
+        {
+        }
+
+        public DefaultChannelGroup(bool stayClosed)
+            : this(executor: null, stayClosed)
+        {
+        }
+
         public DefaultChannelGroup(IEventExecutor executor)
             : this(executor, false)
         {
         }
 
-        public DefaultChannelGroup(string name, IEventExecutor executor)
-            : this(name, executor, false)
+        public DefaultChannelGroup(IEventExecutor executor, bool stayClosed)
+            : this($"group-{Interlocked.Increment(ref s_nextId):X2}", executor, stayClosed)
         {
         }
 
-        public DefaultChannelGroup(IEventExecutor executor, bool stayClosed)
-            : this($"group-{Interlocked.Increment(ref s_nextId):X2}", executor, stayClosed)
+        public DefaultChannelGroup(string name, bool stayClosed)
+            : this(name, null, stayClosed)
+        {
+        }
+
+        public DefaultChannelGroup(string name, IEventExecutor executor)
+            : this(name, executor, false)
         {
         }
 

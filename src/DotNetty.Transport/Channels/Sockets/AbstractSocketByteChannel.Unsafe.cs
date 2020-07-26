@@ -21,7 +21,6 @@ namespace DotNetty.Transport.Channels.Sockets
             void CloseOnRead()
             {
                 var ch = _channel;
-                if (!ch.IsOpen) { return; }
 
                 if (!ch.IsInputShutdown)
                 {

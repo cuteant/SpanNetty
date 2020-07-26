@@ -62,6 +62,7 @@ namespace DotNetty.Transport.Channels.Sockets
             _channelFactory = new TChannelFactory();
         }
 
+        IServerSocketChannelConfiguration IServerSocketChannel.Configuration => _config;
         public override IChannelConfiguration Configuration => _config;
 
         public override bool IsActive
