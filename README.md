@@ -1,3 +1,17 @@
+# dotnetty-span-fork
+
+This is a fork from DotNetty project: https://github.com/azure/dotnetty
+
+## ~ Features
+  - Align with [Netty-4.1.50](https://github.com/netty/netty/tree/netty-4.1.50.Final).
+
+## Use
+
+* Stable builds are available on [NuGet](https://www.nuget.org/packages?q=spannetty).
+* Nightly builds are available on [MyGet](https://www.myget.org/F/cuteant/api/v2).
+
+# ~ ORIGINAL README ~
+
 # DotNetty Project
 
 [![Join the chat at https://gitter.im/Azure/DotNetty](https://img.shields.io/gitter/room/Azure/DotNetty.js.svg?style=flat-square)](https://gitter.im/Azure/DotNetty?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
