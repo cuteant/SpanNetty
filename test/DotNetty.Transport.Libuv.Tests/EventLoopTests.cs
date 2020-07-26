@@ -6,6 +6,7 @@ namespace DotNetty.Transport.Libuv.Tests
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Tests.Common;
     using Xunit;
@@ -116,7 +117,7 @@ namespace DotNetty.Transport.Libuv.Tests
                 this.eventLoop.Execute(new NoOp());
             }
 
-            long startTime = DateTime.UtcNow.Ticks;
+            long startTime = PreciseTime.NanoTime();
 
             Assert.True(this.eventLoop.IsShuttingDown);
             Assert.False(this.eventLoop.IsShutdown);
@@ -125,8 +126,7 @@ namespace DotNetty.Transport.Libuv.Tests
             Assert.True(this.eventLoop.IsShuttingDown);
             Assert.True(this.eventLoop.IsShutdown);
 
-            long time = DateTime.UtcNow.Ticks - startTime;
-            long duration = (long)TimeSpan.FromTicks(time).TotalMilliseconds;
+            long duration = (long)PreciseTime.ToTimeSpan(PreciseTime.NanoTime() - startTime).TotalMilliseconds;
             Assert.True(duration >= 1000, $"Expecting shutdown quite period >= 1000 milliseconds, but was {duration}");
         }
 

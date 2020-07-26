@@ -415,7 +415,7 @@ namespace DotNetty.Transport.Channels.Local
 
         void ReleaseInboundBuffers()
         {
-            Debug.Assert(EventLoop is null || EventLoop.InEventLoop);
+            //Debug.Assert(EventLoop is null || EventLoop.InEventLoop);
             _ = Interlocked.Exchange(ref v_readInProgress, SharedConstants.False);
             var inboundBuffer = _inboundBuffer;
             while (inboundBuffer.TryDequeue(out object msg))

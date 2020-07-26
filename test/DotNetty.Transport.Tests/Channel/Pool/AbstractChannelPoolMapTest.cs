@@ -10,6 +10,7 @@
     using DotNetty.Transport.Channels.Pool;
     using Xunit;
 
+    [Collection("ChannelPoolTests")]
     public class AbstractChannelPoolMapTest
     {
         [Fact]

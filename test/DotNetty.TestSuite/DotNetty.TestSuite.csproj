@@ -17,6 +17,9 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
     <PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+    <PackageReference Include="System.ValueTuple" Version="$(SystemValueTuplePackageVersion)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.csproj" />

@@ -12,6 +12,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
     using DotNetty.Transport.Channels.Pool;
     using Xunit;
 
+    [Collection("ChannelPoolTests")]
     public class FixedChannelPoolTest : IDisposable
     {
         readonly IEventLoopGroup _group;
