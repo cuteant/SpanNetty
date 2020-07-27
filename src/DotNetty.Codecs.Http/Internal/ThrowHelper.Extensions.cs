@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -275,12 +276,12 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_Multiple_Content_Length_Headers_Found()
+        internal static void ThrowArgumentException_Multiple_Content_Length_Headers_Found(IList<ICharSequence> contentLengthFields)
         {
             throw GetException();
-            static ArgumentException GetException()
+            ArgumentException GetException()
             {
-                return new ArgumentException("Multiple Content-Length headers found");
+                return new ArgumentException("Multiple Content-Length values found: " + string.Join(",", contentLengthFields));
             }
         }
 

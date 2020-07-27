@@ -13,25 +13,33 @@ namespace DotNetty.Codecs.Http
         {
         }
 
-        public HttpResponseDecoder(int maxInitialLineLength, int maxHeaderSize, int maxChunkSize) 
-            : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, true)
+        public HttpResponseDecoder(int maxInitialLineLength, int maxHeaderSize, int maxChunkSize)
+            : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, DefaultChunkedSupported)
         {
         }
 
         public HttpResponseDecoder(int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders)
-            : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, true, validateHeaders)
+            : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, DefaultChunkedSupported, validateHeaders)
         {
         }
 
         public HttpResponseDecoder(int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders, int initialBufferSize)
-            : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, true, validateHeaders, initialBufferSize)
+            : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, DefaultChunkedSupported, validateHeaders, initialBufferSize)
+        {
+        }
+
+        public HttpResponseDecoder(
+                int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders,
+                int initialBufferSize, bool allowDuplicateContentLengths)
+            : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, DefaultChunkedSupported, validateHeaders,
+                  initialBufferSize, allowDuplicateContentLengths)
         {
         }
 
         protected sealed override IHttpMessage CreateMessage(AsciiString[] initialLine) =>
              new DefaultHttpResponse(
                 HttpVersion.ValueOf(initialLine[0]),
-                HttpResponseStatus.ValueOf(initialLine[1].ParseInt() , initialLine[2]), this.ValidateHeaders);
+                HttpResponseStatus.ValueOf(initialLine[1].ParseInt(), initialLine[2]), this.ValidateHeaders);
 
         protected override IHttpMessage CreateInvalidMessage() => new DefaultFullHttpResponse(HttpVersion.Http10, UnknownStatus, this.ValidateHeaders);
 

@@ -357,13 +357,14 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException_Can_not_increase_by(int readableBytes)
+        internal static void ThrowInvalidOperationException_Can_not_increase_by(int capacity, int readableBytes)
         {
-            throw GetException(readableBytes);
+            throw GetException(capacity, readableBytes);
 
-            static InvalidOperationException GetException(int readableBytes)
+            static InvalidOperationException GetException(int capacity, int readableBytes)
             {
-                return new InvalidOperationException("Can't increase by " + readableBytes);
+                return new InvalidOperationException("Can't increase by " + readableBytes + " as capacity(" + capacity + ")" +
+                    " would overflow " + int.MaxValue);
             }
         }
 

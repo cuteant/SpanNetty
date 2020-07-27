@@ -670,6 +670,22 @@ namespace DotNetty.Codecs.Http2
 
         #endregion
 
+
+        #region -- IndexOutOfRangeException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException(int index, int length)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException("Index " + index + " out of bounds for length " + length);
+            }
+        }
+
+        #endregion
+
         #region -- InvalidOperationException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]

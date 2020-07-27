@@ -573,8 +573,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         private static IByteBuffer DecodeAttribute(IByteBuffer b, Encoding charset)
         {
-            //int firstEscaped = b.ForEachByte(new IndexOfProcessor((byte)'%'));
-            int firstEscaped = b.IndexOf(HttpConstants.Percent);
+            int firstEscaped = b.IndexOfAny(b.ReaderIndex, b.WriterIndex, HttpConstants.Percent, HttpConstants.PlusSign);
             if ((uint)firstEscaped > SharedConstants.TooBigOrNegative) // == -1
             {
                 return null; // nothing to decode
@@ -660,9 +659,13 @@ namespace DotNetty.Codecs.Http.Multipart
                         }
                     }
                 }
-                else if (0u >= (uint)(value - HttpConstants.Percent))
+                else if (0u >= (uint)(value - HttpConstants.Percent)) // '%'
                 {
                     NextEscapedIdx = 1;
+                }
+                else if (0u >= (uint)(value - HttpConstants.PlusSign)) // '+'
+                {
+                    _output.WriteByte(HttpConstants.Space);
                 }
                 else
                 {

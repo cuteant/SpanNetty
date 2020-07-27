@@ -86,7 +86,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// Sec-WebSocket-Protocol: chat
         /// ]]>
         /// </summary>
-        protected override IFullHttpResponse NewHandshakeResponse(IFullHttpRequest req, HttpHeaders headers)
+        protected internal override IFullHttpResponse NewHandshakeResponse(IFullHttpRequest req, HttpHeaders headers)
         {
             if (!req.Headers.TryGet(HttpHeaderNames.SecWebsocketKey, out ICharSequence key)
                 || key is null)
@@ -113,9 +113,9 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 #endif
 
-            _ = res.Headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
-            _ = res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
-            _ = res.Headers.Add(HttpHeaderNames.SecWebsocketAccept, accept);
+            _ = res.Headers.Set(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket)
+                           .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
+                           .Set(HttpHeaderNames.SecWebsocketAccept, accept);
 
             if (req.Headers.TryGet(HttpHeaderNames.SecWebsocketProtocol, out ICharSequence subprotocols)
                 && subprotocols is object)

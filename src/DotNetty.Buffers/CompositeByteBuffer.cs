@@ -227,7 +227,19 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        int AddComponent0(bool increaseWriterIndex, int cIndex, IByteBuffer buffer)
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private static void CheckForOverflow(int capacity, int readableBytes)
+        {
+            if ((uint)(capacity + readableBytes) > SharedConstants.TooBigOrNegative) // < 0
+            {
+                ThrowHelper.ThrowInvalidOperationException_Can_not_increase_by(capacity, readableBytes);
+            }
+        }
+
+        /// <summary>
+        /// Precondition is that <code>buffer != null</code>.
+        /// </summary>
+        private int AddComponent0(bool increaseWriterIndex, int cIndex, IByteBuffer buffer)
         {
             bool wasAdded = false;
             try
@@ -240,10 +252,7 @@ namespace DotNetty.Buffers
 
                 // Check if we would overflow.
                 // See https://github.com/netty/netty/issues/10194
-                if (((uint)Capacity + (uint)readableBytes) > SharedConstants.TooBigOrNegative)
-                {
-                    ThrowHelper.ThrowInvalidOperationException_Can_not_increase_by(readableBytes);
-                }
+                CheckForOverflow(Capacity, readableBytes);
 
                 AddComp(cIndex, c);
                 wasAdded = true;
@@ -354,10 +363,7 @@ namespace DotNetty.Buffers
 
                 // Check if we would overflow.
                 // See https://github.com/netty/netty/issues/10194
-                if (((uint)capacity + (uint)readableBytes) > SharedConstants.TooBigOrNegative)
-                {
-                    ThrowHelper.ThrowInvalidOperationException_Can_not_increase_by(readableBytes);
-                }
+                CheckForOverflow(capacity, readableBytes);
             }
             // only set ci after we've shifted so that finally block logic is always correct
             int ci = int.MaxValue;

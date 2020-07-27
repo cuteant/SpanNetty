@@ -14,8 +14,18 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
     using static HttpVersion;
 
-    public class WebSocketServerHandshaker00Test
+    public class WebSocketServerHandshaker00Test : WebSocketServerHandshakerTest
     {
+        protected override WebSocketServerHandshaker NewHandshaker(string webSocketURL, string subprotocols, WebSocketDecoderConfig decoderConfig)
+        {
+            return new WebSocketServerHandshaker00(webSocketURL, subprotocols, decoderConfig);
+        }
+
+        protected override WebSocketVersion WebSocketVersion()
+        {
+            return Http.WebSockets.WebSocketVersion.V00;
+        }
+
         [Fact]
         public void PerformOpeningHandshake() => PerformOpeningHandshake0(true);
 

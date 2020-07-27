@@ -591,6 +591,80 @@ namespace DotNetty.Codecs.Http.Tests
             return contentLength;
         }
 
+        [Fact]
+        public void TestTransferCodingGZIP()
+        {
+            string requestStr = "POST / HTTP/1.1\r\n" +
+                    "Content-Length: " + GzHelloWorld.Length + "\r\n" +
+                    "Transfer-Encoding: gzip\r\n" +
+                    "\r\n";
+            HttpRequestDecoder decoder = new HttpRequestDecoder();
+            HttpContentDecoder decompressor = new HttpContentDecompressor();
+            EmbeddedChannel channel = new EmbeddedChannel(decoder, decompressor);
+
+            channel.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes(requestStr)));
+            channel.WriteInbound(Unpooled.CopiedBuffer(GzHelloWorld));
+
+            IHttpRequest request = channel.ReadInbound<IHttpRequest>();
+            Assert.True(request.Result.IsSuccess);
+            Assert.False(request.Headers.Contains(HttpHeaderNames.ContentLength));
+
+            IHttpContent content = channel.ReadInbound<IHttpContent>();
+            Assert.True(content.Result.IsSuccess);
+            Assert.Equal(HelloWorld, content.Content.ToString(Encoding.ASCII));
+            content.Release();
+
+            ILastHttpContent lastHttpContent = channel.ReadInbound<ILastHttpContent>();
+            Assert.True(lastHttpContent.Result.IsSuccess);
+            lastHttpContent.Release();
+
+            AssertHasInboundMessages(channel, false);
+            AssertHasOutboundMessages(channel, false);
+            Assert.False(channel.Finish());
+            channel.ReleaseInbound();
+        }
+
+        [Fact]
+        public void TestTransferCodingGZIPAndChunked()
+        {
+            string requestStr = "POST / HTTP/1.1\r\n" +
+                    "Host: example.com\r\n" +
+                    "Content-Type: application/x-www-form-urlencoded\r\n" +
+                    "Trailer: My-Trailer\r\n" +
+                    "Transfer-Encoding: gzip, chunked\r\n" +
+                    "\r\n";
+            HttpRequestDecoder decoder = new HttpRequestDecoder();
+            HttpContentDecoder decompressor = new HttpContentDecompressor();
+            EmbeddedChannel channel = new EmbeddedChannel(decoder, decompressor);
+
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(requestStr, Encoding.ASCII)));
+
+            string chunkLength = GzHelloWorld.Length.ToString("x2");
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(chunkLength + "\r\n", Encoding.ASCII)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(GzHelloWorld)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("\r\n"))));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer("0\r\n", Encoding.ASCII)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer("My-Trailer: 42\r\n\r\n", Encoding.ASCII)));
+
+            IHttpRequest request = channel.ReadInbound<IHttpRequest>();
+            Assert.True(request.Result.IsSuccess);
+            Assert.True(request.Headers.ContainsValue(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked, true));
+            Assert.False(request.Headers.Contains(HttpHeaderNames.ContentLength));
+
+            IHttpContent chunk1 = channel.ReadInbound<IHttpContent>();
+            Assert.True(chunk1.Result.IsSuccess);
+            Assert.Equal(HelloWorld, chunk1.Content.ToString(Encoding.ASCII));
+            chunk1.Release();
+
+            ILastHttpContent chunk2 = channel.ReadInbound<ILastHttpContent>();
+            Assert.True(chunk2.Result.IsSuccess);
+            Assert.Equal("42", chunk2.TrailingHeaders.Get(AsciiString.Of("My-Trailer"), null));
+            chunk2.Release();
+
+            Assert.False(channel.Finish());
+            channel.ReleaseInbound();
+        }
+
         static byte[] GzCompress(byte[] input)
         {
             ZlibEncoder encoder = ZlibCodecFactory.NewZlibEncoder(ZlibWrapper.Gzip);

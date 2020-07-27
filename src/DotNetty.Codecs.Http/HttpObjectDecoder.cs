@@ -20,10 +20,11 @@ namespace DotNetty.Codecs.Http
     /// <h3>Parameters that prevents excessive memory consumption</h3>
     /// <table border="1">
     /// <tr>
-    /// <th>Name</th><th>Meaning</th>
+    /// <th>Name</th><th>Default value</th><th>Meaning</th>
     /// </tr>
     /// <tr>
     /// <td>{@code maxInitialLineLength}</td>
+    /// <td>{@value #DEFAULT_MAX_INITIAL_LINE_LENGTH}</td>
     /// <td>The maximum length of the initial line
     ///     (e.g. {@code "GET / HTTP/1.0"} or {@code "HTTP/1.0 200 OK"})
     ///     If the length of the initial line exceeds this value, a
@@ -31,15 +32,32 @@ namespace DotNetty.Codecs.Http
     /// </tr>
     /// <tr>
     /// <td>{@code maxHeaderSize}</td>
+    /// <td>{@value #DEFAULT_MAX_HEADER_SIZE}</td>
     /// <td>The maximum length of all headers.  If the sum of the length of each
     ///     header exceeds this value, a <see cref="TooLongFrameException"/> will be raised.</td>
     /// </tr>
     /// <tr>
     /// <td><see cref="_maxChunkSize"/></td>
+    /// <td>{@value #DEFAULT_MAX_CHUNK_SIZE}</td>
     /// <td>The maximum length of the content or each chunk.  If the content length
     ///     (or the length of each chunk) exceeds this value, the content or chunk
     ///     will be split into multiple <see cref="IHttpContent"/>s whose length is
     ///     <see cref="_maxChunkSize"/> at maximum.</td>
+    /// </tr>
+    /// </table>
+    ///
+    /// <h3>Parameters that control parsing behavior</h3>
+    /// <table border="1">
+    /// <tr>
+    /// <th>Name</th><th>Default value</th><th>Meaning</th>
+    /// </tr>
+    /// <tr>
+    /// <td>{@code allowDuplicateContentLengths}</td>
+    /// <td>{@value #DEFAULT_ALLOW_DUPLICATE_CONTENT_LENGTHS}</td>
+    /// <td>When set to {@code false}, will reject any messages that contain multiple Content-Length header fields.
+    ///     When set to {@code true}, will allow multiple Content-Length headers only if they are all the same decimal value.
+    ///     The duplicated field-values will be replaced with a single valid Content-Length field.
+    ///     See <a href="https://tools.ietf.org/html/rfc7230#section-3.3.2">RFC 7230, Section 3.3.2</a>.</td>
     /// </tr>
     /// </table>
     ///
@@ -89,10 +107,21 @@ namespace DotNetty.Codecs.Http
         private const byte c_space = (byte)' ';
         private const byte c_tab = (byte)'\t';
 
+        public const int DefaultMaxInitialLineLength = 4096;
+        public const int DefaultMaxHeaderSize = 8192;
+        public const bool DefaultChunkedSupported = true;
+        public const int DefaultMaxChunkSize = 8192;
+        public const bool DefaultValidateHeaders = true;
+        public const int DefaultInitialBufferSize = 128;
+        public const bool DefaultAllowDuplicateContentLengths = false;
+
+        private static readonly char[] s_commaSeparator = new char[] { ',' };
+
         protected readonly bool ValidateHeaders;
 
         private readonly int _maxChunkSize;
         private readonly bool _chunkedSupported;
+        private readonly bool _allowDuplicateContentLengths;
         private readonly HeaderParser _headerParser;
         private readonly LineParser _lineParser;
 
@@ -127,7 +156,8 @@ namespace DotNetty.Codecs.Http
         /// <summary>
         /// Creates a new instance with the default
         /// </summary>
-        protected HttpObjectDecoder() : this(4096, 8192, 8192, true)
+        protected HttpObjectDecoder()
+            : this(DefaultMaxInitialLineLength, DefaultMaxHeaderSize, DefaultMaxChunkSize, DefaultChunkedSupported)
         {
         }
 
@@ -140,7 +170,7 @@ namespace DotNetty.Codecs.Http
         /// <param name="chunkedSupported"></param>
         protected HttpObjectDecoder(
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool chunkedSupported)
-            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, chunkedSupported, true)
+            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, chunkedSupported, DefaultValidateHeaders)
         {
         }
 
@@ -155,7 +185,8 @@ namespace DotNetty.Codecs.Http
         protected HttpObjectDecoder(
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize,
             bool chunkedSupported, bool validateHeaders)
-            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, chunkedSupported, validateHeaders, 128)
+            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, chunkedSupported, validateHeaders,
+                  DefaultInitialBufferSize)
         {
         }
 
@@ -171,6 +202,25 @@ namespace DotNetty.Codecs.Http
         protected HttpObjectDecoder(
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize,
             bool chunkedSupported, bool validateHeaders, int initialBufferSize)
+            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, chunkedSupported, validateHeaders, initialBufferSize,
+                DefaultAllowDuplicateContentLengths)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance with the specified parameters.
+        /// </summary>
+        /// <param name="maxInitialLineLength"></param>
+        /// <param name="maxHeaderSize"></param>
+        /// <param name="maxChunkSize"></param>
+        /// <param name="chunkedSupported"></param>
+        /// <param name="validateHeaders"></param>
+        /// <param name="initialBufferSize"></param>
+        /// <param name="allowDuplicateContentLengths"></param>
+        protected HttpObjectDecoder(
+            int maxInitialLineLength, int maxHeaderSize, int maxChunkSize,
+            bool chunkedSupported, bool validateHeaders, int initialBufferSize,
+            bool allowDuplicateContentLengths)
         {
             if ((uint)(maxInitialLineLength - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(maxInitialLineLength, ExceptionArgument.maxInitialLineLength); }
             if ((uint)(maxHeaderSize - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(maxHeaderSize, ExceptionArgument.maxHeaderSize); }
@@ -182,6 +232,7 @@ namespace DotNetty.Codecs.Http
             _maxChunkSize = maxChunkSize;
             _chunkedSupported = chunkedSupported;
             ValidateHeaders = validateHeaders;
+            _allowDuplicateContentLengths = allowDuplicateContentLengths;
         }
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer buffer, List<object> output)
@@ -676,8 +727,8 @@ namespace DotNetty.Codecs.Http
             _name = null;
             _value = null;
 
-            var values = headers.GetAll(HttpHeaderNames.ContentLength);
-            uint contentLengthValuesCount = (uint)values.Count;
+            var contentLengthFields = headers.GetAll(HttpHeaderNames.ContentLength);
+            uint contentLengthValuesCount = (uint)contentLengthFields.Count;
 
             if (contentLengthValuesCount > 0u)
             {
@@ -694,13 +745,55 @@ namespace DotNetty.Codecs.Http
                 //   duplicated field-values with a single valid Content-Length field
                 //   containing that decimal value prior to determining the message body
                 //   length or forwarding the message.
-                if (contentLengthValuesCount > 1u && httpMessage.ProtocolVersion == HttpVersion.Http11)
+                bool multipleContentLengths =
+                    contentLengthValuesCount > 1u || SharedConstants.TooBigOrNegative >= (uint)contentLengthFields[0].IndexOf(StringUtil.Comma); // >= 0
+                if (multipleContentLengths && httpMessage.ProtocolVersion == HttpVersion.Http11)
                 {
-                    ThrowHelper.ThrowArgumentException_Multiple_Content_Length_Headers_Found();
+                    if (_allowDuplicateContentLengths)
+                    {
+                        // Find and enforce that all Content-Length values are the same
+                        string firstValue = null;
+                        for (int idx = 0; idx < contentLengthFields.Count; idx++)
+                        {
+                            string[] tokens = contentLengthFields[idx].ToString().Split(
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                                StringUtil.Comma
+#else
+                                s_commaSeparator
+#endif
+                                );
+                            for (int tokenIdx = 0; tokenIdx < tokens.Length; tokenIdx++)
+                            {
+                                string trimmed = tokens[tokenIdx].Trim();
+                                if (firstValue is null)
+                                {
+                                    firstValue = trimmed;
+                                }
+                                else if (!string.Equals(trimmed, firstValue))
+                                {
+                                    ThrowHelper.ThrowArgumentException_Multiple_Content_Length_Headers_Found(contentLengthFields);
+                                }
+                            }
+                        }
+                        // Replace the duplicated field-values with a single valid Content-Length field
+                        headers.Set(HttpHeaderNames.ContentLength, firstValue);
+                        if (!long.TryParse(firstValue, out _contentLength))
+                        {
+                            ThrowHelper.ThrowArgumentException_Invalid_Content_Length();
+                        }
+                    }
+                    else
+                    {
+                        // Reject the message as invalid
+                        ThrowHelper.ThrowArgumentException_Multiple_Content_Length_Headers_Found(contentLengthFields);
+                    }
                 }
-                if (!long.TryParse(values[0].ToString(), out _contentLength))
+                else
                 {
-                    ThrowHelper.ThrowArgumentException_Invalid_Content_Length();
+                    if (!long.TryParse(contentLengthFields[0].ToString(), out _contentLength))
+                    {
+                        ThrowHelper.ThrowArgumentException_Invalid_Content_Length();
+                    }
                 }
             }
 

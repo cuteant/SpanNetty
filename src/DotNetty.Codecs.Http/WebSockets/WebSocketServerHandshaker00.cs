@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="req"></param>
         /// <param name="headers"></param>
         /// <returns></returns>
-        protected override IFullHttpResponse NewHandshakeResponse(IFullHttpRequest req, HttpHeaders headers)
+        protected internal override IFullHttpResponse NewHandshakeResponse(IFullHttpRequest req, HttpHeaders headers)
         {
             // Serve the WebSocket handshake request.
             if (!req.Headers.ContainsValue(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade, true)
@@ -117,8 +117,8 @@ namespace DotNetty.Codecs.Http.WebSockets
                 _ = res.Headers.Add(headers);
             }
 
-            _ = res.Headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
-            _ = res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
+            _ = res.Headers.Set(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket)
+                           .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
 
             // Fill in the headers and contents depending on handshake getMethod.
             if (isHixie76)

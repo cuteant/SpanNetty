@@ -171,6 +171,11 @@ namespace DotNetty.Transport.Channels
     ///         pipeline.AddLast(group, "handler", new MyBusinessLogicHandler());
     ///     </code>
     /// </para>
+    /// Be aware that while using <see cref="DefaultEventLoopGroup"/> will offload the operation from the {<see cref="IEventLoop"/> it will
+    /// still process tasks in a serial fashion per {@link ChannelHandlerContext} and so guarantee ordering. Due the ordering
+    /// it may still become a bottle-neck. If ordering is not a requirement for your use-case you may want to consider using
+    /// <see cref="T:UnorderedThreadPoolEventExecutor"/> to maximize the parallelism of the task execution.
+    ///
     /// <para>Thread safety</para>
     /// <para>
     /// An <see cref="IChannelHandler"/> can be added or removed at any time because an <see cref="IChannelPipeline"/>

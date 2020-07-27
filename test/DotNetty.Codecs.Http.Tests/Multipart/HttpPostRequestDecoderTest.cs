@@ -799,7 +799,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
         [Fact]
         public void DecodeFullHttpRequestWithUrlEncodedBody()
         {
-            byte[] bodyBytes = Encoding.UTF8.GetBytes("foo=bar&a=b&empty=&city=%3c%22new%22%20york%20city%3e");
+            byte[] bodyBytes = Encoding.UTF8.GetBytes("foo=bar&a=b&empty=&city=%3c%22new%22%20york%20city%3e&other_city=los+angeles");
             IByteBuffer content = Unpooled.DirectBuffer(bodyBytes.Length);
             content.WriteBytes(bodyBytes);
 
@@ -808,7 +808,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             Assert.NotEmpty(decoder.GetBodyHttpDatas());
 
             Assert.NotEmpty(decoder.GetBodyHttpDatas());
-            Assert.Equal(4, decoder.GetBodyHttpDatas().Count);
+            Assert.Equal(5, decoder.GetBodyHttpDatas().Count);
 
             IAttribute attr = (IAttribute)decoder.GetBodyHttpData("foo");
             Assert.True(attr.GetByteBuffer().IsDirect);
@@ -825,6 +825,10 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             attr = (IAttribute)decoder.GetBodyHttpData("city");
             Assert.True(attr.GetByteBuffer().IsDirect);
             Assert.Equal("<\"new\" york city>", attr.Value);
+
+            attr = (IAttribute)decoder.GetBodyHttpData("other_city");
+            Assert.True(attr.GetByteBuffer().IsDirect);
+            Assert.Equal("los angeles", attr.Value);
 
             decoder.Destroy();
             req.Release();

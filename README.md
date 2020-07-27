@@ -3,7 +3,7 @@
 This is a fork from DotNetty project: https://github.com/azure/dotnetty
 
 ## ~ Features
-  - Align with [Netty-4.1.50](https://github.com/netty/netty/tree/netty-4.1.50.Final).
+  - Align with [Netty-4.1.51](https://github.com/netty/netty/tree/netty-4.1.51.Final).
 
 ## Use
 

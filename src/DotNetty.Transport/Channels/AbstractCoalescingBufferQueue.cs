@@ -15,10 +15,10 @@ namespace DotNetty.Transport.Channels
 
     public abstract class AbstractCoalescingBufferQueue
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractCoalescingBufferQueue>();
-        readonly Deque<object> _bufAndListenerPairs;
-        readonly PendingBytesTracker _tracker;
-        int _readableBytes;
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractCoalescingBufferQueue>();
+        private readonly Deque<object> _bufAndListenerPairs;
+        private readonly PendingBytesTracker _tracker;
+        private int _readableBytes;
 
         /// <summary>
         /// Create a new instance.
@@ -110,6 +110,7 @@ namespace DotNetty.Transport.Channels
             // Use isEmpty rather than readableBytes==0 as we may have a promise associated with an empty buffer.
             if (_bufAndListenerPairs.IsEmpty)
             {
+                Debug.Assert(_readableBytes == 0);
                 return RemoveEmptyValue();
             }
             bytes = Math.Min(bytes, _readableBytes);
@@ -205,7 +206,6 @@ namespace DotNetty.Transport.Channels
         /// <param name="ctx">The context to write all elements to.</param>
         public void WriteAndRemoveAll(IChannelHandlerContext ctx)
         {
-            DecrementReadableBytes(_readableBytes);
             Exception pending = null;
             IByteBuffer previousBuf = null;
             while (true)
@@ -218,6 +218,7 @@ namespace DotNetty.Transport.Channels
                         case null:
                             if (previousBuf is object)
                             {
+                                DecrementReadableBytes(previousBuf.ReadableBytes);
                                 _ = ctx.WriteAsync(previousBuf, ctx.VoidPromise());
                             }
                             goto LoopEnd;
@@ -225,18 +226,21 @@ namespace DotNetty.Transport.Channels
                         case IByteBuffer byteBuffer:
                             if (previousBuf is object)
                             {
+                                DecrementReadableBytes(previousBuf.ReadableBytes);
                                 _ = ctx.WriteAsync(previousBuf, ctx.VoidPromise());
                             }
                             previousBuf = byteBuffer;
                             break;
 
                         case IPromise promise:
+                            DecrementReadableBytes(previousBuf.ReadableBytes);
                             _ = ctx.WriteAsync(previousBuf, promise);
                             previousBuf = null;
                             break;
 
                         default:
                             //    // todo
+                            //    decrementReadableBytes(previousBuf.readableBytes());
                             //    //ctx.WriteAsync(previousBuf).addListener((ChannelFutureListener)entry);
                             //    previousBuf = null;
                             break;
@@ -257,7 +261,7 @@ namespace DotNetty.Transport.Channels
         LoopEnd:
             if (pending is object)
             {
-                _ = ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
+                ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
             }
         }
 
@@ -350,15 +354,15 @@ namespace DotNetty.Transport.Channels
 
         private void ReleaseAndCompleteAll(Task future)
         {
-            DecrementReadableBytes(_readableBytes);
             Exception pending = null;
             while (_bufAndListenerPairs.TryRemoveFirst(out var entry))
             {
                 try
                 {
-                    if (entry is IByteBuffer)
+                    if (entry is IByteBuffer buffer)
                     {
-                        ReferenceCountUtil.SafeRelease(entry);
+                        DecrementReadableBytes(buffer.ReadableBytes);
+                        ReferenceCountUtil.SafeRelease(buffer);
                     }
                     else
                     {
@@ -379,7 +383,7 @@ namespace DotNetty.Transport.Channels
             }
             if (pending is object)
             {
-                _ = ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
+                ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
             }
         }
 
@@ -388,7 +392,7 @@ namespace DotNetty.Transport.Channels
             int nextReadableBytes = _readableBytes + increment;
             if (nextReadableBytes < _readableBytes)
             {
-                _ = ThrowHelper.ThrowInvalidOperationException_BufferQueueLengthOverflow(_readableBytes, increment);
+                ThrowHelper.ThrowInvalidOperationException_BufferQueueLengthOverflow(_readableBytes, increment);
             }
             _readableBytes = nextReadableBytes;
             if (_tracker is object)

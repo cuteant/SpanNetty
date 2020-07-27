@@ -5,9 +5,11 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
 {
     using System;
     using System.IO;
+    using System.Linq;
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http.Multipart;
+    using DotNetty.Common.Utilities;
     using Xunit;
 
     public sealed class DiskFileUploadTest
@@ -171,6 +173,51 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             }
             finally
             {
+                f1.Delete();
+            }
+        }
+
+        [Fact]
+        public void TestAddContentFromByteBuf()
+        {
+            TestAddContentFromByteBuf0(false);
+        }
+
+        [Fact]
+        public void TestAddContentFromCompositeByteBuf()
+        {
+            TestAddContentFromByteBuf0(true);
+        }
+
+        private static void TestAddContentFromByteBuf0(bool composite)
+        {
+            DiskFileUpload f1 = new DiskFileUpload("file3", "file3", "application/json", null, null, 0);
+            try
+            {
+                byte[] bytes = new byte[4096];
+                (new SafeRandom()).NextBytes(bytes);
+
+                IByteBuffer buffer;
+
+                if (composite)
+                {
+                    buffer = Unpooled.CompositeBuffer()
+                            .AddComponent(true, Unpooled.WrappedBuffer(bytes, 0, bytes.Length / 2))
+                            .AddComponent(true, Unpooled.WrappedBuffer(bytes, bytes.Length / 2, bytes.Length / 2));
+                }
+                else
+                {
+                    buffer = Unpooled.WrappedBuffer(bytes);
+                }
+                f1.AddContent(buffer, true);
+                IByteBuffer buf = f1.GetByteBuffer();
+                Assert.Equal(0, buf.ReaderIndex);
+                Assert.Equal(buf.WriterIndex, bytes.Length);
+                Assert.True(ByteBufferUtil.GetBytes(buf).SequenceEqual(bytes));
+            }
+            finally
+            {
+                //release the ByteBuf
                 f1.Delete();
             }
         }

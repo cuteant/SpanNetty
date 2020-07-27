@@ -189,7 +189,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        public static bool IsTransferEncodingChunked(IHttpMessage message) => message.Headers.Contains(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked, true);
+        public static bool IsTransferEncodingChunked(IHttpMessage message) => message.Headers.ContainsValue(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked, true);
 
         public static void SetTransferEncodingChunked(IHttpMessage m, bool chunked)
         {

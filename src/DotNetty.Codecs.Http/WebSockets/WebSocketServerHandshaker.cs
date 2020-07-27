@@ -297,7 +297,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="req"></param>
         /// <param name="responseHeaders"></param>
         /// <returns></returns>
-        protected abstract IFullHttpResponse NewHandshakeResponse(IFullHttpRequest req, HttpHeaders responseHeaders);
+        protected internal abstract IFullHttpResponse NewHandshakeResponse(IFullHttpRequest req, HttpHeaders responseHeaders);
 
         /// <summary>
         /// Performs the closing handshake

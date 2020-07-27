@@ -113,11 +113,11 @@ namespace DotNetty.Codecs.Http.Multipart
                     {
                         _fileStream = TempFile();
                     }
-                    _ = buffer.GetBytes(buffer.ReaderIndex, _fileStream, buffer.ReadableBytes);
+                    _ = buffer.GetBytes(buffer.ReaderIndex, _fileStream, localsize);
                     _ = buffer.SetReaderIndex(buffer.ReaderIndex + localsize);
                     _fileStream.Flush();
 
-                    Size += buffer.ReadableBytes;
+                    Size += localsize;
                 }
                 finally
                 {

@@ -13,6 +13,9 @@ namespace DotNetty.Codecs.Http
     public class HttpClientCodec : CombinedChannelDuplexHandler<HttpResponseDecoder, HttpRequestEncoder>,
         HttpClientUpgradeHandler.ISourceCodec
     {
+        public const bool DefaultFailOnMissingResponse = false;
+        public const bool DefaultParseHttpAfterConnectRequest = false;
+
         // A queue that is used for correlating a request and a response.
         private readonly Deque<HttpMethod> _queue = new Deque<HttpMethod>();
         private readonly bool _parseHttpAfterConnectRequest;
@@ -23,25 +26,26 @@ namespace DotNetty.Codecs.Http
         private long _requestResponseCounter;
         private readonly bool _failOnMissingResponse;
 
-        public HttpClientCodec() : this(4096, 8192, 8192, false)
+        public HttpClientCodec()
+            : this(HttpObjectDecoder.DefaultMaxInitialLineLength, HttpObjectDecoder.DefaultMaxHeaderSize, HttpObjectDecoder.DefaultMaxChunkSize, DefaultFailOnMissingResponse)
         {
         }
 
         public HttpClientCodec(int maxInitialLineLength, int maxHeaderSize, int maxChunkSize)
-            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, false)
+            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, DefaultFailOnMissingResponse)
         {
         }
 
         public HttpClientCodec(
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool failOnMissingResponse)
-            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, failOnMissingResponse, true)
+            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, failOnMissingResponse, HttpObjectDecoder.DefaultValidateHeaders)
         {
         }
 
         public HttpClientCodec(
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool failOnMissingResponse,
             bool validateHeaders)
-            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, failOnMissingResponse, validateHeaders, false)
+            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, failOnMissingResponse, validateHeaders, DefaultParseHttpAfterConnectRequest)
         {
         }
 
@@ -57,7 +61,8 @@ namespace DotNetty.Codecs.Http
         public HttpClientCodec(
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool failOnMissingResponse,
             bool validateHeaders, int initialBufferSize)
-            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, failOnMissingResponse, validateHeaders, initialBufferSize, false)
+            : this(maxInitialLineLength, maxHeaderSize, maxChunkSize, failOnMissingResponse, validateHeaders,
+                  initialBufferSize, DefaultParseHttpAfterConnectRequest)
         {
         }
 
@@ -65,7 +70,19 @@ namespace DotNetty.Codecs.Http
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool failOnMissingResponse,
             bool validateHeaders, int initialBufferSize, bool parseHttpAfterConnectRequest)
         {
-            Init(new Decoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize), new Encoder(this));
+            Init(new Decoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize,
+                HttpObjectDecoder.DefaultAllowDuplicateContentLengths), new Encoder(this));
+            _parseHttpAfterConnectRequest = parseHttpAfterConnectRequest;
+            _failOnMissingResponse = failOnMissingResponse;
+        }
+
+        public HttpClientCodec(
+            int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool failOnMissingResponse,
+            bool validateHeaders, int initialBufferSize, bool parseHttpAfterConnectRequest,
+            bool allowDuplicateContentLengths)
+        {
+            Init(new Decoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize,
+                allowDuplicateContentLengths), new Encoder(this));
             _parseHttpAfterConnectRequest = parseHttpAfterConnectRequest;
             _failOnMissingResponse = failOnMissingResponse;
         }
@@ -131,8 +148,9 @@ namespace DotNetty.Codecs.Http
                 _clientCodec = clientCodec;
             }
 
-            internal Decoder(HttpClientCodec clientCodec, int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders, int initialBufferSize)
-                : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize)
+            internal Decoder(HttpClientCodec clientCodec, int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders,
+                int initialBufferSize, bool allowDuplicateContentLengths)
+                : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize, allowDuplicateContentLengths)
             {
                 _clientCodec = clientCodec;
             }

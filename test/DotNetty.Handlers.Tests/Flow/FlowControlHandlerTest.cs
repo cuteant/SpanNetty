@@ -276,7 +276,7 @@ namespace DotNetty.Handlers.Tests.Flow
                 // channelRead(2)
                 peer.Configuration.IsAutoRead = true;
                 setAutoReadLatch1.Signal();
-                Assert.True(msgRcvLatch1.Wait(TimeSpan.FromSeconds(1)));
+                Assert.True(msgRcvLatch2.Wait(TimeSpan.FromSeconds(1)));
 
                 // channelRead(3)
                 peer.Configuration.IsAutoRead = true;
@@ -344,6 +344,77 @@ namespace DotNetty.Handlers.Tests.Flow
                 // channelRead(3)
                 peer.Read();
                 Assert.True(msgRcvLatch3.Wait(TimeSpan.FromSeconds(10)));
+                Assert.True(flow.IsQueueEmpty);
+            }
+            finally
+            {
+                Task.WhenAll(client.CloseAsync(), server.CloseAsync()).Wait(TimeSpan.FromSeconds(5));
+            }
+
+            void Signal(CountdownEvent evt)
+            {
+                if (!evt.IsSet)
+                {
+                    evt.Signal();
+                }
+            }
+        }
+
+        /**
+         * The {@link FlowControlHandler} will keep track of read calls when
+         * when read is called multiple times when the FlowControlHandler queue is empty.
+         */
+        [Fact]
+        public async Task TestTrackReadCallCount()
+        {
+            IChannel channel = null;
+            var mre = new ManualResetEventSlim(false);
+
+            var msgRcvLatch1 = new CountdownEvent(1);
+            var msgRcvLatch2 = new CountdownEvent(2);
+            var msgRcvLatch3 = new CountdownEvent(3);
+
+            ChannelHandlerAdapter handler = new TestHandler(
+                onActive: ctx =>
+                {
+                    ctx.FireChannelActive();
+                    //peerRef.exchange(ctx.Channel, 1L, SECONDS);
+                    Interlocked.Exchange(ref channel, ctx.Channel);
+                    mre.Set();
+                },
+                onRead: (ctx, msg) =>
+                {
+                    Signal(msgRcvLatch1);
+                    Signal(msgRcvLatch2);
+                    Signal(msgRcvLatch3);
+                }
+            );
+
+            var flow = new FlowControlHandler();
+            IChannel server = await NewServer(false, flow, handler);
+            IChannel client = await NewClient(server.LocalAddress);
+            try
+            {
+                // The client connection on the server side
+                mre.Wait(TimeSpan.FromSeconds(1));
+                IChannel peer = Interlocked.Exchange(ref channel, null);
+
+                // Confirm that the queue is empty
+                Assert.True(flow.IsQueueEmpty);
+                // Request read 3 times
+                peer.Read();
+                peer.Read();
+                peer.Read();
+
+                // Write the message
+                client.WriteAndFlushAsync(NewOneMessage()).GetAwaiter().GetResult();
+
+                // channelRead(1)
+                Assert.True(msgRcvLatch1.Wait(TimeSpan.FromSeconds(1)));
+                // channelRead(2)
+                Assert.True(msgRcvLatch2.Wait(TimeSpan.FromSeconds(1)));
+                // channelRead(3)
+                Assert.True(msgRcvLatch3.Wait(TimeSpan.FromSeconds(1)));
                 Assert.True(flow.IsQueueEmpty);
             }
             finally
@@ -442,7 +513,7 @@ namespace DotNetty.Handlers.Tests.Flow
             channel.FlushInbound();
             Assert.Null(channel.ReadInbound<IByteBuffer>());
 
-            Thread.Sleep(delayMillis);
+            Thread.Sleep(delayMillis + 20);
             channel.RunPendingTasks();
             var result = userEvents.TryTake(out var evt, TimeSpan.FromSeconds(5));
             Assert.True(result);
@@ -484,6 +555,82 @@ namespace DotNetty.Handlers.Tests.Flow
                     _userEvents.Add(idleStateEvent);
                 }
                 context.FireUserEventTriggered(evt);
+            }
+        }
+
+        [Fact]
+        public async Task TestRemoveFlowControl()
+        {
+            CountdownEvent latch = new CountdownEvent(3);
+
+            ChannelHandlerAdapter handler = new TestHandler(
+                onActive: ctx =>
+                {
+                    //do the first read
+                    ctx.Read();
+                    ctx.FireChannelActive();
+                },
+                onRead: (ctx, msg) =>
+                {
+                    Signal(latch);
+                    ctx.FireChannelRead(msg);
+                }
+            );
+
+            FlowControlHandler flow = new FlowControlHandler0();
+            ChannelHandlerAdapter tail = new ChannelInboundHandlerAdapter0();
+
+            IChannel server = await NewServer(false /* no auto read */, flow, handler, tail);
+            IChannel client = await NewClient(server.LocalAddress);
+            try
+            {
+                // Write one message
+                await client.WriteAndFlushAsync(NewOneMessage());
+
+                // We should receive 3 messages
+                Assert.True(latch.Wait(TimeSpan.FromSeconds(1)));
+                Assert.True(flow.IsQueueEmpty);
+            }
+            finally
+            {
+                Task.WhenAll(client.CloseAsync(), server.CloseAsync()).Wait(TimeSpan.FromSeconds(5));
+            }
+
+            void Signal(CountdownEvent evt)
+            {
+                if (!evt.IsSet)
+                {
+                    evt.Signal();
+                }
+            }
+        }
+
+        class FlowControlHandler0 : FlowControlHandler
+        {
+            private int _num;
+
+            public override void ChannelRead(IChannelHandlerContext ctx, object msg)
+            {
+                base.ChannelRead(ctx, msg);
+                ++_num;
+                if (_num >= 3)
+                {
+                    //We have received 3 messages. Remove myself later
+                    IChannelHandler handler = this;
+                    ctx.Channel.EventLoop.Execute(() =>
+                    {
+                        ctx.Pipeline.Remove(handler);
+                    });
+                }
+            }
+        }
+
+        class ChannelInboundHandlerAdapter0 : ChannelHandlerAdapter
+        {
+            public override void ChannelRead(IChannelHandlerContext ctx, object msg)
+            {
+                //consume this msg
+                ReferenceCountUtil.Release(msg);
             }
         }
 

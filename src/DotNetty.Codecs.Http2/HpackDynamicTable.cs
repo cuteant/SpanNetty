@@ -58,9 +58,10 @@ namespace DotNetty.Codecs.Http2
         public HpackHeaderField GetEntry(int index)
         {
             uint uIndex = (uint)index;
-            if (0u >= uIndex || uIndex > (uint)Length())
+            var len = Length();
+            if (0u >= uIndex || uIndex > (uint)len)
             {
-                ThrowHelper.ThrowIndexOutOfRangeException();
+                ThrowHelper.ThrowIndexOutOfRangeException(index, len);
             }
 
             int i = _head - index;

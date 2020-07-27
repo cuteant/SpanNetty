@@ -3,6 +3,7 @@
 
 namespace DotNetty.Handlers.Flow
 {
+    using System;
     using DotNetty.Codecs;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
@@ -47,23 +48,27 @@ namespace DotNetty.Handlers.Flow
     /// </summary>
     public class FlowControlHandler : ChannelDuplexHandler
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<FlowControlHandler>();
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<FlowControlHandler>();
 
-        static readonly ThreadLocalPool<RecyclableQueue> Recycler = new ThreadLocalPool<RecyclableQueue>(h => new RecyclableQueue(h));
+        private static readonly ThreadLocalPool<RecyclableQueue> Recycler = new ThreadLocalPool<RecyclableQueue>(h => new RecyclableQueue(h));
 
-        readonly bool _releaseMessages;
+        private readonly bool _releaseMessages;
 
-        RecyclableQueue _queue;
+        private RecyclableQueue _queue;
 
-        IChannelConfiguration _config;
+        private IChannelConfiguration _config;
 
-        bool _shouldConsume;
+        private int _readRequestCount;
 
+        /// <summary>Create new instance.</summary>
         public FlowControlHandler()
             : this(true)
         {
         }
 
+        /// <summary>Create new instance.</summary>
+        /// <param name="releaseMessages">If <c>false</c>, the handler won't release the buffered messages
+        /// when the handler is removed.</param>
         public FlowControlHandler(bool releaseMessages)
         {
             _releaseMessages = releaseMessages;
@@ -107,6 +112,16 @@ namespace DotNetty.Handlers.Flow
             _config = ctx.Channel.Configuration;
         }
 
+        public override void HandlerRemoved(IChannelHandlerContext ctx)
+        {
+            base.HandlerRemoved(ctx);
+            if (!IsQueueEmpty)
+            {
+                Dequeue(ctx, _queue.Count);
+            }
+            Destroy();
+        }
+
         public override void ChannelInactive(IChannelHandlerContext ctx)
         {
             Destroy();
@@ -120,7 +135,7 @@ namespace DotNetty.Handlers.Flow
                 // It seems no messages were consumed. We need to read() some
                 // messages from upstream and once one arrives it need to be
                 // relayed to downstream to keep the flow going.
-                _shouldConsume = true;
+                ++_readRequestCount;
                 _ = ctx.Read();
             }
         }
@@ -137,8 +152,8 @@ namespace DotNetty.Handlers.Flow
             // We just received one message. Do we need to relay it regardless
             // of the auto reading configuration? The answer is yes if this
             // method was called as a result of a prior read() call.
-            int minConsume = _shouldConsume ? 1 : 0;
-            _shouldConsume = false;
+            int minConsume = Math.Min(_readRequestCount, _queue.Count);
+            _readRequestCount -= minConsume;
 
             _ = Dequeue(ctx, minConsume);
         }
@@ -169,7 +184,7 @@ namespace DotNetty.Handlers.Flow
          * @see #read(ChannelHandlerContext)
          * @see #channelRead(ChannelHandlerContext, Object)
          */
-        int Dequeue(IChannelHandlerContext ctx, int minConsume)
+        private int Dequeue(IChannelHandlerContext ctx, int minConsume)
         {
             int consumed = 0;
 

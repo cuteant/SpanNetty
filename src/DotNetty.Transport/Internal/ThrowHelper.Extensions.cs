@@ -668,9 +668,9 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowInvalidOperationException_CoalescingBufferQueuePending(Exception pending)
+        internal static void ThrowInvalidOperationException_CoalescingBufferQueuePending(Exception pending)
         {
-            return TaskUtil.FromException(GetInvalidOperationException());
+            throw GetInvalidOperationException();
             InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException(pending.Message, pending);
@@ -678,9 +678,9 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowInvalidOperationException_BufferQueueLengthOverflow(int readableBytes, int increment)
+        internal static void ThrowInvalidOperationException_BufferQueueLengthOverflow(int readableBytes, int increment)
         {
-            return TaskUtil.FromException(GetInvalidOperationException());
+            throw GetInvalidOperationException();
             InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("buffer queue length overflow: " + readableBytes + " + " + increment);
