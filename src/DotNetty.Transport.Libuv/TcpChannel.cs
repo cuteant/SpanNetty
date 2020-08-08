@@ -67,8 +67,6 @@ namespace DotNetty.Transport.Libuv
 
         protected override EndPoint RemoteAddressInternal => _tcp?.GetPeerEndPoint();
 
-        //protected override IChannelUnsafe NewUnsafe() => new TcpChannelUnsafe(this); ## 苦竹 屏蔽 ##
-
         protected override void DoRegister()
         {
             if (_tcp is null)

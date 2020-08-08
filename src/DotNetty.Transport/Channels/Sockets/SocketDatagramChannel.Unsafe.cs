@@ -32,8 +32,8 @@ namespace DotNetty.Transport.Channels.Sockets
     {
         public sealed class DatagramChannelUnsafe : SocketMessageUnsafe
         {
-            public DatagramChannelUnsafe() //SocketDatagramChannel channel)
-                : base() //channel)
+            public DatagramChannelUnsafe()
+                : base()
             {
             }
 

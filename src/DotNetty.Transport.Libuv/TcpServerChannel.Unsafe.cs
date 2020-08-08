@@ -45,7 +45,7 @@ namespace DotNetty.Transport.Libuv
         {
             static readonly Action<object, object> AcceptAction = (u, e) => OnAccept(u, e);
 
-            public TcpServerChannelUnsafe() : base() // TcpServerChannel channel) : base(channel)
+            public TcpServerChannelUnsafe() : base()
             {
             }
 
@@ -119,7 +119,7 @@ namespace DotNetty.Transport.Libuv
                 Exception exception = null;
                 try
                 {
-                    var tcpChannel = ch._channelFactory.CreateChannel(ch, tcp); // ## 苦竹 修改 ## new TcpChannel(ch, tcp);
+                    var tcpChannel = ch._channelFactory.CreateChannel(ch, tcp);
                     _ = ch.Pipeline.FireChannelRead(tcpChannel);
                     allocHandle.IncMessagesRead(1);
                 }

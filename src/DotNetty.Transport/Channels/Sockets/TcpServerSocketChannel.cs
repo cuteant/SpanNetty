@@ -105,8 +105,6 @@ namespace DotNetty.Transport.Channels.Sockets
 
         SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> AcceptOperation => _acceptOperation ??= new SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe>((TServerChannel)this, false);
 
-        //protected override IChannelUnsafe NewUnsafe() => new TcpServerSocketChannelUnsafe(this); ## 苦竹 屏蔽 ##
-
         protected override void DoBind(EndPoint localAddress)
         {
             Socket.Bind(localAddress);
@@ -120,7 +118,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (TryResetState(StateFlags.Open | StateFlags.Active))
             {
-                Socket.SafeClose(); // this.Socket.Dispose();
+                Socket.SafeClose();
             }
         }
 

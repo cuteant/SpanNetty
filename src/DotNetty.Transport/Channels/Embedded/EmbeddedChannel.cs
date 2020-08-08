@@ -260,8 +260,6 @@ namespace DotNetty.Transport.Channels.Embedded
 
         protected override EndPoint RemoteAddressInternal => IsActive ? REMOTE_ADDRESS : null;
 
-        //protected override IChannelUnsafe NewUnsafe() => new EmbeddedUnsafe(this); ## 苦竹 屏蔽 ##
-
         protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is EmbeddedEventLoop;
 
         protected override void DoBind(EndPoint localAddress)

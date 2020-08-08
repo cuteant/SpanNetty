@@ -877,6 +877,7 @@ namespace DotNetty.Transport.Channels
             while (IsFlushedEntry(entry));
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         bool IsFlushedEntry(Entry e) => e is object && e != _unflushedEntry;
 
         public interface IMessageProcessor

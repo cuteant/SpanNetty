@@ -31,7 +31,6 @@ namespace DotNetty.Transport.Channels.Sockets
     using System;
     using System.Collections.Generic;
     using System.Net;
-    using System.Net.NetworkInformation;
     using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
@@ -79,13 +78,13 @@ namespace DotNetty.Transport.Channels.Sockets
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel()
-            : this(null, SocketEx.CreateSocket(), false) //new Socket(SocketType.Stream, ProtocolType.Tcp))
+            : this(null, SocketEx.CreateSocket(), false)
         {
         }
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel(AddressFamily addressFamily)
-            : this(null, SocketEx.CreateSocket(addressFamily), false) //new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp))
+            : this(null, SocketEx.CreateSocket(addressFamily), false)
         {
         }
 
@@ -304,7 +303,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     {
                         Socket.Shutdown(SocketShutdown.Both);
                     }
-                    Socket.SafeClose(); //this.Socket.Dispose();
+                    Socket.SafeClose();
                 }
             }
             finally
@@ -503,7 +502,5 @@ namespace DotNetty.Transport.Channels.Sockets
             }
             return adjusted;
         }
-
-        //protected override IChannelUnsafe NewUnsafe() => new TcpSocketChannelUnsafe(this); ## 苦竹 屏蔽 ##
     }
 }

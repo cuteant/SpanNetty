@@ -36,12 +36,10 @@ namespace DotNetty.Transport.Channels.Sockets
     {
         public sealed class TcpServerSocketChannelUnsafe : AbstractSocketUnsafe
         {
-            public TcpServerSocketChannelUnsafe() //TcpServerSocketChannel channel)
-                : base() //channel)
+            public TcpServerSocketChannelUnsafe()
+                : base()
             {
             }
-
-            //new TcpServerSocketChannel Channel => (TcpServerSocketChannel)this.channel;
 
             public override void FinishRead(SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> operation)
             {
@@ -150,7 +148,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    return _channel._channelFactory.CreateChannel(_channel, socket); // ## 苦竹 修改 ## return new TcpSocketChannel(this.channel, socket, true);
+                    return _channel._channelFactory.CreateChannel(_channel, socket);
                 }
                 catch (Exception ex)
                 {

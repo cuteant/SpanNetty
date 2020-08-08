@@ -45,8 +45,6 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        //protected override IChannelUnsafe NewUnsafe() => new SocketMessageUnsafe(this); ## 苦竹 屏蔽 ##
-
         protected override void DoBeginRead()
         {
             if (_inputShutdown) { return; }

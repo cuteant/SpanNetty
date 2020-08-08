@@ -98,8 +98,6 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        //protected override IChannelUnsafe NewUnsafe() => new TcpServerChannelUnsafe(this); ## 苦竹 屏蔽 ##
-
         internal override NativeHandle GetHandle()
         {
             if (_tcpListener is null)

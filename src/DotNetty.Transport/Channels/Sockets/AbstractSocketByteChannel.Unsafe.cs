@@ -36,12 +36,10 @@ namespace DotNetty.Transport.Channels.Sockets
     {
         public partial class SocketByteChannelUnsafe : AbstractSocketUnsafe
         {
-            public SocketByteChannelUnsafe() //(AbstractSocketByteChannel channel)
-                : base() //channel)
+            public SocketByteChannelUnsafe()
+                : base()
             {
             }
-
-            //new AbstractSocketByteChannel Channel => (AbstractSocketByteChannel)this.channel;
 
             void CloseOnRead()
             {

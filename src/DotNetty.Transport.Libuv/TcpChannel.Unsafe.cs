@@ -34,7 +34,7 @@ namespace DotNetty.Transport.Libuv
     {
         public sealed class TcpChannelUnsafe : NativeChannelUnsafe
         {
-            public TcpChannelUnsafe() : base() //TcpChannel channel) : base(channel)
+            public TcpChannelUnsafe() : base()
             {
             }
 

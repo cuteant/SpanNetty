@@ -55,7 +55,6 @@ namespace DotNetty.Transport.Channels.Sockets
     public partial class SocketDatagramChannel<TChannel> : AbstractSocketMessageChannel<TChannel, SocketDatagramChannel<TChannel>.DatagramChannelUnsafe>, IDatagramChannel
         where TChannel : SocketDatagramChannel<TChannel>
     {
-        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<SocketDatagramChannel>();
         private static readonly Action<object, object> ReceiveFromCompletedSyncCallback = (u, p) => OnReceiveFromCompletedSync(u, p);
         private static readonly ChannelMetadata ChannelMetadata = new ChannelMetadata(true);
 
@@ -237,8 +236,6 @@ namespace DotNetty.Transport.Channels.Sockets
                 Unsafe.FinishWrite(operation);
             }
         }
-
-        //protected override IChannelUnsafe NewUnsafe() => new DatagramChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
         protected override bool DoWriteMessage(object msg, ChannelOutboundBuffer input)
         {

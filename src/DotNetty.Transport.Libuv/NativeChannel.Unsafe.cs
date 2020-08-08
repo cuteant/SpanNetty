@@ -43,7 +43,7 @@ namespace DotNetty.Transport.Libuv
         {
             private static readonly Action<object, object> CancelConnectAction = (c, s) => CancelConnect(c, s);
 
-            protected NativeChannelUnsafe() : base() //(NativeChannel channel) : base(channel)
+            protected NativeChannelUnsafe() : base()
             {
             }
 
@@ -208,7 +208,7 @@ namespace DotNetty.Transport.Libuv
                     {
                         _ = pipeline.FireExceptionCaught(ThrowHelper.GetChannelException(error));
                     }
-                    if (ch.IsOpen) { Close(VoidPromise()); } // ## 苦竹 修改 this.CloseSafe(); ##
+                    if (ch.IsOpen) { Close(VoidPromise()); }
                 }
                 else
                 {

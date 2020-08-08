@@ -48,13 +48,10 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public abstract class AbstractSocketUnsafe : AbstractUnsafe, ISocketChannelUnsafe
         {
-            protected AbstractSocketUnsafe() //(AbstractSocketChannel channel)
-                : base() //(channel)
+            protected AbstractSocketUnsafe()
+                : base()
             {
             }
-
-            //public AbstractSocketChannel Channel => (AbstractSocketChannel)this.channel;
-            //public TChannel Channel => this.channel;
 
             public sealed override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {

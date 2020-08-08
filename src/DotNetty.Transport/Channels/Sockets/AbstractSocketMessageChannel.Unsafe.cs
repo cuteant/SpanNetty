@@ -32,12 +32,10 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             readonly List<object> _readBuf = new List<object>();
 
-            public SocketMessageUnsafe() // (AbstractSocketMessageChannel channel)
-                : base() //channel)
+            public SocketMessageUnsafe()
+                : base()
             {
             }
-
-            //new AbstractSocketMessageChannel Channel => (AbstractSocketMessageChannel)this.channel;
 
             public override void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {

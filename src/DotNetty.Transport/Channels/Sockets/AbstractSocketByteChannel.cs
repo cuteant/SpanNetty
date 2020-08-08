@@ -64,8 +64,6 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        //protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this); ## 苦竹 屏蔽 ##
-
         /// <summary>
         /// Shutdown the input side of the channel.
         /// </summary>
@@ -274,7 +272,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                 if (!pending)
                 {
-                    Unsafe.FinishWrite(operation); // ## 苦竹 修改 ## ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
+                    Unsafe.FinishWrite(operation);
                 }
 
                 return pending;
