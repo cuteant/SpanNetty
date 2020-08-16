@@ -33,10 +33,10 @@
     <CastleCorePackageVersion>4.4.1</CastleCorePackageVersion>
 
     <!-- Ioc related packages -->
-    <AutofacPackageVersion>4.9.4</AutofacPackageVersion>
-    <AutofacConfigurationPackageVersion>4.1.0</AutofacConfigurationPackageVersion>
-    <AutofacExtensionsDependencyInjectionPackageVersion>4.4.0</AutofacExtensionsDependencyInjectionPackageVersion>
-    <AutofacExtrasDynamicProxyPackageVersion>4.5.0</AutofacExtrasDynamicProxyPackageVersion>
+    <AutofacPackageVersion>5.2.0</AutofacPackageVersion>
+    <AutofacConfigurationPackageVersion>5.1.0</AutofacConfigurationPackageVersion>
+    <AutofacExtensionsDependencyInjectionPackageVersion>6.0.0</AutofacExtensionsDependencyInjectionPackageVersion>
+    <AutofacExtrasDynamicProxyPackageVersion>5.0.0</AutofacExtrasDynamicProxyPackageVersion>
 
     <!-- Compression related packages -->
     <BrotliNativePackageVersion>0.0.1</BrotliNativePackageVersion>
@@ -54,6 +54,11 @@
     <ConsulPackageVersion>0.7.2.6</ConsulPackageVersion>
     <DapperStrongNamePackageVersion>2.0.35</DapperStrongNamePackageVersion>
     <MicrosoftSqlServerTypesPackageVersion>14.0.1016.290</MicrosoftSqlServerTypesPackageVersion>
+    <MongoDBBsonPackageVersion>2.11.0</MongoDBBsonPackageVersion>
+    <MongoDBDriverCorePackageVersion>2.11.0</MongoDBDriverCorePackageVersion>
+    <MongoDBDriverPackageVersion>2.11.0</MongoDBDriverPackageVersion>
+    <MongoDBDriverGridFSPackageVersion>2.11.0</MongoDBDriverGridFSPackageVersion>
+    <mongocsharpdriverPackageVersion>2.11.0</mongocsharpdriverPackageVersion>
     <MongoDBBsonStrongNamePackageVersion>2.9.3</MongoDBBsonStrongNamePackageVersion>
     <MongoDBDriverCoreStrongNamePackageVersion>2.9.3</MongoDBDriverCoreStrongNamePackageVersion>
     <MongoDBDriverStrongNamePackageVersion>2.9.3</MongoDBDriverStrongNamePackageVersion>
@@ -76,6 +81,7 @@
     <!-- Logging related packages -->
     <NLogPackageVersion>4.7.2</NLogPackageVersion>
     <NLogDevPackageVersion>4.7.2</NLogDevPackageVersion>
+    <NLogExtensionsHostingPackageVersion>1.6.4</NLogExtensionsHostingPackageVersion>
     <NLogExtensionsLoggingPackageVersion>1.6.4</NLogExtensionsLoggingPackageVersion>
     <NLogWebAspNetCorePackageVersion>4.9.2</NLogWebAspNetCorePackageVersion>
 
@@ -148,6 +154,6 @@
     <ProtobufNetPackageVersion>2.4.6</ProtobufNetPackageVersion>
     <ProtobufNetDevPackageVersion>3.0.0-alpha.155</ProtobufNetDevPackageVersion>
     <ProtobufNetDataPackageVersion>3.0.1</ProtobufNetDataPackageVersion>
-    <YamlDotNetPackageVersion>8.1.0</YamlDotNetPackageVersion>
+    <YamlDotNetPackageVersion>8.1.2</YamlDotNetPackageVersion>
   </PropertyGroup>
 </Project>

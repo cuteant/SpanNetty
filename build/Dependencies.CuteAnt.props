@@ -11,9 +11,9 @@
 
     <ReactiveStreamsSignedPackageVersion>1.0.2</ReactiveStreamsSignedPackageVersion>
 
-    <EasyEventStoreAbstractionsPackageVersion>5.0.1-rtm-190629-02</EasyEventStoreAbstractionsPackageVersion>
-    <EasyEventStoreAutoSubscribingPackageVersion>5.0.1-rtm-190629-02</EasyEventStoreAutoSubscribingPackageVersion>
-    <EasyEventStoreCorePackageVersion>5.0.1-rtm-190629-02</EasyEventStoreCorePackageVersion>
+    <EasyEventStoreAbstractionsPackageVersion>5.0.2008.521</EasyEventStoreAbstractionsPackageVersion>
+    <EasyEventStoreAutoSubscribingPackageVersion>5.0.2008.521</EasyEventStoreAutoSubscribingPackageVersion>
+    <EasyEventStoreCorePackageVersion>5.0.2008.521</EasyEventStoreCorePackageVersion>
 
     <GrEmitSignedPackageVersion>3.1.1</GrEmitSignedPackageVersion>
     <GrobExpCompilerSignedPackageVersion>1.2.13</GrobExpCompilerSignedPackageVersion>
@@ -130,16 +130,16 @@
     <AkkaStreamsUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaStreamsUnofficialPackageVersion>
     <AkkaStreamsTestKitUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaStreamsTestKitUnofficialPackageVersion>
 
-    <SpanNettyBuffersPackageVersion>0.7.2007.2701</SpanNettyBuffersPackageVersion>
-    <SpanNettyCodecsHttpPackageVersion>0.7.2007.2701</SpanNettyCodecsHttpPackageVersion>
-    <SpanNettyCodecsHttp2PackageVersion>0.7.2007.2701</SpanNettyCodecsHttp2PackageVersion>
-    <SpanNettyCodecsMqttPackageVersion>0.7.2007.2701</SpanNettyCodecsMqttPackageVersion>
-    <SpanNettyCodecsProtobufPackageVersion>0.7.2007.2701</SpanNettyCodecsProtobufPackageVersion>
-    <SpanNettyCodecsPackageVersion>0.7.2007.2701</SpanNettyCodecsPackageVersion>
-    <SpanNettyCommonPackageVersion>0.7.2007.2701</SpanNettyCommonPackageVersion>
-    <SpanNettyHandlersPackageVersion>0.7.2007.2701</SpanNettyHandlersPackageVersion>
-    <SpanNettyTransportLibuvPackageVersion>0.7.0-beta-20072701</SpanNettyTransportLibuvPackageVersion>
-    <SpanNettyTransportPackageVersion>0.7.2007.2701</SpanNettyTransportPackageVersion>
+    <SpanNettyBuffersPackageVersion>0.7.2007.2802</SpanNettyBuffersPackageVersion>
+    <SpanNettyCodecsHttpPackageVersion>0.7.2007.2802</SpanNettyCodecsHttpPackageVersion>
+    <SpanNettyCodecsHttp2PackageVersion>0.7.2007.2802</SpanNettyCodecsHttp2PackageVersion>
+    <SpanNettyCodecsMqttPackageVersion>0.7.2007.2802</SpanNettyCodecsMqttPackageVersion>
+    <SpanNettyCodecsProtobufPackageVersion>0.7.2007.2802</SpanNettyCodecsProtobufPackageVersion>
+    <SpanNettyCodecsPackageVersion>0.7.2007.2802</SpanNettyCodecsPackageVersion>
+    <SpanNettyCommonPackageVersion>0.7.2007.2802</SpanNettyCommonPackageVersion>
+    <SpanNettyHandlersPackageVersion>0.7.2007.2802</SpanNettyHandlersPackageVersion>
+    <SpanNettyTransportLibuvPackageVersion>0.7.0-beta-20072802</SpanNettyTransportLibuvPackageVersion>
+    <SpanNettyTransportPackageVersion>0.7.2007.2802</SpanNettyTransportPackageVersion>
 
     <!-- Serialization related packages -->
     <HyperionUnofficialPackageVersion>0.9.15-rtm-200401-01</HyperionUnofficialPackageVersion>
