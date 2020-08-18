@@ -28,9 +28,8 @@
 
 namespace DotNetty.Transport.Libuv
 {
-    using System.Net;
     using System.Runtime.CompilerServices;
-    using System.Threading;
+    using System.Net;
     using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
@@ -42,20 +41,14 @@ namespace DotNetty.Transport.Libuv
 
         internal bool ReadPending;
 
-        private int v_state;
-        private int InternalState
-        {
-            [MethodImpl(InlineMethod.AggressiveOptimization)]
-            get => Volatile.Read(ref v_state);
-            set => Interlocked.Exchange(ref v_state, value);
-        }
+        private volatile int v_state;
 
         private IPromise _connectPromise;
         private IScheduledTask _connectCancellationTask;
 
         protected NativeChannel(IChannel parent) : base(parent)
         {
-            InternalState = StateFlags.Open;
+            v_state = StateFlags.Open;
         }
 
         public override bool IsOpen => IsInState(StateFlags.Open);
@@ -64,26 +57,28 @@ namespace DotNetty.Transport.Libuv
 
         protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is LoopExecutor;
 
-        protected bool IsInState(int stateToCheck) => (InternalState & stateToCheck) == stateToCheck;
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected bool IsInState(int stateToCheck) => (v_state & stateToCheck) == stateToCheck;
 
-        protected void SetState(int stateToSet) => InternalState |= stateToSet;
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected void SetState(int stateToSet) => v_state |= stateToSet;
 
         protected int ResetState(int stateToReset)
         {
-            var oldState = InternalState;
+            var oldState = v_state;
             if ((oldState & stateToReset) != 0)
             {
-                InternalState = oldState & ~stateToReset;
+                v_state = oldState & ~stateToReset;
             }
             return oldState;
         }
 
         protected bool TryResetState(int stateToReset)
         {
-            var oldState = InternalState;
+            var oldState = v_state;
             if ((oldState & stateToReset) != 0)
             {
-                InternalState = oldState & ~stateToReset;
+                v_state = oldState & ~stateToReset;
                 return true;
             }
             return false;
