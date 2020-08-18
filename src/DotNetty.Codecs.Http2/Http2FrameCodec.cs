@@ -508,7 +508,7 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        private static readonly Action<Task, object> ResetNufferedStreamsAction = ResetNufferedStreams;
+        private static readonly Action<Task, object> ResetNufferedStreamsAction = (t, s) => ResetNufferedStreams(t, s);
         private static void ResetNufferedStreams(Task t, object s)
         {
             var wrapped = ((Http2FrameCodec, int))s;

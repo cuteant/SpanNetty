@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Mqtt
 
         private static readonly CachedReadConcurrentDictionary<string, TopicFilterErrorStatus> s_topicFilterErrCache =
             new CachedReadConcurrentDictionary<string, TopicFilterErrorStatus>(StringComparer.Ordinal);
-        private static readonly Func<string, TopicFilterErrorStatus> s_getTopicFilterErrorStatusFunc = GetTopicFilterErrorStatus;
+        private static readonly Func<string, TopicFilterErrorStatus> s_getTopicFilterErrorStatusFunc = tf => GetTopicFilterErrorStatus(tf);
 
         static void ValidateTopicFilter(string topicFilter)
         {

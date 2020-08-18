@@ -223,7 +223,7 @@ namespace DotNetty.Codecs.Http2
             LinkOutcome(future, promise, streamChannel);
         }
 
-        static readonly Action<Task, object> LinkOutcomeContinuationAction = LinkOutcomeContinuation;
+        static readonly Action<Task, object> LinkOutcomeContinuationAction = (t, s) => LinkOutcomeContinuation(t, s);
         private static void LinkOutcomeContinuation(Task future, object state)
         {
             var wrapped = ((TaskCompletionSource<IHttp2StreamChannel>, IHttp2StreamChannel))state;

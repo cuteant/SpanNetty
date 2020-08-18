@@ -73,7 +73,7 @@ namespace DotNetty.Codecs.Http
             _ = context.FireChannelRead(message);
         }
 
-        static readonly Action<Task, object> CloseOnFailureAction = CloseOnFailure;
+        static readonly Action<Task, object> CloseOnFailureAction = (t, s) => CloseOnFailure(t, s);
         static void CloseOnFailure(Task task, object state)
         {
             if (task.IsFaulted)

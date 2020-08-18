@@ -103,7 +103,7 @@ namespace DotNetty.Codecs.Http
 
         static readonly CachedReadConcurrentDictionary<string, HttpMethod> s_methodCache =
             new CachedReadConcurrentDictionary<string, HttpMethod>(StringComparer.Ordinal);
-        static readonly Func<string, HttpMethod> s_convertToHttpMethodFunc = ConvertToHttpMethod;
+        static readonly Func<string, HttpMethod> s_convertToHttpMethodFunc = n => ConvertToHttpMethod(n);
 
         // HashMap
         static readonly Dictionary<string, HttpMethod> MethodMap;

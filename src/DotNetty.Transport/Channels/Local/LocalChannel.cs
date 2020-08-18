@@ -62,7 +62,7 @@ namespace DotNetty.Transport.Channels.Local
             METADATA = new ChannelMetadata(false);
             DoWriteClosedChannelException = new ClosedChannelException();
             DoCloseClosedChannelException = new ClosedChannelException();
-            InternalReadAction = InternalRead;
+            InternalReadAction = o => InternalRead(o);
         }
 
         // To further optimize this we could write our own SPSC queue.

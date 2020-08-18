@@ -108,7 +108,7 @@ namespace DotNetty.Codecs.Http
         /// <param name="maxContentLength">the maximum length of the aggregated content in bytes.
         /// If the length of the aggregated content exceeds this value,
         /// <see cref="HandleOversizedMessage(IChannelHandlerContext, IHttpMessage)"/> will be called.</param>
-        public HttpObjectAggregator(int maxContentLength) 
+        public HttpObjectAggregator(int maxContentLength)
             : this(maxContentLength, false)
         {
         }
@@ -120,7 +120,7 @@ namespace DotNetty.Codecs.Http
         /// <param name="closeOnExpectationFailed">If a 100-continue response is detected but the content length is too large
         /// then <c>true</c> means close the connection. otherwise the connection will remain open and data will be
         /// consumed and discarded until the next request is received.</param>
-        public HttpObjectAggregator(int maxContentLength, bool closeOnExpectationFailed) 
+        public HttpObjectAggregator(int maxContentLength, bool closeOnExpectationFailed)
             : base(maxContentLength)
         {
             _closeOnExpectationFailed = closeOnExpectationFailed;
@@ -187,11 +187,11 @@ namespace DotNetty.Codecs.Http
         }
 
         /// <inheritdoc />
-        protected override bool CloseAfterContinueResponse(object msg) => 
+        protected override bool CloseAfterContinueResponse(object msg) =>
             _closeOnExpectationFailed && IgnoreContentAfterContinueResponse(msg);
 
         /// <inheritdoc />
-        protected override bool IgnoreContentAfterContinueResponse(object msg) => 
+        protected override bool IgnoreContentAfterContinueResponse(object msg) =>
             msg is IHttpResponse response && response.Status.CodeClass.Equals(HttpStatusClass.ClientError);
 
         /// <inheritdoc />
@@ -269,7 +269,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
+        static readonly Action<Task, object> CloseOnCompleteAction = (t, s) => CloseOnComplete(t, s);
         static void CloseOnComplete(Task t, object s)
         {
 #if DEBUG
@@ -281,7 +281,7 @@ namespace DotNetty.Codecs.Http
             _ = ((IChannelHandlerContext)s).CloseAsync();
         }
 
-        static readonly Action<Task, object> CloseOnFaultAction = CloseOnFault;
+        static readonly Action<Task, object> CloseOnFaultAction = (t, s) => CloseOnFault(t, s);
         static void CloseOnFault(Task t, object s)
         {
             if (t.IsFaulted)
@@ -388,7 +388,7 @@ namespace DotNetty.Codecs.Http
 
             public override IByteBufferHolder Replace(IByteBuffer content)
             {
-                var dup = new DefaultFullHttpRequest(ProtocolVersion, Method, Uri, content, 
+                var dup = new DefaultFullHttpRequest(ProtocolVersion, Method, Uri, content,
                     Headers.Copy(), TrailingHeaders.Copy());
                 dup.Result = Result;
                 return dup;
@@ -428,7 +428,7 @@ namespace DotNetty.Codecs.Http
 
             public override IByteBufferHolder Replace(IByteBuffer content)
             {
-                var dup = new DefaultFullHttpResponse(ProtocolVersion, Status, content, 
+                var dup = new DefaultFullHttpResponse(ProtocolVersion, Status, content,
                     Headers.Copy(), TrailingHeaders.Copy());
                 dup.Result = Result;
                 return dup;

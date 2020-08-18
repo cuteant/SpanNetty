@@ -45,8 +45,8 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
     /// </summary>
     public class WebSocketServerExtensionHandler : ChannelHandlerAdapter
     {
-        private static readonly Action<Task, object> s_switchWebSocketExtensionHandlerAction = SwitchWebSocketExtensionHandler;
-        private static readonly Action<Task, object> s_removeWebSocketExtensionHandlerAction = RemoveWebSocketExtensionHandler;
+        private static readonly Action<Task, object> s_switchWebSocketExtensionHandlerAction = (t, s) => SwitchWebSocketExtensionHandler(t, s);
+        private static readonly Action<Task, object> s_removeWebSocketExtensionHandlerAction = (t, s) => RemoveWebSocketExtensionHandler(t, s);
 
         private readonly List<IWebSocketServerExtensionHandshaker> _extensionHandshakers;
 

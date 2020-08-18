@@ -149,7 +149,7 @@ namespace DotNetty.Handlers.Tls
             public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
                 => _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());
 
-            private static readonly Action<Task, object> s_writeCompleteCallback = HandleChannelWriteComplete;
+            private static readonly Action<Task, object> s_writeCompleteCallback = (t, s) => HandleChannelWriteComplete(t, s);
 
             public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
             {

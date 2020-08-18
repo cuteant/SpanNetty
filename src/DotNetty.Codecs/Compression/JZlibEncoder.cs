@@ -295,7 +295,7 @@ namespace DotNetty.Codecs.Compression
             return context.WriteAndFlushAsync(footer, promise);
         }
 
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
+        static readonly Action<Task, object> CloseOnCompleteAction = (t, s) => CloseOnComplete(t, s);
         static void CloseOnComplete(Task t, object s)
         {
             var wrapped = ((IChannelHandlerContext, IPromise))s;
@@ -306,7 +306,7 @@ namespace DotNetty.Codecs.Compression
             _ = wrapped.Item1.CloseAsync(wrapped.Item2);
         }
 
-        static readonly Action<object, object> CloseHandlerContextAction = CloseHandlerContext;
+        static readonly Action<object, object> CloseHandlerContextAction = (c, p) => CloseHandlerContext(c, p);
         static void CloseHandlerContext(object ctx, object p) => ((IChannelHandlerContext)ctx).CloseAsync((IPromise)p);
 
         public override void HandlerAdded(IChannelHandlerContext context) => Interlocked.Exchange(ref this.ctx, context);

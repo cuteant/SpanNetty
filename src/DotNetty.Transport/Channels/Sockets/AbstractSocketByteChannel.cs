@@ -51,8 +51,8 @@ namespace DotNetty.Transport.Channels.Sockets
         // todo: FileRegion support        
         //typeof(FileRegion).Name + ')';
 
-        private static readonly Action<object> FlushAction = OnFlushSync;
-        private static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
+        private static readonly Action<object> FlushAction = c => OnFlushSync(c);
+        private static readonly Action<object, object> ReadCompletedSyncCallback = (u, e) => OnReadCompletedSync(u, e);
 
         private bool _inputClosedSeenErrorOnRead;
 

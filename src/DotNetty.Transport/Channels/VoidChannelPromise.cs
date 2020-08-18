@@ -127,7 +127,7 @@ namespace DotNetty.Transport.Channels
             return promise;
         }
 
-        private static readonly Action<Task, object> FireExceptionOnFailureAction = FireExceptionOnFailure;
+        private static readonly Action<Task, object> FireExceptionOnFailureAction = (t, s) => FireExceptionOnFailure(t, s);
         private static void FireExceptionOnFailure(Task t, object s)
         {
             var ch = (IChannel)s;

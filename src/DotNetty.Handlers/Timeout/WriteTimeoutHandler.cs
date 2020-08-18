@@ -176,7 +176,7 @@ namespace DotNetty.Handlers.Timeout
             readonly IChannelHandlerContext _context;
             readonly Task _future;
 
-            public static readonly Action<Task, object> OperationCompleteAction = HandleOperationComplete;
+            public static readonly Action<Task, object> OperationCompleteAction = (t, s) => HandleOperationComplete(t, s);
 
             public WriteTimeoutTask(IChannelHandlerContext context, Task future, WriteTimeoutHandler handler)
             {
@@ -187,7 +187,7 @@ namespace DotNetty.Handlers.Timeout
 
             internal static void HandleOperationComplete(Task future, object state)
             {
-                var writeTimeoutTask = (WriteTimeoutTask) state;
+                var writeTimeoutTask = (WriteTimeoutTask)state;
 
                 // ScheduledTask has already be set when reaching here
                 _ = writeTimeoutTask.ScheduledTask.Cancel();

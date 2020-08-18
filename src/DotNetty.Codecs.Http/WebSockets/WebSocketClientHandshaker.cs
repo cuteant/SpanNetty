@@ -191,7 +191,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <summary>Returns a new <see cref="IFullHttpRequest"/> which will be used for the handshake.</summary>
         protected internal abstract IFullHttpRequest NewHandshakeRequest();
 
-        static readonly Action<Task, object> HandshakeOnCompleteAction = HandshakeOnComplete;
+        static readonly Action<Task, object> HandshakeOnCompleteAction = (t, s) => HandshakeOnComplete(t, s);
         static void HandshakeOnComplete(Task t, object state)
         {
             var wrapped = ((IPromise, IChannelPipeline, WebSocketClientHandshaker))state;
@@ -325,7 +325,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        static readonly Action<object, object> RemoveHandlerAction = OnRemoveHandler;
+        static readonly Action<object, object> RemoveHandlerAction = (p, h) => OnRemoveHandler(p, h);
         static void OnRemoveHandler(object p, object h) => ((IChannelPipeline)p).Remove((IChannelHandler)h);
 
         /// <summary>
@@ -472,7 +472,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             _ = flushFuture.Task.ContinueWith(CloseOnCompleteAction, (channel, this), TaskContinuationOptions.ExecuteSynchronously);
         }
 
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
+        static readonly Action<Task, object> CloseOnCompleteAction = (t, s) => CloseOnComplete(t, s);
         static void CloseOnComplete(Task t, object state)
         {
             var wrapped = ((IChannel, WebSocketClientHandshaker))state;
@@ -491,7 +491,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        private static readonly Action<object, object> CloseChannelAction = CloseChannel;
+        private static readonly Action<object, object> CloseChannelAction = (c, p) => CloseChannel(c, p);
         private static void CloseChannel(object c, object p)
         {
             var channel = (IChannel)c;
@@ -502,7 +502,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        private static readonly Action<Task, object> AbortCloseChannelAfterChannelClosedAction = AbortCloseChannelAfterChannelClosed;
+        private static readonly Action<Task, object> AbortCloseChannelAfterChannelClosedAction = (t, s) => AbortCloseChannelAfterChannelClosed(t, s);
         private static void AbortCloseChannelAfterChannelClosed(Task t, object s)
         {
             _ = ((IScheduledTask)s).Cancel();

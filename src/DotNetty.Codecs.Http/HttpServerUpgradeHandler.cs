@@ -355,7 +355,7 @@ namespace DotNetty.Codecs.Http
             return true;
         }
 
-        static readonly Action<Task, object> CloseOnFailureAction = CloseOnFailure;
+        static readonly Action<Task, object> CloseOnFailureAction = (t, s) => CloseOnFailure(t, s);
         static void CloseOnFailure(Task t, object s)
         {
             if (!t.IsSuccess())

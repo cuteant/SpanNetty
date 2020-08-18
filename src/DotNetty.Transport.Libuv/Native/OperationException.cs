@@ -34,7 +34,7 @@ namespace DotNetty.Transport.Libuv.Native
     public sealed class OperationException : Exception
     {
         static readonly CachedReadConcurrentDictionary<string, ErrorCode> s_errorCodeCache = new CachedReadConcurrentDictionary<string, ErrorCode>(StringComparer.Ordinal);
-        static readonly Func<string, ErrorCode> s_convertErrorCodeFunc = ConvertErrorCode;
+        static readonly Func<string, ErrorCode> s_convertErrorCodeFunc = e => ConvertErrorCode(e);
 
         public OperationException(int errorCode, string errorName, string description)
         {

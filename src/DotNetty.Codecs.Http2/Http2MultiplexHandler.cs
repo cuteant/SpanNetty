@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public sealed class Http2MultiplexHandler : Http2ChannelDuplexHandler, IHasParentContext
     {
-        internal static readonly Action<Task, object> RegisterDoneAction = RegisterDone;
+        internal static readonly Action<Task, object> RegisterDoneAction = (t, s) => RegisterDone(t, s);
 
         private readonly IChannelHandler _inboundStreamHandler;
         private readonly IChannelHandler _upgradeStreamHandler;

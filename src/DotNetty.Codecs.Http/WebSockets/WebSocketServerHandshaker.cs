@@ -206,7 +206,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             _ = channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, (completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
         }
 
-        static readonly Action<Task, object> RemoveHandlerAfterWriteAction = RemoveHandlerAfterWrite;
+        static readonly Action<Task, object> RemoveHandlerAfterWriteAction = (t, s) => RemoveHandlerAfterWrite(t, s);
         static void RemoveHandlerAfterWrite(Task t, object state)
         {
             var wrapped = ((IPromise, IChannelPipeline, string))state;

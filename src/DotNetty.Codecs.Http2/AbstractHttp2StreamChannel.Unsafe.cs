@@ -457,7 +457,7 @@ namespace DotNetty.Codecs.Http2
                 }
             }
 
-            private static readonly Action<Task, object> InvokeWriteCompleteAfterWriteAction = InvokeWriteCompleteAfterWrite;
+            private static readonly Action<Task, object> InvokeWriteCompleteAfterWriteAction = (t, s) => InvokeWriteCompleteAfterWrite(t, s);
             private static void InvokeWriteCompleteAfterWrite(Task t, object s)
             {
                 var wrapped = ((Http2ChannelUnsafe, IPromise, long, bool))s;

@@ -56,7 +56,7 @@ namespace DotNetty.Transport.Channels.Sockets
         where TChannel : SocketDatagramChannel<TChannel>
     {
         //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<SocketDatagramChannel>();
-        private static readonly Action<object, object> ReceiveFromCompletedSyncCallback = OnReceiveFromCompletedSync;
+        private static readonly Action<object, object> ReceiveFromCompletedSyncCallback = (u, p) => OnReceiveFromCompletedSync(u, p);
         private static readonly ChannelMetadata ChannelMetadata = new ChannelMetadata(true);
 
         private readonly DefaultDatagramChannelConfig _config;

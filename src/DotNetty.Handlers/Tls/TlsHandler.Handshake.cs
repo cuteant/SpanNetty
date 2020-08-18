@@ -41,7 +41,7 @@ namespace DotNetty.Handlers.Tls
 
     partial class TlsHandler
     {
-        private static readonly Action<Task, object> s_handshakeCompletionCallback = new Action<Task, object>(HandleHandshakeCompleted);
+        private static readonly Action<Task, object> s_handshakeCompletionCallback = (t, s) => HandleHandshakeCompleted(t, s);
         public static readonly AttributeKey<SslStream> SslStreamAttrKey = AttributeKey<SslStream>.ValueOf("SSLSTREAM");
 
         private bool EnsureAuthenticated(IChannelHandlerContext ctx)

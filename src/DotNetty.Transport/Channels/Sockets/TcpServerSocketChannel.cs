@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Channels.Sockets
     {
         private static readonly ChannelMetadata METADATA = new ChannelMetadata(false);
 
-        private static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
+        private static readonly Action<object, object> ReadCompletedSyncCallback = (u, p) => OnReadCompletedSync(u, p);
 
         private readonly TChannelFactory _channelFactory;
 

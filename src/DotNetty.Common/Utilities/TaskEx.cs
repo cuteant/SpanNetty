@@ -106,7 +106,7 @@ namespace DotNetty.Common.Utilities
 #endif
         }
 
-        static readonly Action<Task, object> LinkOutcomeContinuationAction = LinkOutcomeContinuation;
+        static readonly Action<Task, object> LinkOutcomeContinuationAction = (t, s) => LinkOutcomeContinuation(t, s);
         private static void LinkOutcomeContinuation(Task t, object tcs)
         {
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
@@ -174,7 +174,7 @@ namespace DotNetty.Common.Utilities
                 TaskContinuationOptions.ExecuteSynchronously);
         }
 
-        static readonly Action<Task, object> CascadeToContinuationAction = CascadeToContinuation;
+        static readonly Action<Task, object> CascadeToContinuationAction = (t, s) => CascadeToContinuation(t, s);
         private static void CascadeToContinuation(Task t, object s)
         {
             var wrapped = ((IPromise, IInternalLogger))s;

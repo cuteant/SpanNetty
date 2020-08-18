@@ -47,7 +47,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         public PipeListener(Loop loop, bool ipc) : base(loop, ipc)
         {
-            onReadAction = OnRead;
+            onReadAction = (p, s) => OnRead(p, s);
 
             _pipes = new List<Pipe>();
             _windowsApi = new WindowsApi();

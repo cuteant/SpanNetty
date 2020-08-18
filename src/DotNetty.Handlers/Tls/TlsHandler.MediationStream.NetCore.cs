@@ -69,7 +69,7 @@ namespace DotNetty.Handlers.Tls
                 new Task(ReadCompletionAction, this).RunSynchronously(TaskScheduler.Default);
             }
 
-            static readonly Action<object> ReadCompletionAction = ReadCompletion;
+            static readonly Action<object> ReadCompletionAction = m => ReadCompletion(m);
             static void ReadCompletion(object ms)
             {
                 var self = (MediationStream)ms;

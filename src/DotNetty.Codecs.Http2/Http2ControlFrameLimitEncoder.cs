@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http2
             return promise;
         }
 
-        private static readonly Action<Task, object> OutstandingControlFramesListenerAction = OutstandingControlFramesListener;
+        private static readonly Action<Task, object> OutstandingControlFramesListenerAction = (t, s) => OutstandingControlFramesListener(t, s);
         private static void OutstandingControlFramesListener(Task t, object s)
         {
             ((Http2ControlFrameLimitEncoder)s)._outstandingControlFrames--;

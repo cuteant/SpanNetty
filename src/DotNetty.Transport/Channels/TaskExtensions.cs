@@ -43,7 +43,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(CloseChannelOnCompleteAction, channel, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> CloseChannelOnCompleteAction = CloseChannelOnComplete;
+        private static readonly Action<Task, object> CloseChannelOnCompleteAction = (t, s) => CloseChannelOnComplete(t, s);
         private static void CloseChannelOnComplete(Task t, object c) => _ = ((IChannel)c).CloseAsync();
 
 
@@ -60,7 +60,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(CloseWrappedChannelOnCompleteAction, (channel, promise), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> CloseWrappedChannelOnCompleteAction = CloseWrappedChannelOnComplete;
+        private static readonly Action<Task, object> CloseWrappedChannelOnCompleteAction = (t, s) => CloseWrappedChannelOnComplete(t, s);
         private static void CloseWrappedChannelOnComplete(Task t, object s)
         {
             var wrapped = ((IChannel, IPromise))s;
@@ -81,7 +81,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(CloseContextOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> CloseContextOnCompleteAction = CloseContextOnComplete;
+        private static readonly Action<Task, object> CloseContextOnCompleteAction = (t, s) => CloseContextOnComplete(t, s);
         private static void CloseContextOnComplete(Task t, object c) => _ = ((IChannelHandlerContext)c).CloseAsync();
 
 
@@ -98,7 +98,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(CloseWrappedContextOnCompleteAction, (ctx, promise), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> CloseWrappedContextOnCompleteAction = CloseWrappedContextOnComplete;
+        private static readonly Action<Task, object> CloseWrappedContextOnCompleteAction = (t, s) => CloseWrappedContextOnComplete(t, s);
         private static void CloseWrappedContextOnComplete(Task t, object s)
         {
             var wrapped = ((IChannelHandlerContext, IPromise))s;
@@ -122,7 +122,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(CloseChannelOnFailureAction, channel, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> CloseChannelOnFailureAction = CloseChannelOnFailure;
+        private static readonly Action<Task, object> CloseChannelOnFailureAction = (t, s) => CloseChannelOnFailure(t, s);
         private static void CloseChannelOnFailure(Task t, object c)
         {
             if (t.IsFault())
@@ -148,7 +148,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(CloseWrappedChannelOnFailureAction, (channel, promise), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> CloseWrappedChannelOnFailureAction = CloseWrappedChannelOnFailure;
+        private static readonly Action<Task, object> CloseWrappedChannelOnFailureAction = (t, s) => CloseWrappedChannelOnFailure(t, s);
         private static void CloseWrappedChannelOnFailure(Task t, object s)
         {
             if (t.IsFault())
@@ -175,7 +175,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(CloseContextOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> CloseContextOnFailureAction = CloseContextOnFailure;
+        private static readonly Action<Task, object> CloseContextOnFailureAction = (t, s) => CloseContextOnFailure(t, s);
         private static void CloseContextOnFailure(Task t, object c)
         {
             if (t.IsFault())
@@ -201,7 +201,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(CloseWrappedContextOnFailureAction, (ctx, promise), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> CloseWrappedContextOnFailureAction = CloseWrappedContextOnFailure;
+        private static readonly Action<Task, object> CloseWrappedContextOnFailureAction = (t, s) => CloseWrappedContextOnFailure(t, s);
         private static void CloseWrappedContextOnFailure(Task t, object s)
         {
             if (t.IsFault())
@@ -227,7 +227,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(FirePipelineExceptionOnFailureAction, pipeline, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> FirePipelineExceptionOnFailureAction = FirePipelineExceptionOnFailure;
+        private static readonly Action<Task, object> FirePipelineExceptionOnFailureAction = (t, s) => FirePipelineExceptionOnFailure(t, s);
         private static void FirePipelineExceptionOnFailure(Task t, object s)
         {
             if (t.IsFault())
@@ -252,7 +252,7 @@ namespace DotNetty.Transport.Channels
                 return task.ContinueWith(FireContextExceptionOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> FireContextExceptionOnFailureAction = FireContextExceptionOnFailure;
+        private static readonly Action<Task, object> FireContextExceptionOnFailureAction = (t, s) => FireContextExceptionOnFailure(t, s);
         private static void FireContextExceptionOnFailure(Task t, object s)
         {
             if (t.IsFault())

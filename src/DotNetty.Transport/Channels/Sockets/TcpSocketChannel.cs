@@ -66,9 +66,9 @@ namespace DotNetty.Transport.Channels.Sockets
     public partial class TcpSocketChannel<TChannel> : AbstractSocketByteChannel<TChannel, TcpSocketChannel<TChannel>.TcpSocketChannelUnsafe>, ISocketChannel
         where TChannel : TcpSocketChannel<TChannel>
     {
-        private static readonly Action<object, object> ShutdownOutputAction = OnShutdownOutput;
-        private static readonly Action<object, object> ShutdownInputAction = OnShutdownInput;
-        private static readonly Action<object, object> ShutdownAction = OnShutdown;
+        private static readonly Action<object, object> ShutdownOutputAction = (c, p) => OnShutdownOutput(c, p);
+        private static readonly Action<object, object> ShutdownInputAction = (c, p) => OnShutdownInput(c, p);
+        private static readonly Action<object, object> ShutdownAction = (c, p) => OnShutdown(c, p);
 
         private static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 

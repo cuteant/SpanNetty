@@ -40,7 +40,7 @@ namespace DotNetty.Transport.Channels.Groups
 
     public class DefaultChannelGroup : IChannelGroup, IComparable<IChannelGroup>
     {
-        private static readonly Action<Task, object> RemoveChannelAfterCloseAction = RemoveChannelAfterClose;
+        private static readonly Action<Task, object> RemoveChannelAfterCloseAction = (t, s) => RemoveChannelAfterClose(t, s);
         private static int s_nextId;
 
         private readonly IEventExecutor _executor;

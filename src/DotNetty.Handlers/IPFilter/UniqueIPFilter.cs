@@ -52,7 +52,7 @@ namespace DotNetty.Handlers.IPFilter
             return true;
         }
 
-        static readonly Action<Task, object> s_removeIpAddrAfterCloseAction = RemoveIpAddrAfterCloseAction;
+        static readonly Action<Task, object> s_removeIpAddrAfterCloseAction = (t, s) => RemoveIpAddrAfterCloseAction(t, s);
         static void RemoveIpAddrAfterCloseAction(Task t, object s)
         {
             var wrapped = ((ConcurrentDictionary<IPAddress, byte>, IPAddress))s;

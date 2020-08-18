@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Channels
     {
         sealed class DelegatingChannelHandlerContext : IChannelHandlerContext
         {
-            private static readonly Action<object> s_removeAction = OnRemove;
+            private static readonly Action<object> s_removeAction = o => OnRemove(o);
 
             private readonly IChannelHandlerContext _ctx;
             private readonly IChannelHandler _handler;

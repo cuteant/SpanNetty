@@ -26,14 +26,14 @@ namespace DotNetty.Transport.Channels
 
     partial class AbstractChannelHandlerContext
     {
-        private static readonly Action<object> InvokeChannelRegisteredAction = OnInvokeChannelRegistered;
-        private static readonly Action<object> InvokeChannelUnregisteredAction = OnInvokeChannelUnregistered;
-        private static readonly Action<object> InvokeChannelActiveAction = OnInvokeChannelActive;
-        private static readonly Action<object> InvokeChannelInactiveAction = OnInvokeChannelInactive;
+        private static readonly Action<object> InvokeChannelRegisteredAction = ctx => OnInvokeChannelRegistered(ctx);
+        private static readonly Action<object> InvokeChannelUnregisteredAction = ctx => OnInvokeChannelUnregistered(ctx);
+        private static readonly Action<object> InvokeChannelActiveAction = ctx => OnInvokeChannelActive(ctx);
+        private static readonly Action<object> InvokeChannelInactiveAction = ctx => OnInvokeChannelInactive(ctx);
 
-        private static readonly Action<object, object> InvokeUserEventTriggeredAction = OnInvokeUserEventTriggered;
-        private static readonly Action<object, object> InvokeChannelReadAction = OnInvokeChannelRead;
-        private static readonly Action<object, object> InvokeExceptionCaughtAction = OnInvokeExceptionCaught;
+        private static readonly Action<object, object> InvokeUserEventTriggeredAction = (c, e) => OnInvokeUserEventTriggered(c, e);
+        private static readonly Action<object, object> InvokeChannelReadAction = (c, e) => OnInvokeChannelRead(c, e);
+        private static readonly Action<object, object> InvokeExceptionCaughtAction = (c, e) => OnInvokeExceptionCaught(c, e);
 
         private static void OnInvokeUserEventTriggered(object ctx, object evt)
         {

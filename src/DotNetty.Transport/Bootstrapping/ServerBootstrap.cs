@@ -306,7 +306,7 @@ namespace DotNetty.Transport.Bootstrapping
                 }
             }
 
-            static readonly Action<Task, object> s_closeAfterRegisterAction = CloseAfterRegisterAction;
+            static readonly Action<Task, object> s_closeAfterRegisterAction = (t, s) => CloseAfterRegisterAction(t, s);
             static void CloseAfterRegisterAction(Task future, object state)
             {
                 ForceClose((IChannel)state, future.Exception);

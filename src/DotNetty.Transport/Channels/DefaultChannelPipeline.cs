@@ -52,10 +52,10 @@ namespace DotNetty.Transport.Channels
     {
         internal static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<DefaultChannelPipeline>();
 
-        private static readonly Action<object, object> CallHandlerAddedAction = OnCallHandlerAdded;
-        private static readonly Action<object, object> CallHandlerRemovedAction = OnCallHandlerRemoved;
-        private static readonly Action<object, object> DestroyUpAction = OnDestroyUp;
-        private static readonly Action<object, object> DestroyDownAction = OnDestroyDown;
+        private static readonly Action<object, object> CallHandlerAddedAction = (s, c) => OnCallHandlerAdded(s, c);
+        private static readonly Action<object, object> CallHandlerRemovedAction = (s, c) => OnCallHandlerRemoved(s, c);
+        private static readonly Action<object, object> DestroyUpAction = (s, c) => OnDestroyUp(s, c);
+        private static readonly Action<object, object> DestroyDownAction = (s, c) => OnDestroyDown(s, c);
 
         private static readonly NameCachesLocal NameCaches = new NameCachesLocal();
 
@@ -1125,7 +1125,7 @@ namespace DotNetty.Transport.Channels
             finally
             {
 #endif
-                _ = ReferenceCountUtil.Release(msg);
+            _ = ReferenceCountUtil.Release(msg);
 #if DEBUG
             }
 #endif

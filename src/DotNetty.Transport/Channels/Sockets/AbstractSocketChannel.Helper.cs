@@ -28,13 +28,13 @@ namespace DotNetty.Transport.Channels.Sockets
 
     partial class AbstractSocketChannel<TChannel, TUnsafe>
     {
-        internal static readonly EventHandler<SocketAsyncEventArgs> IoCompletedCallback = OnIoCompleted;
-        private static readonly Action<object, object> ConnectCallbackAction = OnConnectCompletedSync;
-        private static readonly Action<object, object> ReadCallbackAction = OnReadCompletedSync;
-        private static readonly Action<object, object> WriteCallbackAction = OnWriteCompletedSync;
-        private static readonly Action<object> ClearReadPendingAction = OnClearReadPending;
-        private static readonly Action<object, object> ConnectTimeoutAction = OnConnectTimeout;
-        private static readonly Action<Task, object> CloseSafeOnCompleteAction = OnCloseSafeOnComplete;
+        internal static readonly EventHandler<SocketAsyncEventArgs> IoCompletedCallback = (s, a) => OnIoCompleted(s, a);
+        private static readonly Action<object, object> ConnectCallbackAction = (u, e) => OnConnectCompletedSync(u, e);
+        private static readonly Action<object, object> ReadCallbackAction = (u, e) => OnReadCompletedSync(u, e);
+        private static readonly Action<object, object> WriteCallbackAction = (u, e) => OnWriteCompletedSync(u, e);
+        private static readonly Action<object> ClearReadPendingAction = c => OnClearReadPending(c);
+        private static readonly Action<object, object> ConnectTimeoutAction = (c, a) => OnConnectTimeout(c, a);
+        private static readonly Action<Task, object> CloseSafeOnCompleteAction = (t, s) => OnCloseSafeOnComplete(t, s);
 
         private static void OnConnectCompletedSync(object u, object e) => ((ISocketChannelUnsafe)u).FinishConnect((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
 

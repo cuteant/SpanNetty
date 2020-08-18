@@ -104,7 +104,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        static readonly Action<Task, object> FireUserEventTriggeredAction = OnFireUserEventTriggered;
+        static readonly Action<Task, object> FireUserEventTriggeredAction = (t, s) => OnFireUserEventTriggered(t, s);
         static void OnFireUserEventTriggered(Task t, object state)
         {
             var wrapped = ((IChannelHandlerContext, IFullHttpRequest, WebSocketServerHandshaker, IPromise))state;
@@ -177,7 +177,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             _ = localHandshakePromise.Task.ContinueWith(AbortHandshakeTimeoutAfterHandshakeCompletedAction, timeoutTask, TaskContinuationOptions.ExecuteSynchronously);
         }
 
-        private static readonly Action<object, object> FireHandshakeTimeoutAction = FireHandshakeTimeout;
+        private static readonly Action<object, object> FireHandshakeTimeoutAction = (c, p) => FireHandshakeTimeout(c, p);
         private static void FireHandshakeTimeout(object c, object p)
         {
             var handshakePromise = (IPromise)p;
@@ -191,7 +191,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        private static readonly Action<Task, object> AbortHandshakeTimeoutAfterHandshakeCompletedAction = AbortHandshakeTimeoutAfterHandshakeCompleted;
+        private static readonly Action<Task, object> AbortHandshakeTimeoutAfterHandshakeCompletedAction = (t, s) => AbortHandshakeTimeoutAfterHandshakeCompleted(t, s);
         private static void AbortHandshakeTimeoutAfterHandshakeCompleted(Task t, object s)
         {
             _ = ((IScheduledTask)s).Cancel();

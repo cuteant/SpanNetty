@@ -43,7 +43,7 @@ namespace DotNetty.Transport.Libuv
     {
         public sealed class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
         {
-            static readonly Action<object, object> AcceptAction = OnAccept;
+            static readonly Action<object, object> AcceptAction = (u, e) => OnAccept(u, e);
 
             public TcpServerChannelUnsafe() : base() // TcpServerChannel channel) : base(channel)
             {

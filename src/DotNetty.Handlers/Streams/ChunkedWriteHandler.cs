@@ -42,9 +42,9 @@ namespace DotNetty.Handlers.Streams
     public class ChunkedWriteHandler<T> : ChannelDuplexHandler
     {
         private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChunkedWriteHandler<T>>();
-        private static readonly Action<Task, object> LinkOutcomeWhenIsEndOfChunkedInputAction = LinkOutcomeWhenIsEndOfChunkedInput;
-        private static readonly Action<Task, object> LinkOutcomeAction = LinkOutcome;
-        private static readonly Action<object> InvokeDoFlushAction = OnInvokeDoFlush;
+        private static readonly Action<Task, object> LinkOutcomeWhenIsEndOfChunkedInputAction = (t, s) => LinkOutcomeWhenIsEndOfChunkedInput(t, s);
+        private static readonly Action<Task, object> LinkOutcomeAction = (t, s) => LinkOutcome(t, s);
+        private static readonly Action<object> InvokeDoFlushAction = s => OnInvokeDoFlush(s);
 
         private readonly Deque<PendingWrite> _queue = new Deque<PendingWrite>();
         private IChannelHandlerContext _ctx;

@@ -580,7 +580,7 @@ namespace DotNetty.Codecs.Http2
             _ = future.ContinueWith(NotifyLifecycleManagerOnErrorAction, (lm, ctx), TaskContinuationOptions.ExecuteSynchronously);
         }
 
-        private static readonly Action<Task, object> NotifyLifecycleManagerOnErrorAction = NotifyLifecycleManagerOnError0;
+        private static readonly Action<Task, object> NotifyLifecycleManagerOnErrorAction = (t, s) => NotifyLifecycleManagerOnError0(t, s);
         private static void NotifyLifecycleManagerOnError0(Task t, object s)
         {
             var wrapped = ((IHttp2LifecycleManager, IChannelHandlerContext))s;
@@ -678,7 +678,7 @@ namespace DotNetty.Codecs.Http2
 
             }
 
-            private static readonly Action<Task, object> LinkOutcomeContinuationAction = LinkOutcomeContinuation;
+            private static readonly Action<Task, object> LinkOutcomeContinuationAction = (t, s) => LinkOutcomeContinuation(t, s);
             private static void LinkOutcomeContinuation(Task task, object state)
             {
                 if (!task.IsSuccess())

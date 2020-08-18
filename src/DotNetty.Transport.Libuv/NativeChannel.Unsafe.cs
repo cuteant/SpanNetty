@@ -41,7 +41,7 @@ namespace DotNetty.Transport.Libuv
     {
         public abstract class NativeChannelUnsafe : AbstractUnsafe, INativeUnsafe
         {
-            private static readonly Action<object, object> CancelConnectAction = CancelConnect;
+            private static readonly Action<object, object> CancelConnectAction = (c, s) => CancelConnect(c, s);
 
             protected NativeChannelUnsafe() : base() //(NativeChannel channel) : base(channel)
             {

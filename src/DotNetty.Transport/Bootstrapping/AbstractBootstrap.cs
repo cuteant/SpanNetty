@@ -376,7 +376,7 @@ namespace DotNetty.Transport.Bootstrapping
             return promise.Task;
         }
 
-        static readonly Action<object> BindlocalAddressAction = OnBindlocalAddress;
+        static readonly Action<object> BindlocalAddressAction = s => OnBindlocalAddress(s);
         private static void OnBindlocalAddress(object state)
         {
             var wrapped = ((IChannel, EndPoint, IPromise))state;

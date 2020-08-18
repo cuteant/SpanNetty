@@ -46,7 +46,7 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public abstract partial class AbstractUnsafe : IChannelUnsafe
         {
-            private static readonly Action<object, object> RegisterAction = OnRegister;
+            private static readonly Action<object, object> RegisterAction = (u, p) => OnRegister(u, p);
 
             protected TChannel _channel;
             private ChannelOutboundBuffer v_outboundBuffer;

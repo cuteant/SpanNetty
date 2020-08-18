@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http2
 
     partial class AbstractHttp2StreamChannel
     {
-        private static readonly Action<Task, object> WindowUpdateFrameWriteListenerAction = WindowUpdateFrameWriteListener;
+        private static readonly Action<Task, object> WindowUpdateFrameWriteListenerAction = (t, s) => WindowUpdateFrameWriteListener(t, s);
         private static void WindowUpdateFrameWriteListener(Task future, object state)
         {
             WindowUpdateFrameWriteComplete(future, (AbstractHttp2StreamChannel)state);
@@ -151,7 +151,7 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        private static readonly Action<object> InvokeFireChannelWritabilityChangedAction = InvokeFireChannelWritabilityChanged;
+        private static readonly Action<object> InvokeFireChannelWritabilityChangedAction = s => InvokeFireChannelWritabilityChanged(s);
         private static void InvokeFireChannelWritabilityChanged(object s)
         {
             _ = ((IChannelPipeline)s).FireChannelWritabilityChanged();

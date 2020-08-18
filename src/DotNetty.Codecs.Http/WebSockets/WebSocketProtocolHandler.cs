@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
     public abstract class WebSocketProtocolHandler : MessageToMessageDecoder<WebSocketFrame>
     {
-        private static readonly Action<Task, object> AbortCloseSetAction = AbortCloseSet;
+        private static readonly Action<Task, object> AbortCloseSetAction = (t, s) => AbortCloseSet(t, s);
 
         internal readonly bool DropPongFrames;
         private readonly WebSocketCloseStatus _closeStatus;
