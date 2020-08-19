@@ -409,39 +409,36 @@ namespace DotNetty.Transport.Channels.Sockets
                     List<ArraySegment<byte>> bufferList = sharedBufferList;
                     // Always us nioBuffers() to workaround data-corruption.
                     // See https://github.com/netty/netty/issues/2761
-                    switch (nioBufferCnt)
+                    if(0u >= (uint)nioBufferCnt)
                     {
-                        case 0:
-                            // We have something else beside ByteBuffers to write so fallback to normal writes.
-                            base.DoWrite(input);
-                            return;
-                        default:
-                            for (int i = writeSpinCount - 1; i >= 0; i--)
-                            {
-                                long localWrittenBytes = socket.Send(bufferList, SocketFlags.None, out SocketError errorCode);
-                                if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
-                                {
-                                    ThrowHelper.ThrowSocketException(errorCode);
-                                }
+                        // We have something else beside ByteBuffers to write so fallback to normal writes.
+                        base.DoWrite(input);
+                        return;
+                    }
+                    for (int i = writeSpinCount - 1; i >= 0; i--)
+                    {
+                        long localWrittenBytes = socket.Send(bufferList, SocketFlags.None, out SocketError errorCode);
+                        if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
+                        {
+                            ThrowHelper.ThrowSocketException(errorCode);
+                        }
 
-                                if (0ul >= (ulong)localWrittenBytes)
-                                {
-                                    break;
-                                }
-
-                                expectedWrittenBytes -= localWrittenBytes;
-                                writtenBytes += localWrittenBytes;
-                                if (0ul >= (ulong)expectedWrittenBytes)
-                                {
-                                    done = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    bufferList = AdjustBufferList(localWrittenBytes, bufferList);
-                                }
-                            }
+                        if (0ul >= (ulong)localWrittenBytes)
+                        {
                             break;
+                        }
+
+                        expectedWrittenBytes -= localWrittenBytes;
+                        writtenBytes += localWrittenBytes;
+                        if (0ul >= (ulong)expectedWrittenBytes)
+                        {
+                            done = true;
+                            break;
+                        }
+                        else
+                        {
+                            bufferList = AdjustBufferList(localWrittenBytes, bufferList);
+                        }
                     }
 
                     if (writtenBytes > 0)

@@ -31,6 +31,7 @@ namespace DotNetty.Transport.Channels.Sockets
     using System;
     using System.Net;
     using System.Net.Sockets;
+    using System.Runtime.CompilerServices;
 
     public sealed class TcpServerSocketChannel : TcpServerSocketChannel<TcpServerSocketChannel, TcpSocketChannelFactory>
     {
@@ -103,7 +104,24 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override EndPoint LocalAddressInternal => Socket.LocalEndPoint;
 
-        SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> AcceptOperation => _acceptOperation ??= new SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe>((TServerChannel)this, false);
+        private SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> AcceptOperation
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => _acceptOperation ?? EnsureAcceptOperationCreated();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> EnsureAcceptOperationCreated()
+        {
+            lock (this)
+            {
+                if (_acceptOperation is null)
+                {
+                    _acceptOperation = new SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe>((TServerChannel)this, false);
+                }
+            }
+            return _acceptOperation;
+        }
 
         protected override void DoBind(EndPoint localAddress)
         {

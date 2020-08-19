@@ -55,7 +55,7 @@ namespace DotNetty.Common.Concurrency
         private readonly TaskScheduler _taskScheduler;
         private readonly CountdownEvent _threadLock;
         private readonly IPromise _terminationCompletionSource;
-        private int v_executionState = NotStartedState;
+        private volatile int v_executionState = NotStartedState;
 
         protected readonly IQueue<IRunnable> _taskQueue;
         private readonly IBlockingQueue<IRunnable> _blockingTaskQueue;
@@ -229,13 +229,13 @@ namespace DotNetty.Common.Concurrency
         public virtual int PendingTasks => _taskQueue.Count;
 
         /// <inheritdoc />
-        public override bool IsShuttingDown => (uint)Volatile.Read(ref v_executionState) >= ShuttingDownState;
+        public override bool IsShuttingDown => (uint)v_executionState >= ShuttingDownState;
 
         /// <inheritdoc />
-        public override bool IsShutdown => (uint)Volatile.Read(ref v_executionState) >= ShutdownState;
+        public override bool IsShutdown => (uint)v_executionState >= ShutdownState;
 
         /// <inheritdoc />
-        public override bool IsTerminated => (uint)Volatile.Read(ref v_executionState) >=/*==*/ TerminatedState;
+        public override bool IsTerminated => (uint)v_executionState >=/*==*/ TerminatedState;
 
         /// <inheritdoc />
         public override Task TerminationCompletion => _terminationCompletionSource.Task;
@@ -247,7 +247,7 @@ namespace DotNetty.Common.Concurrency
 
         protected long GracefulShutdownStartTime => _gracefulShutdownStartTime;
 
-        protected int ExecutionState => Volatile.Read(ref v_executionState);
+        protected int ExecutionState => v_executionState;
 
         #endregion
 
@@ -328,7 +328,7 @@ namespace DotNetty.Common.Concurrency
 
         protected void SetExecutionState(int newState)
         {
-            var currentState = Volatile.Read(ref v_executionState);
+            var currentState = v_executionState;
             int oldState;
             do
             {
@@ -734,7 +734,7 @@ namespace DotNetty.Common.Concurrency
 
         protected internal virtual void WakeUp(bool inEventLoop)
         {
-            if (!inEventLoop/* || (Volatile.Read(ref v_executionState) == ST_SHUTTING_DOWN)*/)
+            if (!inEventLoop/* || (v_executionState == ST_SHUTTING_DOWN)*/)
             {
                 // Use offer as we actually only need this to unblock the thread and if offer fails we do not care as there
                 // is already something in the queue.
@@ -834,7 +834,7 @@ namespace DotNetty.Common.Concurrency
 
             bool inEventLoop = InEventLoop;
             bool wakeup;
-            int thisState = Volatile.Read(ref v_executionState);
+            int thisState = v_executionState;
             int oldState;
             do
             {

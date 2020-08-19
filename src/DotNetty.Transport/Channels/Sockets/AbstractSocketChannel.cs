@@ -50,13 +50,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         private SocketChannelAsyncOperation<TChannel, TUnsafe> _readOperation;
         private SocketChannelAsyncOperation<TChannel, TUnsafe> _writeOperation;
-        private int v_state;
-        private int InternalState
-        {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get => Volatile.Read(ref v_state);
-            set => Interlocked.Exchange(ref v_state, value);
-        }
+        private volatile int v_state;
 
         private IPromise _connectPromise;
         private IScheduledTask _connectCancellationTask;
@@ -65,7 +59,7 @@ namespace DotNetty.Transport.Channels.Sockets
             : base(parent)
         {
             Socket = socket;
-            InternalState = StateFlags.Open;
+            v_state = StateFlags.Open;
 
             try
             {
@@ -129,35 +123,71 @@ namespace DotNetty.Transport.Channels.Sockets
 
         void ClearReadPending0() => ReadPending = false;
 
-        protected void SetState(int stateToSet) => InternalState |= stateToSet;
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected void SetState(int stateToSet) => v_state |= stateToSet;
 
         /// <returns>state before modification</returns>
         protected int ResetState(int stateToReset)
         {
-            var oldState = InternalState;
+            var oldState = v_state;
             if ((oldState & stateToReset) != 0)
             {
-                InternalState = oldState & ~stateToReset;
+                v_state = oldState & ~stateToReset;
             }
             return oldState;
         }
 
         protected bool TryResetState(int stateToReset)
         {
-            var oldState = InternalState;
+            var oldState = v_state;
             if ((oldState & stateToReset) != 0)
             {
-                InternalState = oldState & ~stateToReset;
+                v_state = oldState & ~stateToReset;
                 return true;
             }
             return false;
         }
 
-        protected bool IsInState(int stateToCheck) => (InternalState & stateToCheck) == stateToCheck;
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected bool IsInState(int stateToCheck) => 0u >= (uint)((v_state & stateToCheck) - stateToCheck);
 
-        protected SocketChannelAsyncOperation<TChannel, TUnsafe> ReadOperation => _readOperation ??= new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, true);
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> ReadOperation
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => _readOperation ?? EnsureReadOperationCreated();
+        }
 
-        SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => _writeOperation ??= new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false);
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private SocketChannelAsyncOperation<TChannel, TUnsafe> EnsureReadOperationCreated()
+        {
+            lock (this)
+            {
+                if (_readOperation is null)
+                {
+                    _readOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, true);
+                }
+            }
+            return _readOperation;
+        }
+
+        private SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => _writeOperation ?? EnsureWriteOperationCreated();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private SocketChannelAsyncOperation<TChannel, TUnsafe> EnsureWriteOperationCreated()
+        {
+            lock (this)
+            {
+                if (_writeOperation is null)
+                {
+                    _writeOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false);
+                }
+            }
+            return _writeOperation;
+        }
 
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
         protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(in ReadOnlyMemory<byte> buffer)
@@ -266,7 +296,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             if (!IsInState(StateFlags.ReadScheduled))
             {
-                InternalState |= StateFlags.ReadScheduled;
+                v_state |= StateFlags.ReadScheduled;
                 ScheduleSocketRead();
             }
         }
