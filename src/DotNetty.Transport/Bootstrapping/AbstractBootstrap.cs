@@ -372,14 +372,14 @@ namespace DotNetty.Transport.Bootstrapping
             // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
             // the pipeline in its channelRegistered() implementation.
             var promise = channel.NewPromise();
-            channel.EventLoop.Execute(BindlocalAddressAction, Tuple.Create(channel, localAddress, promise));
+            channel.EventLoop.Execute(BindlocalAddressAction, (channel, localAddress, promise));
             return promise.Task;
         }
 
         static readonly Action<object> BindlocalAddressAction = OnBindlocalAddress;
         private static void OnBindlocalAddress(object state)
         {
-            var wrapped = (Tuple<IChannel, EndPoint, IPromise>)state;
+            var wrapped = ((IChannel, EndPoint, IPromise))state;
             try
             {
                 wrapped.Item1.BindAsync(wrapped.Item2).LinkOutcome(wrapped.Item3);

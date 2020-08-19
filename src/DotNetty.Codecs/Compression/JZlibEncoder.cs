@@ -140,7 +140,7 @@ namespace DotNetty.Codecs.Compression
             else
             {
                 var p = ctx.NewPromise();
-                executor.Execute(InvokeFinishEncode, this, Tuple.Create(p, promise));
+                executor.Execute((e, p) => InvokeFinishEncode(e, p), this, (p, promise));
                 return p.Task;
             }
         }
@@ -148,7 +148,7 @@ namespace DotNetty.Codecs.Compression
         static void InvokeFinishEncode(object e, object p)
         {
             var self = (JZlibEncoder)e;
-            var promise = (Tuple<IPromise, IPromise>)p;
+            var promise = ((IPromise, IPromise))p;
             var f = self.FinishEncode(self.CurrentContext(), promise.Item1);
             f.LinkOutcome(promise.Item2);
         }
@@ -238,7 +238,7 @@ namespace DotNetty.Codecs.Compression
         public override void Close(IChannelHandlerContext context, IPromise promise)
         {
             var completion = this.FinishEncode(context, context.NewPromise());
-            _ = completion.ContinueWith(CloseOnCompleteAction, Tuple.Create(context, promise), TaskContinuationOptions.ExecuteSynchronously);
+            _ = completion.ContinueWith(CloseOnCompleteAction, (context, promise), TaskContinuationOptions.ExecuteSynchronously);
             if (!completion.IsCompleted)
             {
                 _ = ctx.Executor.Schedule(CloseHandlerContextAction, context, promise, TimeSpan.FromSeconds(10));
@@ -298,7 +298,7 @@ namespace DotNetty.Codecs.Compression
         static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
         static void CloseOnComplete(Task t, object s)
         {
-            var wrapped = (Tuple<IChannelHandlerContext, IPromise>)s;
+            var wrapped = ((IChannelHandlerContext, IPromise))s;
             if (t.IsFaulted)
             {
                 _ = wrapped.Item1.FireExceptionCaught(t.Exception.InnerException);

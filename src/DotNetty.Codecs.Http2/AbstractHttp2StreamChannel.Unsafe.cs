@@ -452,7 +452,7 @@ namespace DotNetty.Codecs.Http2
                     long bytes = FlowControlledFrameSizeEstimatorHandle.Instance.Size(frame);
                     ch.IncrementPendingOutboundBytes(bytes, false);
                     _ = future.ContinueWith(InvokeWriteCompleteAfterWriteAction,
-                        Tuple.Create(this, promise, bytes, firstWrite), TaskContinuationOptions.ExecuteSynchronously);
+                        (this, promise, bytes, firstWrite), TaskContinuationOptions.ExecuteSynchronously);
                     _writeDoneAndNoFlush = true;
                 }
             }
@@ -460,7 +460,7 @@ namespace DotNetty.Codecs.Http2
             private static readonly Action<Task, object> InvokeWriteCompleteAfterWriteAction = InvokeWriteCompleteAfterWrite;
             private static void InvokeWriteCompleteAfterWrite(Task t, object s)
             {
-                var wrapped = (Tuple<Http2ChannelUnsafe, IPromise, long, bool>)s;
+                var wrapped = ((Http2ChannelUnsafe, IPromise, long, bool))s;
                 var self = wrapped.Item1;
                 self.InvokeWriteComplete(t, wrapped.Item2, wrapped.Item4);
                 self._channel.DecrementPendingOutboundBytes(wrapped.Item3, false);

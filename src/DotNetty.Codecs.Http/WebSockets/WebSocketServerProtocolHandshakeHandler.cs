@@ -94,7 +94,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     _ = ctx.Pipeline.Remove(this);
 
                     Task task = handshaker.HandshakeAsync(ctx.Channel, req);
-                    _ = task.ContinueWith(FireUserEventTriggeredAction, Tuple.Create(ctx, req, handshaker, _handshakePromise), TaskContinuationOptions.ExecuteSynchronously);
+                    _ = task.ContinueWith(FireUserEventTriggeredAction, (ctx, req, handshaker, _handshakePromise), TaskContinuationOptions.ExecuteSynchronously);
                     ApplyHandshakeTimeout();
                 }
             }
@@ -107,7 +107,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         static readonly Action<Task, object> FireUserEventTriggeredAction = OnFireUserEventTriggered;
         static void OnFireUserEventTriggered(Task t, object state)
         {
-            var wrapped = (Tuple<IChannelHandlerContext, IFullHttpRequest, WebSocketServerHandshaker, IPromise>)state;
+            var wrapped = ((IChannelHandlerContext, IFullHttpRequest, WebSocketServerHandshaker, IPromise))state;
             if (t.IsSuccess())
             {
                 _ = wrapped.Item4.TryComplete();

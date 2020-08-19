@@ -203,13 +203,13 @@ namespace DotNetty.Codecs.Http.WebSockets
                 _ = p.AddBefore(encoderName, "wsencoder", NewWebSocketEncoder());
             }
 
-            _ = channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
+            _ = channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, (completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
         }
 
         static readonly Action<Task, object> RemoveHandlerAfterWriteAction = RemoveHandlerAfterWrite;
         static void RemoveHandlerAfterWrite(Task t, object state)
         {
-            var wrapped = (Tuple<IPromise, IChannelPipeline, string>)state;
+            var wrapped = ((IPromise, IChannelPipeline, string))state;
             if (t.IsSuccess())
             {
                 _ = wrapped.Item2.Remove(wrapped.Item3);

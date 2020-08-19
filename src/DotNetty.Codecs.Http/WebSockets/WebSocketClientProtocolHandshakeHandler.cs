@@ -66,7 +66,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             base.ChannelActive(context);
 
             _ = _handshaker.HandshakeAsync(context.Channel)
-                .ContinueWith(FireUserEventTriggeredAction, Tuple.Create(context, _handshakePromise), TaskContinuationOptions.ExecuteSynchronously);
+                .ContinueWith(FireUserEventTriggeredAction, (context, _handshakePromise), TaskContinuationOptions.ExecuteSynchronously);
 
             ApplyHandshakeTimeout();
         }
@@ -74,7 +74,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         static readonly Action<Task, object> FireUserEventTriggeredAction = OnFireUserEventTriggered;
         static void OnFireUserEventTriggered(Task t, object state)
         {
-            var wrapped = (Tuple<IChannelHandlerContext, IPromise>)state;
+            var wrapped = ((IChannelHandlerContext, IPromise))state;
             if (t.IsSuccess())
             {
                 _ = wrapped.Item2.TrySetException(t.Exception);

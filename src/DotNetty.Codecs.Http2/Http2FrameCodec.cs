@@ -499,7 +499,7 @@ namespace DotNetty.Codecs.Http2
                     _ = Interlocked.Increment(ref v_numBufferedStreams);
                     // Clean up the stream being initialized if writing the headers fails and also
                     // decrement the number of buffered streams.
-                    _ = promise.Task.ContinueWith(ResetNufferedStreamsAction, Tuple.Create(this, streamId), TaskContinuationOptions.ExecuteSynchronously);
+                    _ = promise.Task.ContinueWith(ResetNufferedStreamsAction, (this, streamId), TaskContinuationOptions.ExecuteSynchronously);
                 }
                 else
                 {
@@ -511,7 +511,7 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> ResetNufferedStreamsAction = ResetNufferedStreams;
         private static void ResetNufferedStreams(Task t, object s)
         {
-            var wrapped = (Tuple<Http2FrameCodec, int>)s;
+            var wrapped = ((Http2FrameCodec, int))s;
             var self = wrapped.Item1;
             _ = Interlocked.Decrement(ref self.v_numBufferedStreams);
             self.HandleHeaderFuture(t, wrapped.Item2);

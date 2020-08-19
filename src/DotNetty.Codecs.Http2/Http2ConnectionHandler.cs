@@ -513,8 +513,7 @@ namespace DotNetty.Codecs.Http2
                 timeoutTask = ctx.Executor.Schedule(ScheduledCloseChannelAction, ctx, promise, _gracefulShutdownTimeout);
             }
             _ = future.ContinueWith(CloseChannelOnCompleteAction,
-                Tuple.Create(ctx, promise, timeoutTask),
-                TaskContinuationOptions.ExecuteSynchronously);
+                    (ctx, promise, timeoutTask), TaskContinuationOptions.ExecuteSynchronously);
         }
 
         private void DoGracefulShutdown(IChannelHandlerContext ctx, Task future, IPromise promise)
@@ -838,7 +837,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                _ = future.ContinueWith(CloseConnectionOnErrorOnCompleteAction, Tuple.Create(this, ctx), TaskContinuationOptions.ExecuteSynchronously);
+                _ = future.ContinueWith(CloseConnectionOnErrorOnCompleteAction, (this, ctx), TaskContinuationOptions.ExecuteSynchronously);
             }
             return future;
         }
@@ -891,7 +890,7 @@ namespace DotNetty.Codecs.Http2
             else
             {
                 _ = future.ContinueWith(ProcessRstStreamWriteResultOnCompleteAction,
-                    Tuple.Create(this, ctx, stream), TaskContinuationOptions.ExecuteSynchronously);
+                        (this, ctx, stream), TaskContinuationOptions.ExecuteSynchronously);
             }
 
             return future;
@@ -929,7 +928,7 @@ namespace DotNetty.Codecs.Http2
             else
             {
                 _ = future.ContinueWith(ProcessGoAwayWriteResultOnCompleteAction,
-                    Tuple.Create(ctx, lastStreamId, errorCode, debugData), TaskContinuationOptions.ExecuteSynchronously);
+                        (ctx, lastStreamId, errorCode, debugData), TaskContinuationOptions.ExecuteSynchronously);
             }
 
             return future;
@@ -991,7 +990,7 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> CloseChannelOnCompleteAction = CloseChannelOnComplete;
         private static void CloseChannelOnComplete(Task t, object s)
         {
-            var wrapped = (Tuple<IChannelHandlerContext, IPromise, IScheduledTask>)s;
+            var wrapped = ((IChannelHandlerContext, IPromise, IScheduledTask))s;
             _ = (wrapped.Item3?.Cancel());
             var promise = wrapped.Item2;
             if (promise is object)
@@ -1012,21 +1011,21 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> CloseConnectionOnErrorOnCompleteAction = CloseConnectionOnErrorOnComplete;
         private static void CloseConnectionOnErrorOnComplete(Task t, object s)
         {
-            var wrapped = (Tuple<Http2ConnectionHandler, IChannelHandlerContext>)s;
+            var wrapped = ((Http2ConnectionHandler, IChannelHandlerContext))s;
             wrapped.Item1.CloseConnectionOnError(wrapped.Item2, t);
         }
 
         private static readonly Action<Task, object> ProcessRstStreamWriteResultOnCompleteAction = ProcessRstStreamWriteResultOnComplete;
         private static void ProcessRstStreamWriteResultOnComplete(Task t, object s)
         {
-            var wrapped = (Tuple<Http2ConnectionHandler, IChannelHandlerContext, IHttp2Stream>)s;
+            var wrapped = ((Http2ConnectionHandler, IChannelHandlerContext, IHttp2Stream))s;
             wrapped.Item1.ProcessRstStreamWriteResult(wrapped.Item2, wrapped.Item3, t);
         }
 
         private static readonly Action<Task, object> ProcessGoAwayWriteResultOnCompleteAction = ProcessGoAwayWriteResultOnComplete;
         private static void ProcessGoAwayWriteResultOnComplete(Task t, object s)
         {
-            var wrapped = (Tuple<IChannelHandlerContext, int, Http2Error, IByteBuffer>)s;
+            var wrapped = ((IChannelHandlerContext, int, Http2Error, IByteBuffer))s;
             ProcessGoAwayWriteResult(wrapped.Item1, wrapped.Item2, wrapped.Item3, wrapped.Item4, t);
         }
 

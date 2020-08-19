@@ -182,7 +182,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             var completion = channel.NewPromise();
             _ = channel.WriteAndFlushAsync(request).ContinueWith(HandshakeOnCompleteAction,
-                new Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>(completion, pipeline, this),
+                (completion, pipeline, this),
                 TaskContinuationOptions.ExecuteSynchronously);
 
             return completion.Task;
@@ -194,7 +194,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         static readonly Action<Task, object> HandshakeOnCompleteAction = HandshakeOnComplete;
         static void HandshakeOnComplete(Task t, object state)
         {
-            var wrapped = (Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>)state;
+            var wrapped = ((IPromise, IChannelPipeline, WebSocketClientHandshaker))state;
             if (t.IsCanceled)
             {
                 _ = wrapped.Item1.TrySetCanceled(); return;
@@ -469,13 +469,13 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 return;
             }
-            _ = flushFuture.Task.ContinueWith(CloseOnCompleteAction, Tuple.Create(channel, this), TaskContinuationOptions.ExecuteSynchronously);
+            _ = flushFuture.Task.ContinueWith(CloseOnCompleteAction, (channel, this), TaskContinuationOptions.ExecuteSynchronously);
         }
 
         static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
         static void CloseOnComplete(Task t, object state)
         {
-            var wrapped = (Tuple<IChannel, WebSocketClientHandshaker>)state;
+            var wrapped = ((IChannel, WebSocketClientHandshaker))state;
             var channel = wrapped.Item1;
             var self = wrapped.Item2;
 

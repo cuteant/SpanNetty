@@ -390,7 +390,7 @@ namespace DotNetty.Transport.Channels.Groups
             bool added = map.TryAdd(channel.Id, channel);
             if (added)
             {
-                _ = channel.CloseCompletion.ContinueWith(RemoveChannelAfterCloseAction, new Tuple<DefaultChannelGroup, IChannel>(this, channel), TaskContinuationOptions.ExecuteSynchronously);
+                _ = channel.CloseCompletion.ContinueWith(RemoveChannelAfterCloseAction, (this, channel), TaskContinuationOptions.ExecuteSynchronously);
             }
 
             if (_stayClosed && (SharedConstants.False < (uint)Volatile.Read(ref _closed)))
@@ -415,7 +415,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         static void RemoveChannelAfterClose(Task t, object s)
         {
-            var wrapped = (Tuple<DefaultChannelGroup, IChannel>)s;
+            var wrapped = ((DefaultChannelGroup, IChannel))s;
             _ = wrapped.Item1.Remove(wrapped.Item2);
         }
 

@@ -62,7 +62,7 @@ namespace DotNetty.Handlers.Streams
             }
             else
             {
-                ctx.Executor.Execute(InvokeDoFlushAction, Tuple.Create(this, ctx));
+                ctx.Executor.Execute(InvokeDoFlushAction, (this, ctx));
             }
         }
 
@@ -268,7 +268,7 @@ namespace DotNetty.Handlers.Streams
                         else
                         {
                             _ = future.ContinueWith(LinkOutcomeAction,
-                                Tuple.Create(this, channel, currentWrite, resume), TaskContinuationOptions.ExecuteSynchronously);
+                                (this, channel, currentWrite, resume), TaskContinuationOptions.ExecuteSynchronously);
                         }
                     }
 
@@ -296,7 +296,7 @@ namespace DotNetty.Handlers.Streams
 
         private static void LinkOutcome(Task task, object state)
         {
-            var wrapped = (Tuple<ChunkedWriteHandler<T>, IChannel, PendingWrite, bool>)state;
+            var wrapped = ((ChunkedWriteHandler<T>, IChannel, PendingWrite, bool))state;
             HandleFuture(task, wrapped.Item1, wrapped.Item2, wrapped.Item3, wrapped.Item4);
         }
 
@@ -346,7 +346,7 @@ namespace DotNetty.Handlers.Streams
 
         private static void OnInvokeDoFlush(object state)
         {
-            var wrapped = (Tuple<ChunkedWriteHandler<T>, IChannelHandlerContext>)state;
+            var wrapped = ((ChunkedWriteHandler<T>, IChannelHandlerContext))state;
             wrapped.Item1.InvokeDoFlush(wrapped.Item2);
         }
 

@@ -47,7 +47,7 @@ namespace DotNetty.Handlers.IPFilter
             }
             else
             {
-                ctx.Channel.CloseCompletion.ContinueWith(s_removeIpAddrAfterCloseAction, Tuple.Create(this.connected, remoteIp), TaskContinuationOptions.ExecuteSynchronously);
+                ctx.Channel.CloseCompletion.ContinueWith(s_removeIpAddrAfterCloseAction, (this.connected, remoteIp), TaskContinuationOptions.ExecuteSynchronously);
             }
             return true;
         }
@@ -55,7 +55,7 @@ namespace DotNetty.Handlers.IPFilter
         static readonly Action<Task, object> s_removeIpAddrAfterCloseAction = RemoveIpAddrAfterCloseAction;
         static void RemoveIpAddrAfterCloseAction(Task t, object s)
         {
-            var wrapped = (Tuple<ConcurrentDictionary<IPAddress, byte>, IPAddress>)s;
+            var wrapped = ((ConcurrentDictionary<IPAddress, byte>, IPAddress))s;
             wrapped.Item1.TryRemove(wrapped.Item2, out _);
         }
 

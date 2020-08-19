@@ -577,13 +577,13 @@ namespace DotNetty.Codecs.Http2
 
         private static void NotifyLifecycleManagerOnError(Task future, IHttp2LifecycleManager lm, IChannelHandlerContext ctx)
         {
-            _ = future.ContinueWith(NotifyLifecycleManagerOnErrorAction, Tuple.Create(lm, ctx), TaskContinuationOptions.ExecuteSynchronously);
+            _ = future.ContinueWith(NotifyLifecycleManagerOnErrorAction, (lm, ctx), TaskContinuationOptions.ExecuteSynchronously);
         }
 
         private static readonly Action<Task, object> NotifyLifecycleManagerOnErrorAction = NotifyLifecycleManagerOnError0;
         private static void NotifyLifecycleManagerOnError0(Task t, object s)
         {
-            var wrapped = (Tuple<IHttp2LifecycleManager, IChannelHandlerContext>)s;
+            var wrapped = ((IHttp2LifecycleManager, IChannelHandlerContext))s;
             var cause = t.Exception;
             if (cause is object)
             {

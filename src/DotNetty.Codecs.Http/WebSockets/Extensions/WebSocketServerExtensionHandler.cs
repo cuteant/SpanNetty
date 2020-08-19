@@ -132,7 +132,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                                 extensionData.Name, extensionData.Parameters);
                         }
 
-                        _ = promise.Task.ContinueWith(s_switchWebSocketExtensionHandlerAction, Tuple.Create(ctx, _validExtensions), TaskContinuationOptions.ExecuteSynchronously);
+                        _ = promise.Task.ContinueWith(s_switchWebSocketExtensionHandlerAction, (ctx, _validExtensions), TaskContinuationOptions.ExecuteSynchronously);
 
                         if (headerValue is object)
                         {
@@ -140,7 +140,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                         }
                     }
                 }
-                _ = promise.Task.ContinueWith(s_removeWebSocketExtensionHandlerAction, Tuple.Create(ctx, this), TaskContinuationOptions.ExecuteSynchronously);
+                _ = promise.Task.ContinueWith(s_removeWebSocketExtensionHandlerAction, (ctx, this), TaskContinuationOptions.ExecuteSynchronously);
             }
 
             base.Write(ctx, msg, promise);
@@ -148,7 +148,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         private static void SwitchWebSocketExtensionHandler(Task promise, object state)
         {
-            var wrapped = (Tuple<IChannelHandlerContext, List<IWebSocketServerExtension>>)state;
+            var wrapped = ((IChannelHandlerContext, List<IWebSocketServerExtension>))state;
             var ctx = wrapped.Item1;
             var validExtensions = wrapped.Item2;
             var pipeline = ctx.Pipeline;
@@ -168,7 +168,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         private static void RemoveWebSocketExtensionHandler(Task future, object state)
         {
-            var wrapped = (Tuple<IChannelHandlerContext, WebSocketServerExtensionHandler>)state;
+            var wrapped = ((IChannelHandlerContext, WebSocketServerExtensionHandler))state;
             if (future.IsSuccess())
             {
                 _ = wrapped.Item1.Pipeline.Remove(wrapped.Item2);

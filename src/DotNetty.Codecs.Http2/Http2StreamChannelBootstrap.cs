@@ -226,7 +226,7 @@ namespace DotNetty.Codecs.Http2
         static readonly Action<Task, object> LinkOutcomeContinuationAction = LinkOutcomeContinuation;
         private static void LinkOutcomeContinuation(Task future, object state)
         {
-            var wrapped = (Tuple<TaskCompletionSource<IHttp2StreamChannel>, IHttp2StreamChannel>)state;
+            var wrapped = ((TaskCompletionSource<IHttp2StreamChannel>, IHttp2StreamChannel))state;
             var streamChannel = wrapped.Item2;
             if (future.IsSuccess())
             {
@@ -255,7 +255,7 @@ namespace DotNetty.Codecs.Http2
             if (!future.IsCompleted)
             {
                 _ = future.ContinueWith(LinkOutcomeContinuationAction,
-                    Tuple.Create(promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
+                    (promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
                 return;
             }
             if (future.IsSuccess())

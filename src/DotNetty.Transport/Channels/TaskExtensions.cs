@@ -57,13 +57,13 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                return task.ContinueWith(CloseWrappedChannelOnCompleteAction, Tuple.Create(channel, promise), TaskContinuationOptions.ExecuteSynchronously);
+                return task.ContinueWith(CloseWrappedChannelOnCompleteAction, (channel, promise), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
         private static readonly Action<Task, object> CloseWrappedChannelOnCompleteAction = CloseWrappedChannelOnComplete;
         private static void CloseWrappedChannelOnComplete(Task t, object s)
         {
-            var wrapped = (Tuple<IChannel, IPromise>)s;
+            var wrapped = ((IChannel, IPromise))s;
             _ = wrapped.Item1.CloseAsync(wrapped.Item2);
         }
 
@@ -95,13 +95,13 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                return task.ContinueWith(CloseWrappedContextOnCompleteAction, Tuple.Create(ctx, promise), TaskContinuationOptions.ExecuteSynchronously);
+                return task.ContinueWith(CloseWrappedContextOnCompleteAction, (ctx, promise), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
         private static readonly Action<Task, object> CloseWrappedContextOnCompleteAction = CloseWrappedContextOnComplete;
         private static void CloseWrappedContextOnComplete(Task t, object s)
         {
-            var wrapped = (Tuple<IChannelHandlerContext, IPromise>)s;
+            var wrapped = ((IChannelHandlerContext, IPromise))s;
             _ = wrapped.Item1.CloseAsync(wrapped.Item2);
         }
 
@@ -145,7 +145,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                return task.ContinueWith(CloseWrappedChannelOnFailureAction, Tuple.Create(channel, promise), TaskContinuationOptions.ExecuteSynchronously);
+                return task.ContinueWith(CloseWrappedChannelOnFailureAction, (channel, promise), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
         private static readonly Action<Task, object> CloseWrappedChannelOnFailureAction = CloseWrappedChannelOnFailure;
@@ -153,7 +153,7 @@ namespace DotNetty.Transport.Channels
         {
             if (t.IsFault())
             {
-                var wrapped = (Tuple<IChannel, IPromise>)s;
+                var wrapped = ((IChannel, IPromise))s;
                 _ = wrapped.Item1.CloseAsync(wrapped.Item2);
             }
         }
@@ -198,7 +198,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                return task.ContinueWith(CloseWrappedContextOnFailureAction, Tuple.Create(ctx, promise), TaskContinuationOptions.ExecuteSynchronously);
+                return task.ContinueWith(CloseWrappedContextOnFailureAction, (ctx, promise), TaskContinuationOptions.ExecuteSynchronously);
             }
         }
         private static readonly Action<Task, object> CloseWrappedContextOnFailureAction = CloseWrappedContextOnFailure;
@@ -206,7 +206,7 @@ namespace DotNetty.Transport.Channels
         {
             if (t.IsFault())
             {
-                var wrapped = (Tuple<IChannelHandlerContext, IPromise>)s;
+                var wrapped = ((IChannelHandlerContext, IPromise))s;
                 _ = wrapped.Item1.CloseAsync(wrapped.Item2);
             }
         }

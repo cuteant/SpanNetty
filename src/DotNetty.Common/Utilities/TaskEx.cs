@@ -177,7 +177,7 @@ namespace DotNetty.Common.Utilities
         static readonly Action<Task, object> CascadeToContinuationAction = CascadeToContinuation;
         private static void CascadeToContinuation(Task t, object s)
         {
-            var wrapped = (Tuple<IPromise, IInternalLogger>)s;
+            var wrapped = ((IPromise, IInternalLogger))s;
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
             if (t.IsCompletedSuccessfully)
             {
@@ -242,7 +242,7 @@ namespace DotNetty.Common.Utilities
 #endif
             task.ContinueWith(
                 CascadeToContinuationAction,
-                Tuple.Create(promise, internalLogger),
+                (promise, internalLogger),
                 TaskContinuationOptions.ExecuteSynchronously);
         }
 
