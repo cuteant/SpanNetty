@@ -207,6 +207,24 @@ namespace DotNetty.Transport.Libuv
             return new CompatibleConcurrentQueue<IRunnable>();
         }
 
+        public override void Execute(IRunnable task)
+        {
+            InternalExecute(task);
+        }
+
+        public override void LazyExecute(IRunnable task)
+        {
+            InternalExecute(task);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private void InternalExecute(IRunnable task)
+        {
+            AddTask(task);
+
+            WakeUp(InEventLoop);
+        }
+
         protected override void WakeUp(bool inEventLoop)
         {
             // If the executor is not in the event loop, wake up the loop by async handle immediately.

@@ -45,7 +45,6 @@ namespace DotNetty.Transport.Channels
 
         private readonly long _breakoutNanosInterval;
         private readonly ManualResetEventSlim _emptyEvent;
-        private bool _firstTask; // 不需要设置 volatile
 
         public SingleThreadEventLoop(IEventLoopGroup parent)
             : this(parent, DefaultBreakoutInterval)
@@ -85,7 +84,6 @@ namespace DotNetty.Transport.Channels
         public SingleThreadEventLoop(IEventLoopGroup parent, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler, TimeSpan breakoutInterval)
             : base(parent, threadFactory, false, int.MaxValue, rejectedHandler)
         {
-            _firstTask = true;
             _emptyEvent = new ManualResetEventSlim(false, 1);
             _breakoutNanosInterval = PreciseTime.ToDelayNanos(breakoutInterval);
             Start();
@@ -115,40 +113,20 @@ namespace DotNetty.Transport.Channels
         /// <inheritdoc />
         public sealed override void Execute(IRunnable task)
         {
-            if (!(task is ILazyRunnable)
-#if DEBUG
-                && WakesUpForTask(task)
-#endif
-                )
-            {
-                InternalExecute(task, true);
-            }
-            else
-            {
-                InternalLazyExecute(task);
-            }
+            InternalExecute(task);
         }
 
         public sealed override void LazyExecute(IRunnable task)
         {
-            InternalExecute(task, false);
-        }
-
-        protected override void InternalLazyExecute(IRunnable task)
-        {
-            // netty 第一个任务进来，不管是否延迟任务，都会启动线程
-            // 防止线程启动后，第一个进来的就是 lazy task
-            var firstTask = _firstTask;
-            if (firstTask) { _firstTask = false; }
-            InternalExecute(task, firstTask);
+            InternalExecute(task);
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        private void InternalExecute(IRunnable task, bool immediate)
+        private void InternalExecute(IRunnable task)
         {
             AddTask(task);
 
-            if (immediate) { _emptyEvent.Set(); }
+            if (!InEventLoop) { _emptyEvent.Set(); }
         }
 
         protected sealed override void WakeUp(bool inEventLoop)
@@ -171,7 +149,10 @@ namespace DotNetty.Transport.Channels
 #else
             _emptyEvent.Reset();
 #endif
-            if (_taskQueue.TryDequeue(out task) || IsShuttingDown) { return task; }
+            if (_taskQueue.TryDequeue(out task) || IsShuttingDown) // revisit queue as producer might have put a task in meanwhile
+            {
+                return task;
+            }
 
             // revisit queue as producer might have put a task in meanwhile
             if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
@@ -180,14 +161,8 @@ namespace DotNetty.Transport.Channels
                 if ((ulong)delayNanos > 0UL) // delayNanos >= 0
                 {
                     var timeout = PreciseTime.ToMilliseconds(delayNanos);
-                    if (_emptyEvent.Wait((int)Math.Min(timeout, MaxDelayMilliseconds)))
-                    {
-                        if (_taskQueue.TryDequeue(out task)) { return task; }
-                    }
+                    _emptyEvent.Wait((int)Math.Min(timeout, MaxDelayMilliseconds));
                 }
-
-                FetchFromScheduledTaskQueue();
-                _taskQueue.TryDequeue(out task);
             }
             else
             {

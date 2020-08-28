@@ -995,6 +995,7 @@
 
             public override void ChannelActive(IChannelHandlerContext ctx)
             {
+                Thread.Sleep(10);
                 // Ensure the promise was done before the handler method is triggered.
                 if (_promise.IsCompleted)
                 {
