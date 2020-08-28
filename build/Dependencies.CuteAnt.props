@@ -9,8 +9,6 @@
 
     <LinqOptimizerCSharpStrongNamePackageVersion>0.7.0-rtm-1912022030</LinqOptimizerCSharpStrongNamePackageVersion>
 
-    <ReactiveStreamsSignedPackageVersion>1.0.2</ReactiveStreamsSignedPackageVersion>
-
     <EasyEventStoreAbstractionsPackageVersion>5.0.2008.521</EasyEventStoreAbstractionsPackageVersion>
     <EasyEventStoreAutoSubscribingPackageVersion>5.0.2008.521</EasyEventStoreAutoSubscribingPackageVersion>
     <EasyEventStoreCorePackageVersion>5.0.2008.521</EasyEventStoreCorePackageVersion>
@@ -90,59 +88,66 @@
     <SerilogExtensionsLoggingUnofficialPackageVersion>2.2.0-rtm-190222-01</SerilogExtensionsLoggingUnofficialPackageVersion>
 
     <!-- Network related packages -->
-    <AkkaCoreUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaCoreUnofficialPackageVersion>
-    <AkkaUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaUnofficialPackageVersion>
-    <AkkaTestKitUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaTestKitUnofficialPackageVersion>
-    <AkkaTestKitXunit2UnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaTestKitXunit2UnofficialPackageVersion>
-    <AkkaTestsSharedUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaTestsSharedUnofficialPackageVersion>
+    <AkkaCoreUnofficialPackageVersion>1.4.2008.2600</AkkaCoreUnofficialPackageVersion>
+    <AkkaUnofficialPackageVersion>1.4.2008.2600</AkkaUnofficialPackageVersion>
+    <AkkaTestKitUnofficialPackageVersion>1.4.2008.2600</AkkaTestKitUnofficialPackageVersion>
+    <AkkaTestKitXunit2UnofficialPackageVersion>1.4.2008.2600</AkkaTestKitXunit2UnofficialPackageVersion>
+    <AkkaTestsSharedUnofficialPackageVersion>1.4.2008.2600</AkkaTestsSharedUnofficialPackageVersion>
 
-    <AkkaDistributedDataUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaDistributedDataUnofficialPackageVersion>
-    <AkkaClusterUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaClusterUnofficialPackageVersion>
-    <AkkaClusterShardingUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaClusterShardingUnofficialPackageVersion>
-    <AkkaClusterToolsUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaClusterToolsUnofficialPackageVersion>
-    <AkkaClusterTestKitUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaClusterTestKitUnofficialPackageVersion>
-    <AkkaRemoteUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaRemoteUnofficialPackageVersion>
-    <AkkaRemoteTestKitUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaRemoteTestKitUnofficialPackageVersion>
+    <AkkaCoordinationUnofficialPackageVersion>1.4.2008.2600</AkkaCoordinationUnofficialPackageVersion>
+    <AkkaDistributedDataUnofficialPackageVersion>1.4.2008.2600</AkkaDistributedDataUnofficialPackageVersion>
+    <AkkaDistributedDataLightningDBUnofficialPackageVersion>1.4.2008.2600</AkkaDistributedDataLightningDBUnofficialPackageVersion>
+    <AkkaClusterUnofficialPackageVersion>1.4.2008.2600</AkkaClusterUnofficialPackageVersion>
+    <AkkaClusterMetricsUnofficialPackageVersion>1.4.2008.2600</AkkaClusterMetricsUnofficialPackageVersion>
+    <AkkaClusterShardingUnofficialPackageVersion>1.4.2008.2600</AkkaClusterShardingUnofficialPackageVersion>
+    <AkkaClusterToolsUnofficialPackageVersion>1.4.2008.2600</AkkaClusterToolsUnofficialPackageVersion>
+    <AkkaClusterTestKitUnofficialPackageVersion>1.4.2008.2600</AkkaClusterTestKitUnofficialPackageVersion>
+    <AkkaRemoteUnofficialPackageVersion>1.4.2008.2600</AkkaRemoteUnofficialPackageVersion>
+    <AkkaRemoteTestKitUnofficialPackageVersion>1.4.2008.2600</AkkaRemoteTestKitUnofficialPackageVersion>
 
-    <AkkaDICoreUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaDICoreUnofficialPackageVersion>
-    <AkkaDIAutoFacUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaDIAutoFacUnofficialPackageVersion>
-    <AkkaDITestKitUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaDITestKitUnofficialPackageVersion>
+    <AkkaDICoreUnofficialPackageVersion>1.4.2008.2600</AkkaDICoreUnofficialPackageVersion>
+    <AkkaDIAutoFacUnofficialPackageVersion>1.4.2008.2600</AkkaDIAutoFacUnofficialPackageVersion>
+    <AkkaDITestKitUnofficialPackageVersion>1.4.2008.2600</AkkaDITestKitUnofficialPackageVersion>
 
-    <AkkaLoggerNLogUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaLoggerNLogUnofficialPackageVersion>
-    <AkkaLoggerSerilogUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaLoggerSerilogUnofficialPackageVersion>
+    <AkkaLoggerNLogUnofficialPackageVersion>1.4.2008.2600</AkkaLoggerNLogUnofficialPackageVersion>
+    <AkkaLoggerSerilogUnofficialPackageVersion>1.4.2008.2600</AkkaLoggerSerilogUnofficialPackageVersion>
 
-    <AkkaExtensionEventStorePackageVersion>1.3.13-rtm-190629-01</AkkaExtensionEventStorePackageVersion>
+    <AkkaExtensionEventStorePackageVersion>1.4.2008.2600</AkkaExtensionEventStorePackageVersion>
 
-    <AkkaPersistenceUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaPersistenceUnofficialPackageVersion>
-    <AkkaPersistenceQueryUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaPersistenceQueryUnofficialPackageVersion>
-    <AkkaPersistenceTCKUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaPersistenceTCKUnofficialPackageVersion>
-    <AkkaPersistenceEventStoreUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaPersistenceEventStoreUnofficialPackageVersion>
-    <AkkaPersistenceMongoDbUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaPersistenceMongoDbUnofficialPackageVersion>
+    <AkkaPersistenceUnofficialPackageVersion>1.4.2008.2600</AkkaPersistenceUnofficialPackageVersion>
+    <AkkaPersistenceQueryUnofficialPackageVersion>1.4.2008.2600</AkkaPersistenceQueryUnofficialPackageVersion>
+    <AkkaPersistenceTCKUnofficialPackageVersion>1.4.2008.2600</AkkaPersistenceTCKUnofficialPackageVersion>
+    <AkkaPersistenceTestKitUnofficialPackageVersion>1.4.2008.2600</AkkaPersistenceTestKitUnofficialPackageVersion>
+    <AkkaPersistenceTestKitXunit2UnofficialPackageVersion>1.4.2008.2600</AkkaPersistenceTestKitXunit2UnofficialPackageVersion>
+    <AkkaPersistenceEventStoreUnofficialPackageVersion>1.4.2008.2600</AkkaPersistenceEventStoreUnofficialPackageVersion>
+    <AkkaPersistenceMongoDbUnofficialPackageVersion>1.4.2008.2600</AkkaPersistenceMongoDbUnofficialPackageVersion>
 
-    <AkkaSerializationHyperionUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaSerializationHyperionUnofficialPackageVersion>
-    <AkkaSerializationJsonUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaSerializationJsonUnofficialPackageVersion>
-    <AkkaSerializationMessagePackLZ4PackageVersion>1.3.13-rtm-190629-01</AkkaSerializationMessagePackLZ4PackageVersion>
-    <AkkaSerializationProtobufPackageVersion>1.3.13-rtm-190629-01</AkkaSerializationProtobufPackageVersion>
-    <AkkaSerializationProtobufNetPackageVersion>1.3.13-rtm-190629-01</AkkaSerializationProtobufNetPackageVersion>
-    <AkkaSerializationUtf8JsonPackageVersion>1.3.13-rtm-190629-01</AkkaSerializationUtf8JsonPackageVersion>
-    <AkkaSerializationTestKitUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaSerializationTestKitUnofficialPackageVersion>
+    <AkkaSerializationHyperionUnofficialPackageVersion>1.4.2008.2600</AkkaSerializationHyperionUnofficialPackageVersion>
+    <AkkaSerializationMessagePackLZ4PackageVersion>1.4.2008.2600</AkkaSerializationMessagePackLZ4PackageVersion>
+    <AkkaSerializationProtobufPackageVersion>1.4.2008.2600</AkkaSerializationProtobufPackageVersion>
+    <AkkaSerializationProtobufNetPackageVersion>1.4.2008.2600</AkkaSerializationProtobufNetPackageVersion>
+    <AkkaSerializationTestKitUnofficialPackageVersion>1.4.2008.2600</AkkaSerializationTestKitUnofficialPackageVersion>
 
-    <AkkaStreamsUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaStreamsUnofficialPackageVersion>
-    <AkkaStreamsTestKitUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaStreamsTestKitUnofficialPackageVersion>
+    <AkkaStreamsUnofficialPackageVersion>1.4.2008.2600</AkkaStreamsUnofficialPackageVersion>
+    <AkkaStreamsEventStorePackageVersion>1.4.2008.2600</AkkaStreamsEventStorePackageVersion>
+    <AkkaStreamsTestKitUnofficialPackageVersion>1.4.2008.2600</AkkaStreamsTestKitUnofficialPackageVersion>
 
-    <SpanNettyBuffersPackageVersion>0.7.2007.2802</SpanNettyBuffersPackageVersion>
-    <SpanNettyCodecsHttpPackageVersion>0.7.2007.2802</SpanNettyCodecsHttpPackageVersion>
-    <SpanNettyCodecsHttp2PackageVersion>0.7.2007.2802</SpanNettyCodecsHttp2PackageVersion>
-    <SpanNettyCodecsMqttPackageVersion>0.7.2007.2802</SpanNettyCodecsMqttPackageVersion>
-    <SpanNettyCodecsProtobufPackageVersion>0.7.2007.2802</SpanNettyCodecsProtobufPackageVersion>
-    <SpanNettyCodecsPackageVersion>0.7.2007.2802</SpanNettyCodecsPackageVersion>
-    <SpanNettyCommonPackageVersion>0.7.2007.2802</SpanNettyCommonPackageVersion>
-    <SpanNettyHandlersPackageVersion>0.7.2007.2802</SpanNettyHandlersPackageVersion>
-    <SpanNettyTransportLibuvPackageVersion>0.7.0-beta-20072802</SpanNettyTransportLibuvPackageVersion>
-    <SpanNettyTransportPackageVersion>0.7.2007.2802</SpanNettyTransportPackageVersion>
+    <ReactiveStreamsSignedPackageVersion>1.4.2008.2600</ReactiveStreamsSignedPackageVersion>
+    <ReactiveStreamsTCKSignedPackageVersion>1.4.2008.2600</ReactiveStreamsTCKSignedPackageVersion>
+
+    <SpanNettyBuffersPackageVersion>0.7.2008.2000</SpanNettyBuffersPackageVersion>
+    <SpanNettyCodecsHttpPackageVersion>0.7.2008.2000</SpanNettyCodecsHttpPackageVersion>
+    <SpanNettyCodecsHttp2PackageVersion>0.7.2008.2000</SpanNettyCodecsHttp2PackageVersion>
+    <SpanNettyCodecsMqttPackageVersion>0.7.2008.2000</SpanNettyCodecsMqttPackageVersion>
+    <SpanNettyCodecsProtobufPackageVersion>0.7.2008.2000</SpanNettyCodecsProtobufPackageVersion>
+    <SpanNettyCodecsPackageVersion>0.7.2008.2000</SpanNettyCodecsPackageVersion>
+    <SpanNettyCommonPackageVersion>0.7.2008.2000</SpanNettyCommonPackageVersion>
+    <SpanNettyHandlersPackageVersion>0.7.2008.2000</SpanNettyHandlersPackageVersion>
+    <SpanNettyTransportLibuvPackageVersion>0.7.0-beta-20082000</SpanNettyTransportLibuvPackageVersion>
+    <SpanNettyTransportPackageVersion>0.7.2008.2000</SpanNettyTransportPackageVersion>
 
     <!-- Serialization related packages -->
-    <HyperionUnofficialPackageVersion>0.9.15-rtm-200401-01</HyperionUnofficialPackageVersion>
+    <HyperionUnofficialPackageVersion>0.9.16-rtm-200824-01</HyperionUnofficialPackageVersion>
     <MessagePackSpanAbstractionsPackageVersion>1.0.0</MessagePackSpanAbstractionsPackageVersion>
     <MessagePackHyperionPackageVersion>1.1.0-rtm-200401-01</MessagePackHyperionPackageVersion>
     <MessagePackImmutableCollectionUnofficialPackageVersion>1.1.0-rtm-200401-01</MessagePackImmutableCollectionUnofficialPackageVersion>

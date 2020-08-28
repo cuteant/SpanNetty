@@ -59,6 +59,10 @@
     <MongoDBDriverPackageVersion>2.11.0</MongoDBDriverPackageVersion>
     <MongoDBDriverGridFSPackageVersion>2.11.0</MongoDBDriverGridFSPackageVersion>
     <mongocsharpdriverPackageVersion>2.11.0</mongocsharpdriverPackageVersion>
+    <MongoDBBsonSignedPackageVersion>2.10.4</MongoDBBsonSignedPackageVersion>
+    <MongoDBDriverCoreSignedPackageVersion>2.10.4</MongoDBDriverCoreSignedPackageVersion>
+    <MongoDBDriverSignedPackageVersion>2.10.4</MongoDBDriverSignedPackageVersion>
+    <MongoDBDriverGridFSSignedPackageVersion>2.10.4</MongoDBDriverGridFSSignedPackageVersion>
     <MongoDBBsonStrongNamePackageVersion>2.9.3</MongoDBBsonStrongNamePackageVersion>
     <MongoDBDriverCoreStrongNamePackageVersion>2.9.3</MongoDBDriverCoreStrongNamePackageVersion>
     <MongoDBDriverStrongNamePackageVersion>2.9.3</MongoDBDriverStrongNamePackageVersion>
