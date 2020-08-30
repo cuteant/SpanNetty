@@ -21,9 +21,11 @@
   <ItemGroup>
     <PackageReference Include="Libuv" Version="$(LibuvPackageVersion)" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Transport\DotNetty.Transport.csproj" />
   </ItemGroup>
+
   <ItemGroup>
     <Compile Update="Internal\Strings.Designer.cs">
       <DesignTime>True</DesignTime>

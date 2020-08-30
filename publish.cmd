@@ -34,7 +34,7 @@ call %_dotnet% restore %BUILD_FLAGS% /bl:%BuildConfiguration%-Restore.binlog /p:
 @echo RESTORE ok for %BuildConfiguration% %SOLUTION%
 
 SET STEP=Build %BuildConfiguration%
-call %_dotnet% build --no-restore %BUILD_FLAGS% /bl:%BuildConfiguration%-Build.binlog /p:Configuration=%BuildConfiguration%%AdditionalConfigurationProperties% "%SOLUTION%"
+call %_dotnet% build --no-restore %BUILD_FLAGS% /bl:%BuildConfiguration%-Build.binlog /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:Configuration=%BuildConfiguration%%AdditionalConfigurationProperties% "%SOLUTION%"
 @if ERRORLEVEL 1 GOTO :ErrorStop
 @echo BUILD ok for %BuildConfiguration% %SOLUTION%
 

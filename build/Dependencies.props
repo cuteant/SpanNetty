@@ -1,25 +1,18 @@
 <Project>
   <!-- Shared Package Versions -->
   <PropertyGroup>
-    <MicrosoftBuildPackageVersion>16.0.461</MicrosoftBuildPackageVersion>
-    <MicrosoftBuildRuntimePackageVersion>16.0.461</MicrosoftBuildRuntimePackageVersion>
-    <MicrosoftBuildTasksCorePackageVersion>16.0.461</MicrosoftBuildTasksCorePackageVersion>
-    <MicrosoftBuildUtilitiesCorePackageVersion>16.0.461</MicrosoftBuildUtilitiesCorePackageVersion>
+    <MicrosoftBuildPackageVersion>16.6.0</MicrosoftBuildPackageVersion>
+    <MicrosoftBuildRuntimePackageVersion>16.6.0</MicrosoftBuildRuntimePackageVersion>
+    <MicrosoftBuildTasksCorePackageVersion>16.6.0</MicrosoftBuildTasksCorePackageVersion>
+    <MicrosoftBuildUtilitiesCorePackageVersion>16.6.0</MicrosoftBuildUtilitiesCorePackageVersion>
 
     <MicrosoftBclPackageVersion>1.1.10</MicrosoftBclPackageVersion>
     <MicrosoftBclAsyncPackageVersion>1.0.168</MicrosoftBclAsyncPackageVersion>
     <MicrosoftBclBuildPackageVersion>1.0.21</MicrosoftBclBuildPackageVersion>
 
-    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.6.1</MicrosoftApplicationInsightsAspNetCorePackageVersion>
-    <MicrosoftApplicationInsightsPackageVersion>2.9.1</MicrosoftApplicationInsightsPackageVersion>
+    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.14.0</MicrosoftApplicationInsightsAspNetCorePackageVersion>
+    <MicrosoftApplicationInsightsPackageVersion>2.14.0</MicrosoftApplicationInsightsPackageVersion>
 
-    <MicrosoftSourceLinkGitHubPackageVersion>1.0.0-beta2-18618-05</MicrosoftSourceLinkGitHubPackageVersion>
-    <SourceLinkCreateCommandLinePackageVersion>2.8.3</SourceLinkCreateCommandLinePackageVersion>
-    <SourceLinkEmbedAllSourceFilesPackageVersion>2.8.3</SourceLinkEmbedAllSourceFilesPackageVersion>
-    <SourceLinkCreateGitHubPackageVersion>2.8.3</SourceLinkCreateGitHubPackageVersion>
-    <SourceLinkCopyPdbFilesVersion>2.8.3</SourceLinkCopyPdbFilesVersion>
-    <SourceLinkEmbedPaketFilesPackageVersion>2.8.3</SourceLinkEmbedPaketFilesPackageVersion>
-    <SourceLinkTestPackageVersion>2.8.3</SourceLinkTestPackageVersion>
-    <SourceLinkCreateBitBucketPackageVersion>2.8.3</SourceLinkCreateBitBucketPackageVersion>
+    <MicrosoftSourceLinkGitHubPackageVersion>1.0.0</MicrosoftSourceLinkGitHubPackageVersion>
   </PropertyGroup>
 </Project>
