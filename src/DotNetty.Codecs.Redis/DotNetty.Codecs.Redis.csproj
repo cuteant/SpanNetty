@@ -13,7 +13,7 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>SpanNetty.Codecs.Redis</PackageId>
     <Title>SpanNetty.Codecs.Redis</Title>
-    <Description>Redis codec for DotNetty：the complete port of the DotNetty.Codecs.Redis assembly to support .NET 4.5.1 and newer.</Description>
+    <Description>Redis codec：the port of the Netty.Codecs.Redis assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;redis</PackageTags>
   </PropertyGroup>
 

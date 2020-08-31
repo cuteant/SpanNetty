@@ -11,7 +11,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>SpanNetty.Common</PackageId>
     <Title>SpanNetty.Common</Title>
-    <Description>Common routines：the complete port of the DotNetty.Common assembly to support .NET 4.5.1 and newer.</Description>
+    <Description>Common routines.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
   </PropertyGroup>
 

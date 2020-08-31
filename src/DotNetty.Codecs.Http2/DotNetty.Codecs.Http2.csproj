@@ -11,7 +11,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>SpanNetty.Codecs.Http2</PackageId>
     <Title>SpanNetty.Codecs.Http2</Title>
-    <Description>Http2 codec.</Description>
+    <Description>Http2 codec：the port of the Netty.Codecs.Http2 assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;Http2</PackageTags>
   </PropertyGroup>
 
