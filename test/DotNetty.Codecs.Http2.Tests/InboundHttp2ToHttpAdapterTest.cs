@@ -26,6 +26,11 @@ namespace DotNetty.Codecs.Http2.Tests
 
     //public sealed class LibuvInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
     //{
+    //    static LibuvInboundHttp2ToHttpAdapterTest()
+    //    {
+    //        DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+    //    }
+
     //    public LibuvInboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
 
     //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
@@ -76,9 +81,9 @@ namespace DotNetty.Codecs.Http2.Tests
     //    }
     //}
 
-    public sealed class InboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
+    public sealed class LocalInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
     {
-        public InboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
+        public LocalInboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
 
         protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
         {

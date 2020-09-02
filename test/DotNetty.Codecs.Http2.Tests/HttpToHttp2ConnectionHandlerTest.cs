@@ -26,6 +26,11 @@ namespace DotNetty.Codecs.Http2.Tests
 
     //public sealed class LibuvHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
     //{
+    //    static LibuvHttpToHttp2ConnectionHandlerTest()
+    //    {
+    //        DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+    //    }
+
     //    public LibuvHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
 
     //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
@@ -60,9 +65,9 @@ namespace DotNetty.Codecs.Http2.Tests
     //    }
     //}
 
-    public sealed class HttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
+    public sealed class LocalHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
     {
-        public HttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
+        public LocalHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
 
         protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
         {

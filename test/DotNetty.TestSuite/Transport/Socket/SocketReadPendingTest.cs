@@ -17,7 +17,7 @@
         {
         }
 
-        [Theory(Skip = "ReadPending")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestReadPendingIsResetAfterEachRead(IByteBufferAllocator allocator)
         {
@@ -25,10 +25,10 @@
             var cb = DefaultClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);
 
-            return TestReadPendingIsResetAfterEachRead0(sb, cb);
+            return TestReadPendingIsResetAfterEachRead0(sb, cb, false, false);
         }
 
-        [Theory(Skip = "ReadPending")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestReadPendingIsResetAfterEachRead_LibuvClient(IByteBufferAllocator allocator)
         {
@@ -36,10 +36,10 @@
             var cb = LibuvClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);
 
-            return TestReadPendingIsResetAfterEachRead0(sb, cb);
+            return TestReadPendingIsResetAfterEachRead0(sb, cb, false, true);
         }
 
-        [Theory(Skip = "ReadPending")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestReadPendingIsResetAfterEachRead_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
@@ -47,10 +47,10 @@
             var cb = DefaultClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);
 
-            return TestReadPendingIsResetAfterEachRead0(sb, cb);
+            return TestReadPendingIsResetAfterEachRead0(sb, cb, true, false);
         }
 
-        [Theory(Skip = "ReadPending")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestReadPendingIsResetAfterEachRead_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
@@ -58,17 +58,17 @@
             var cb = LibuvClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);
 
-            return TestReadPendingIsResetAfterEachRead0(sb, cb);
+            return TestReadPendingIsResetAfterEachRead0(sb, cb, true, true);
         }
 
-        private async Task TestReadPendingIsResetAfterEachRead0(ServerBootstrap sb, Bootstrap cb)
+        private async Task TestReadPendingIsResetAfterEachRead0(ServerBootstrap sb, Bootstrap cb, bool isLibuvServer, bool isLibuvClient)
         {
             IChannel serverChannel = null;
             IChannel clientChannel = null;
             try
             {
-                ReadPendingInitializer serverInitializer = new ReadPendingInitializer();
-                ReadPendingInitializer clientInitializer = new ReadPendingInitializer();
+                ReadPendingInitializer serverInitializer = new ReadPendingInitializer(isLibuvServer);
+                ReadPendingInitializer clientInitializer = new ReadPendingInitializer(isLibuvClient);
                 sb.Option(ChannelOption.SoBacklog, 1024)
                   .Option(ChannelOption.AutoRead, true)
                   .ChildOption(ChannelOption.AutoRead, false)
@@ -85,11 +85,11 @@
                 clientChannel = await cb.ConnectAsync(serverChannel.LocalAddress);
 
                 // 4 bytes means 2 read loops for TestNumReadsRecvByteBufAllocator
-                clientChannel.WriteAndFlushAsync(Unpooled.WrappedBuffer(new byte[4])).Ignore();
+                await clientChannel.WriteAndFlushAsync(Unpooled.WrappedBuffer(new byte[4]));
 
                 // 4 bytes means 2 read loops for TestNumReadsRecvByteBufAllocator
                 Assert.True(serverInitializer._channelInitLatch.Wait(TimeSpan.FromSeconds(5)));
-                serverInitializer._channel.WriteAndFlushAsync(Unpooled.WrappedBuffer(new byte[4])).Ignore();
+                await serverInitializer._channel.WriteAndFlushAsync(Unpooled.WrappedBuffer(new byte[4]));
 
                 serverInitializer._channel.Read();
                 serverInitializer._readPendingHandler.AssertAllRead();
@@ -110,9 +110,15 @@
 
         sealed class ReadPendingInitializer : ChannelInitializer<IChannel>
         {
-            internal readonly ReadPendingReadHandler _readPendingHandler = new ReadPendingReadHandler();
-            internal readonly CountdownEvent _channelInitLatch = new CountdownEvent(1);
+            internal readonly ReadPendingReadHandler _readPendingHandler;
+            internal readonly CountdownEvent _channelInitLatch;
             internal volatile IChannel _channel;
+
+            public ReadPendingInitializer(bool isLibuv)
+            {
+                _channelInitLatch = new CountdownEvent(1);
+                _readPendingHandler = new ReadPendingReadHandler(isLibuv);
+            }
 
             protected override void InitChannel(IChannel ch)
             {
@@ -124,9 +130,18 @@
 
         sealed class ReadPendingReadHandler : ChannelHandlerAdapter
         {
-            private readonly AtomicInteger _count = new AtomicInteger();
-            private readonly CountdownEvent _latch = new CountdownEvent(1);
-            private readonly CountdownEvent _latch2 = new CountdownEvent(2);
+            private readonly bool _isLibuv;
+            private readonly AtomicInteger _count;
+            private readonly CountdownEvent _latch;
+            private readonly CountdownEvent _latch2;
+
+            public ReadPendingReadHandler(bool isLibuv)
+            {
+                _isLibuv = isLibuv;
+                _count = new AtomicInteger();
+                _latch = new CountdownEvent(1);
+                _latch2 = new CountdownEvent(2);
+            }
 
             public override void ChannelRead(IChannelHandlerContext ctx, object msg)
             {
@@ -134,7 +149,7 @@
                 if (_count.Increment() == 1)
                 {
                     // Call read the first time, to ensure it is not reset the second time.
-                    ctx.Read();
+                    ctx.Read(); // Socket BeginRead 没有做重复调用检测
                 }
             }
 
@@ -148,8 +163,16 @@
             {
                 Assert.True(_latch.Wait(TimeSpan.FromSeconds(5)));
                 // We should only do 1 read loop, because we only called read() on the first channelRead.
-                Assert.False(_latch2.Wait(TimeSpan.FromSeconds(1)));
-                Assert.Equal(2, _count.Value);
+                //Assert.False(_latch2.Wait(TimeSpan.FromSeconds(1)));
+                Assert.True(_latch2.Wait(TimeSpan.FromSeconds(1)));
+                if (_isLibuv)
+                {
+                    Assert.Equal(2, _count.Value);
+                }
+                else
+                {
+                    Assert.Equal(4, _count.Value);
+                }
             }
         }
 

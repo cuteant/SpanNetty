@@ -34,12 +34,12 @@ namespace DotNetty.Transport.Libuv.Native
 
     sealed class Timer : NativeHandle
     {
-        static readonly uv_work_cb WorkCallback = OnWorkCallback;
+        static readonly uv_work_cb WorkCallback = h => OnWorkCallback(h);
 
         readonly Action<object> _callback;
         readonly object _state;
 
-        public unsafe Timer(Loop loop, Action<object> callback, object state) 
+        public unsafe Timer(Loop loop, Action<object> callback, object state)
             : base(uv_handle_type.UV_TIMER)
         {
             Debug.Assert(loop is object);

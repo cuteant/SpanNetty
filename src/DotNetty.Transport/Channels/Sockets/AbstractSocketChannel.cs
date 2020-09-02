@@ -292,6 +292,14 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (!IsOpen) { return; }
 
+            // 这儿不检测
+            //// Channel.read() or ChannelHandlerContext.read() was called
+            //final SelectionKey selectionKey = this.selectionKey;
+            //if (!selectionKey.isValid())
+            //{
+            //    return;
+            //}
+
             ReadPending = true;
 
             if (!IsInState(StateFlags.ReadScheduled))

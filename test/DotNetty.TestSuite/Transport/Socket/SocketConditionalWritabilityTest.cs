@@ -12,6 +12,11 @@
 
     public class SocketConditionalWritabilityTest : AbstractSocketTest
     {
+        static SocketConditionalWritabilityTest()
+        {
+            DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+        }
+
         public SocketConditionalWritabilityTest(ITestOutputHelper output)
             : base(output)
         {
@@ -39,7 +44,7 @@
             return TestConditionalWritability0(sb, cb);
         }
 
-        [Theory(Skip = "ConditionalWritability")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestConditionalWritability_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
@@ -50,7 +55,7 @@
             return TestConditionalWritability0(sb, cb);
         }
 
-        [Theory(Skip = "ConditionalWritability")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestConditionalWritability_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {

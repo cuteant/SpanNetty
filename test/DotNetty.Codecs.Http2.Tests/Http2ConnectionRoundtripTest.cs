@@ -24,6 +24,11 @@ namespace DotNetty.Codecs.Http2.Tests
 
     //public sealed class LibuvHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
     //{
+    //    static LibuvHttp2ConnectionRoundtripTest()
+    //    {
+    //        DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+    //    }
+
     //    public LibuvHttp2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
 
     //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
@@ -40,17 +45,17 @@ namespace DotNetty.Codecs.Http2.Tests
     //        bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
     //    }
 
-    //    [Fact(Skip = "not yet supported")]
-    //    public override void FlowControlProperlyChunksLargeMessage()
-    //    {
-    //        base.FlowControlProperlyChunksLargeMessage();
-    //    }
+    //    //[Fact(Skip = "not yet supported")]
+    //    //public override void FlowControlProperlyChunksLargeMessage()
+    //    //{
+    //    //    base.FlowControlProperlyChunksLargeMessage();
+    //    //}
 
-    //    [Fact(Skip = "not yet supported")]
-    //    public override void StressTest()
-    //    {
-    //        base.StressTest();
-    //    }
+    //    //[Fact(Skip = "not yet supported")]
+    //    //public override void StressTest()
+    //    //{
+    //    //    base.StressTest();
+    //    //}
     //}
 
     //public sealed class SocketHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
@@ -69,9 +74,9 @@ namespace DotNetty.Codecs.Http2.Tests
     //    }
     //}
 
-    public sealed class Http2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
+    public sealed class LocalHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
     {
-        public Http2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
+        public LocalHttp2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
 
         protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
         {

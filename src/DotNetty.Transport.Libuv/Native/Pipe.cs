@@ -170,7 +170,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         sealed class Ping : NativeRequest
         {
-            internal static readonly uv_watcher_cb WriteCallback = OnWriteCallback;
+            internal static readonly uv_watcher_cb WriteCallback = (h, s) => OnWriteCallback(h, s);
             static readonly byte[] PingBuf = TextEncodings.UTF8NoBOM.GetBytes("PING");
 
             readonly NativeHandle _sentHandle;

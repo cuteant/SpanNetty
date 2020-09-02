@@ -34,7 +34,7 @@ namespace DotNetty.Transport.Libuv.Native
 
     sealed unsafe class Async : NativeHandle
     {
-        static readonly uv_work_cb WorkCallback = OnWorkCallback;
+        static readonly uv_work_cb WorkCallback = h => OnWorkCallback(h);
 
         readonly Action<object> _callback;
         readonly object _state;

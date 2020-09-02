@@ -70,7 +70,7 @@
 
     public sealed class DefaultClientBootstrapFactory : IClientBootstrapFactory
     {
-        public static DefaultClientBootstrapFactory Instance = new DefaultClientBootstrapFactory();
+        public static readonly DefaultClientBootstrapFactory Instance = new DefaultClientBootstrapFactory();
 
         private DefaultClientBootstrapFactory() { }
 
@@ -84,7 +84,7 @@
 
     public sealed class DatagramBootstrapFactory : IClientBootstrapFactory
     {
-        public static DatagramBootstrapFactory Instance = new DatagramBootstrapFactory();
+        public static readonly DatagramBootstrapFactory Instance = new DatagramBootstrapFactory();
 
         private DatagramBootstrapFactory() { }
 
@@ -98,7 +98,7 @@
 
     public sealed class LibuvClientBootstrapFactory : IClientBootstrapFactory
     {
-        public static LibuvClientBootstrapFactory Instance = new LibuvClientBootstrapFactory();
+        public static readonly LibuvClientBootstrapFactory Instance = new LibuvClientBootstrapFactory();
 
         private LibuvClientBootstrapFactory() { }
 
@@ -112,7 +112,7 @@
 
     public sealed class DefaultServerBootstrapFactory : IServerBootstrapFactory
     {
-        public static DefaultServerBootstrapFactory Instance = new DefaultServerBootstrapFactory();
+        public static readonly DefaultServerBootstrapFactory Instance = new DefaultServerBootstrapFactory();
 
         private DefaultServerBootstrapFactory() { }
 
@@ -126,7 +126,7 @@
 
     public sealed class LibuvServerBootstrapFactory : IServerBootstrapFactory
     {
-        public static LibuvServerBootstrapFactory Instance = new LibuvServerBootstrapFactory();
+        public static readonly LibuvServerBootstrapFactory Instance = new LibuvServerBootstrapFactory();
 
         private LibuvServerBootstrapFactory() { }
 

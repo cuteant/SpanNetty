@@ -25,7 +25,7 @@
             var cb = DefaultClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);
 
-            return TestAutoReadOffNoDataReadUntilReadCalled0(sb, cb);
+            return TestAutoReadOffNoDataReadUntilReadCalled0(sb, cb, false);
         }
 
         [Theory]
@@ -36,10 +36,10 @@
             var cb = LibuvClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);
 
-            return TestAutoReadOffNoDataReadUntilReadCalled0(sb, cb);
+            return TestAutoReadOffNoDataReadUntilReadCalled0(sb, cb, false);
         }
 
-        [Theory(Skip = "TestAutoReadOffNoDataReadUntilReadCalled")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestAutoReadOffNoDataReadUntilReadCalled_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
@@ -47,10 +47,10 @@
             var cb = DefaultClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);
 
-            return TestAutoReadOffNoDataReadUntilReadCalled0(sb, cb);
+            return TestAutoReadOffNoDataReadUntilReadCalled0(sb, cb, true);
         }
 
-        [Theory(Skip = "TestAutoReadOffNoDataReadUntilReadCalled")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestAutoReadOffNoDataReadUntilReadCalled_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
@@ -58,17 +58,17 @@
             var cb = LibuvClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);
 
-            return TestAutoReadOffNoDataReadUntilReadCalled0(sb, cb);
+            return TestAutoReadOffNoDataReadUntilReadCalled0(sb, cb, true);
         }
 
-        private async Task TestAutoReadOffNoDataReadUntilReadCalled0(ServerBootstrap sb, Bootstrap cb)
+        private async Task TestAutoReadOffNoDataReadUntilReadCalled0(ServerBootstrap sb, Bootstrap cb, bool isLibuvServer)
         {
             IChannel serverChannel = null;
             IChannel clientChannel = null;
             const int sleepMs = 100;
             try
             {
-                sb.Option(ChannelOption.AutoRead, false);
+                sb.Option(ChannelOption.AutoRead, isLibuvServer); // LibuvServer 不支持 No-AutoRead
                 sb.ChildOption(ChannelOption.AutoRead, false);
                 cb.Option(ChannelOption.AutoRead, false);
                 CountdownEvent serverReadyLatch = new CountdownEvent(1);
@@ -99,10 +99,13 @@
                 await clientChannel.WriteAndFlushAsync(clientChannel.Allocator.Buffer().WriteZero(1));
 
                 // The acceptor shouldn't read any data until we call read() below, but give it some time to see if it will.
-                Thread.Sleep(sleepMs);
-                Assert.Equal(1, acceptorReadLatch.CurrentCount);
-                serverChannel.Read();
-                serverReadyLatch.Wait();
+                if (!isLibuvServer)
+                {
+                    Thread.Sleep(sleepMs);
+                    Assert.Equal(1, acceptorReadLatch.CurrentCount);
+                    serverChannel.Read();
+                    serverReadyLatch.Wait();
+                }
 
                 IChannel serverConnectedChannel = serverConnectedChannelRef.Value;
                 Assert.NotNull(serverConnectedChannel);

@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Libuv.Native
 
     sealed class TcpListener : TcpHandle
     {
-        static readonly uv_watcher_cb ConnectionCallback = OnConnectionCallback;
+        static readonly uv_watcher_cb ConnectionCallback = (h, s) => OnConnectionCallback(h, s);
 
         IServerNativeUnsafe _nativeUnsafe;
 

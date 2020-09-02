@@ -37,7 +37,7 @@ namespace DotNetty.Transport.Libuv.Native
     public abstract unsafe class NativeHandle : IDisposable
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeHandle>();
-        private static readonly uv_close_cb CloseCallback = OnCloseHandle;
+        private static readonly uv_close_cb CloseCallback = h => OnCloseHandle(h);
         internal readonly uv_handle_type HandleType;
         internal IntPtr Handle;
 

@@ -32,7 +32,7 @@ namespace DotNetty.Transport.Libuv.Native
 
     abstract class ConnectRequest : NativeRequest
     {
-        protected static readonly uv_watcher_cb WatcherCallback = OnWatcherCallback;
+        protected static readonly uv_watcher_cb WatcherCallback = (h, s) => OnWatcherCallback(h, s);
 
         OperationException _error;
 

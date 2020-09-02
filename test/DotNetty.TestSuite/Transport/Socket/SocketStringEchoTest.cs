@@ -21,6 +21,7 @@
 
         static SocketStringEchoTest()
         {
+            DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
             s_random = new Random();
             s_data = new string[1024];
             for (int i = 0; i < s_data.Length; i++)
@@ -52,7 +53,7 @@
             return TestStringEcho0(sb, cb);
         }
 
-        [Theory(Skip = "StringEcho")]
+        [Theory]
         [MemberData(nameof(GetAllocators))]
         public Task TestStringEcho_LibuvClient(IByteBufferAllocator allocator)
         {
@@ -63,7 +64,7 @@
             return TestStringEcho0(sb, cb);
         }
 
-        [Theory(Skip = "StringEcho")]
+        [Theory()]
         [MemberData(nameof(GetAllocators))]
         public Task TestStringEcho_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
@@ -74,7 +75,7 @@
             return TestStringEcho0(sb, cb);
         }
 
-        [Theory(Skip = "StringEcho")]
+        [Theory()]
         [MemberData(nameof(GetAllocators))]
         public Task TestStringEcho_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
@@ -89,7 +90,7 @@
         {
             try
             {
-                await TestStringEcho0(sb, cb, true);
+                await TestStringEcho0(sb, cb, true, Output);
             }
             finally
             {
@@ -112,7 +113,7 @@
             return TestStringEchoNotAutoRead0(sb, cb);
         }
 
-        [Theory(Skip = "StringEchoNotAutoRead")]
+        [Theory()]
         [MemberData(nameof(GetAllocators))]
         public Task TestStringEchoNotAutoRead_LibuvClient(IByteBufferAllocator allocator)
         {
@@ -123,7 +124,7 @@
             return TestStringEchoNotAutoRead0(sb, cb);
         }
 
-        [Theory(Skip = "StringEchoNotAutoRead")]
+        [Theory()]
         [MemberData(nameof(GetAllocators))]
         public Task TestStringEchoNotAutoRead_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
@@ -134,7 +135,7 @@
             return TestStringEchoNotAutoRead0(sb, cb);
         }
 
-        [Theory(Skip = "StringEchoNotAutoRead")]
+        [Theory()]
         [MemberData(nameof(GetAllocators))]
         public Task TestStringEchoNotAutoRead_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
@@ -149,7 +150,7 @@
         {
             try
             {
-                await TestStringEcho0(sb, cb, false);
+                await TestStringEcho0(sb, cb, false, Output);
             }
             finally
             {
@@ -160,15 +161,15 @@
             }
         }
 
-        private static async Task TestStringEcho0(ServerBootstrap sb, Bootstrap cb, bool autoRead)
+        private static async Task TestStringEcho0(ServerBootstrap sb, Bootstrap cb, bool autoRead, ITestOutputHelper output)
         {
             sb.ChildOption(ChannelOption.AutoRead, autoRead);
             cb.Option(ChannelOption.AutoRead, autoRead);
 
             IPromise serverDonePromise = new TaskCompletionSource();
             IPromise clientDonePromise = new TaskCompletionSource();
-            StringEchoHandler sh = new StringEchoHandler(autoRead, serverDonePromise);
-            StringEchoHandler ch = new StringEchoHandler(autoRead, clientDonePromise);
+            StringEchoHandler sh = new StringEchoHandler(autoRead, serverDonePromise, output);
+            StringEchoHandler ch = new StringEchoHandler(autoRead, clientDonePromise, output);
 
             sb.ChildHandler(new ActionChannelInitializer<IChannel>(sch =>
             {
@@ -188,10 +189,11 @@
 
             IChannel sc = await sb.BindAsync();
             IChannel cc = await cb.ConnectAsync(sc.LocalAddress);
-            foreach (string element in s_data)
+            for (int i = 0; i < s_data.Length; i++)
             {
+                string element = s_data[i];
                 string delimiter = s_random.Next(0, 1) == 1 ? "\r\n" : "\n";
-                cc.WriteAndFlushAsync(element + delimiter).Ignore();
+                await cc.WriteAndFlushAsync(element + delimiter);
             }
 
             await ch._donePromise.Task;
@@ -220,16 +222,19 @@
 
         sealed class StringEchoHandler : SimpleChannelInboundHandler<string>
         {
-            private readonly bool _autoRead;
             internal readonly IPromise _donePromise;
+            internal readonly AtomicReference<Exception> _exception = new AtomicReference<Exception>();
+            private readonly ITestOutputHelper _output;
+            private readonly bool _autoRead;
+
             private int _dataIndex;
             internal volatile IChannel _channel;
-            internal readonly AtomicReference<Exception> _exception = new AtomicReference<Exception>();
 
-            public StringEchoHandler(bool autoRead, IPromise donePromise)
+            public StringEchoHandler(bool autoRead, IPromise donePromise, ITestOutputHelper output)
             {
                 _autoRead = autoRead;
                 _donePromise = donePromise;
+                _output = output;
             }
 
             public override void ChannelActive(IChannelHandlerContext ctx)
@@ -281,6 +286,7 @@
             {
                 if (_exception.CompareAndSet(null, cause))
                 {
+                    _output.WriteLine(cause.ToString());
                     _donePromise.TrySetException(new InvalidOperationException("exceptionCaught: " + ctx.Channel, cause));
                     ctx.CloseAsync();
                 }

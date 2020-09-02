@@ -221,9 +221,9 @@ namespace DotNetty.Transport.Channels
             private static readonly bool EstimateTaskSizeOnSubmit =
                 SystemPropertyUtil.GetBoolean("io.netty.transport.estimateSizeOnSubmit", true);
 
-            // Assuming a 64-bit .NET VM, 16 bytes object header, 4 reference fields and 2 int field
+            // Assuming compressed oops, 12 bytes obj header, 4 ref fields and one int field
             private static readonly int WriteTaskOverhead =
-                SystemPropertyUtil.GetInt("io.netty.transport.writeTaskSizeOverhead", 56);
+                SystemPropertyUtil.GetInt("io.netty.transport.writeTaskSizeOverhead", 32);
 
             private ThreadLocalPool.Handle _handle;
             private AbstractChannelHandlerContext _ctx;

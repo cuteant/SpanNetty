@@ -39,7 +39,8 @@ namespace DotNetty.Transport.Channels.Sockets
             {
             }
 
-            protected override void AutoReadCleared() => ((TServerChannel)Channel).ReadPending = false;
+            //protected override void AutoReadCleared() => ((TServerChannel)Channel).ReadPending = false;
+            protected override void AutoReadCleared() => ((TServerChannel)Channel).ClearReadPending();
         }
     }
 }

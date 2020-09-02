@@ -38,16 +38,17 @@ namespace DotNetty.Transport.Libuv.Native
     /// </summary>
     sealed class PipeListener : PipeHandle
     {
-        const int DefaultPipeBacklog = 128;
-        static readonly uv_watcher_cb ConnectionCallback = OnConnectionCallback;
+        private const int DefaultPipeBacklog = 128;
+        private static readonly uv_watcher_cb ConnectionCallback = (h, s) => OnConnectionCallback(h, s);
 
-        readonly List<Pipe> _pipes;
-        readonly WindowsApi _windowsApi;
-        int _requestId;
+        private readonly Action<Pipe, int> _onReadAction;
+        private readonly List<Pipe> _pipes;
+        private readonly WindowsApi _windowsApi;
+        private int _requestId;
 
         public PipeListener(Loop loop, bool ipc) : base(loop, ipc)
         {
-            onReadAction = (p, s) => OnRead(p, s);
+            _onReadAction = (p, s) => OnRead(p, s);
 
             _pipes = new List<Pipe>();
             _windowsApi = new WindowsApi();
@@ -93,7 +94,7 @@ namespace DotNetty.Transport.Libuv.Native
             pipe.Send(handle);
         }
 
-        unsafe void OnConnectionCallback(int status)
+        private unsafe void OnConnectionCallback(int status)
         {
             Pipe client = null;
             try
@@ -112,7 +113,7 @@ namespace DotNetty.Transport.Libuv.Native
                     NativeMethods.ThrowIfError(result);
 
                     _pipes.Add(client);
-                    client.ReadStart(onReadAction);
+                    client.ReadStart(_onReadAction);
                 }
             }
             catch (Exception exception)
@@ -122,8 +123,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
         }
 
-        readonly Action<Pipe, int> onReadAction;
-        void OnRead(Pipe pipe, int status)
+        private void OnRead(Pipe pipe, int status)
         {
             // The server connection is never meant to read anything back
             // it is only used for passing handles over to different loops
@@ -144,7 +144,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
         }
 
-        static void OnConnectionCallback(IntPtr handle, int status)
+        private static void OnConnectionCallback(IntPtr handle, int status)
         {
             var server = GetTarget<PipeListener>(handle);
             server.OnConnectionCallback(status);

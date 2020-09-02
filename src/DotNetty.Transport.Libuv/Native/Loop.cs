@@ -36,7 +36,7 @@ namespace DotNetty.Transport.Libuv.Native
     sealed unsafe class Loop : IDisposable
     {
         private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Loop>();
-        private static readonly uv_walk_cb WalkCallback = OnWalkCallback;
+        private static readonly uv_walk_cb WalkCallback = (h, s) => OnWalkCallback(h, s);
 
         private IntPtr _handle;
 

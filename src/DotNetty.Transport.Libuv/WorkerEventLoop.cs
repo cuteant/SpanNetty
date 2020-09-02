@@ -36,6 +36,7 @@ namespace DotNetty.Transport.Libuv
 
     public sealed class WorkerEventLoop : LoopExecutor
     {
+        private readonly Action<Pipe, int> _onReadAction;
         private readonly IPromise _connectCompletion;
         private readonly string _pipeName;
         private Pipe _pipe;
@@ -44,6 +45,8 @@ namespace DotNetty.Transport.Libuv
             : base(parent, threadFactory, rejectedHandler, breakoutInterval)
         {
             if (parent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
+
+            _onReadAction = (p, s) => OnRead(p, s);
 
             string name = parent.PipeName;
             if (string.IsNullOrEmpty(name))
@@ -81,7 +84,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override void Release() => _pipe.CloseHandle();
 
-        void OnConnected(ConnectRequest request)
+        private void OnConnected(ConnectRequest request)
         {
             try
             {
@@ -97,7 +100,7 @@ namespace DotNetty.Transport.Libuv
                         Logger.DispatcherPipeConnected(LoopThreadId, _pipeName);
                     }
 
-                    _pipe.ReadStart(OnRead);
+                    _pipe.ReadStart(_onReadAction);
                     _ = _connectCompletion.TryComplete();
                 }
             }
@@ -107,7 +110,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        void OnRead(Pipe handle, int status)
+        private void OnRead(Pipe handle, int status)
         {
             if (status < 0)
             {

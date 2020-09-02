@@ -42,6 +42,11 @@ namespace DotNetty.Codecs.Http2.Tests
 
     //public class LibuvDataCompressionHttp2Test : AbstractDataCompressionHttp2Test
     //{
+    //    static LibuvDataCompressionHttp2Test()
+    //    {
+    //        DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+    //    }
+
     //    public LibuvDataCompressionHttp2Test(ITestOutputHelper output) : base(output) { }
 
     //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
