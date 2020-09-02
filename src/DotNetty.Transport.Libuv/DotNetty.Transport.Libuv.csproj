@@ -40,5 +40,5 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <Import Project="..\version.libuv.props" />
+  <Import Project="..\version.props" />
 </Project>
