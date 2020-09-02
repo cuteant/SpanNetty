@@ -24,29 +24,29 @@ namespace DotNetty.Codecs.Http2.Tests
     using Xunit;
     using Xunit.Abstractions;
 
-    //public sealed class LibuvInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
-    //{
-    //    static LibuvInboundHttp2ToHttpAdapterTest()
-    //    {
-    //        DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
-    //    }
+    public sealed class LibuvInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
+    {
+        static LibuvInboundHttp2ToHttpAdapterTest()
+        {
+            DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+        }
 
-    //    public LibuvInboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
+        public LibuvInboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
 
-    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-    //    {
-    //        var dispatcher = new DispatcherEventLoopGroup();
-    //        var bossGroup = dispatcher;
-    //        var workGroup = new WorkerEventLoopGroup(dispatcher);
-    //        bootstrap.Group(bossGroup, workGroup)
-    //                 .Channel<TcpServerChannel>();
-    //    }
+        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+        {
+            var dispatcher = new DispatcherEventLoopGroup();
+            var bossGroup = dispatcher;
+            var workGroup = new WorkerEventLoopGroup(dispatcher);
+            bootstrap.Group(bossGroup, workGroup)
+                     .Channel<TcpServerChannel>();
+        }
 
-    //    protected override void SetupBootstrap(Bootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
-    //    }
-    //}
+        protected override void SetupBootstrap(Bootstrap bootstrap)
+        {
+            bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
+        }
+    }
 
     //public sealed class TlsSocketInboundHttp2ToHttpAdapterTest : SocketInboundHttp2ToHttpAdapterTest
     //{

@@ -32,7 +32,7 @@ namespace DotNetty.Buffers
     {
         public void AdvanceReader(int count) => Buf.AdvanceReader(count);
 
-        public virtual ReadOnlyMemory<byte> UnreadMemory => Buf.FreeMemory;
+        public virtual ReadOnlyMemory<byte> UnreadMemory => Buf.UnreadMemory;
         public virtual ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => Buf.GetReadableMemory(index, count);
 
         public virtual ReadOnlySpan<byte> UnreadSpan => Buf.UnreadSpan;

@@ -22,41 +22,39 @@ namespace DotNetty.Codecs.Http2.Tests
     using Xunit;
     using Xunit.Abstractions;
 
-    //public sealed class LibuvHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
-    //{
-    //    static LibuvHttp2ConnectionRoundtripTest()
-    //    {
-    //        DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
-    //    }
+    public sealed class LibuvHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
+    {
+        static LibuvHttp2ConnectionRoundtripTest()
+        {
+            DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+        }
 
-    //    public LibuvHttp2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
+        public LibuvHttp2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
 
-    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-    //    {
-    //        var dispatcher = new DispatcherEventLoopGroup();
-    //        var bossGroup = dispatcher;
-    //        var workGroup = new WorkerEventLoopGroup(dispatcher);
-    //        bootstrap.Group(bossGroup, workGroup)
-    //                 .Channel<TcpServerChannel>();
-    //    }
+        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+        {
+            var dispatcher = new DispatcherEventLoopGroup();
+            var bossGroup = dispatcher;
+            var workGroup = new WorkerEventLoopGroup(dispatcher);
+            bootstrap.Group(bossGroup, workGroup)
+                     .Channel<TcpServerChannel>();
+        }
 
-    //    protected override void SetupBootstrap(Bootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
-    //    }
+        protected override void SetupBootstrap(Bootstrap bootstrap)
+        {
+            bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
+        }
 
-    //    //[Fact(Skip = "not yet supported")]
-    //    //public override void FlowControlProperlyChunksLargeMessage()
-    //    //{
-    //    //    base.FlowControlProperlyChunksLargeMessage();
-    //    //}
+        [Fact(Skip = "not yet supported")]
+        public override void FlowControlProperlyChunksLargeMessage()
+        {
+        }
 
-    //    //[Fact(Skip = "not yet supported")]
-    //    //public override void StressTest()
-    //    //{
-    //    //    base.StressTest();
-    //    //}
-    //}
+        [Fact(Skip = "not yet supported")]
+        public override void StressTest()
+        {
+        }
+    }
 
     //public sealed class SocketHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
     //{
