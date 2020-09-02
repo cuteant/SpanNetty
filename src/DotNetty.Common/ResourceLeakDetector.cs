@@ -41,83 +41,100 @@ namespace DotNetty.Common
 
     public class ResourceLeakDetector
     {
-        const string PropLevel = "io.netty.leakDetection.level";
-        const DetectionLevel DefaultLevel = DetectionLevel.Simple;
+        private const string PropLevel = "io.netty.leakDetection.level";
+        private const DetectionLevel DefaultLevel = DetectionLevel.Simple;
 
-        const string PropTargetRecords = "io.netty.leakDetection.targetRecords";
-        const int DefaultTargetRecords = 4;
+        private const string PropTargetRecords = "io.netty.leakDetection.targetRecords";
+        private const int DefaultTargetRecords = 4;
 
-        static readonly int TargetRecords;
+        private const string PropSamplingInterval = "io.netty.leakDetection.samplingInterval";
+        // There is a minor performance benefit in TLR if this is a power of 2.
+        private const int DefaultSamplingInterval = 128;
+
+        private static readonly int s_targetRecords;
+        private static readonly int s_samplingInterval;
 
         /// <summary>
-        ///    Represents the level of resource leak detection.
+        /// Represents the level of resource leak detection.
         /// </summary>
         public enum DetectionLevel
         {
             /// <summary>
-            ///     Disables resource leak detection.
+            /// Disables resource leak detection.
             /// </summary>
             Disabled,
 
             /// <summary>
-            ///     Enables simplistic sampling resource leak detection which reports there is a leak or not,
-            ///     at the cost of small overhead (default).
+            /// Enables simplistic sampling resource leak detection which reports there is a leak or not,
+            /// at the cost of small overhead (default).
             /// </summary>
             Simple,
 
             /// <summary>
-            ///     Enables advanced sampling resource leak detection which reports where the leaked object was accessed
-            ///     recently at the cost of high overhead.
+            /// Enables advanced sampling resource leak detection which reports where the leaked object was accessed
+            /// recently at the cost of high overhead.
             /// </summary>
             Advanced,
 
             /// <summary>
-            ///     Enables paranoid resource leak detection which reports where the leaked object was accessed recently,
-            ///     at the cost of the highest possible overhead (for testing purposes only).
+            /// Enables paranoid resource leak detection which reports where the leaked object was accessed recently,
+            /// at the cost of the highest possible overhead (for testing purposes only).
             /// </summary>
             Paranoid
         }
 
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ResourceLeakDetector>();
+        private static readonly IInternalLogger Logger;
 
         static ResourceLeakDetector()
         {
-            // If new property name is present, use it
-            string levelStr = SystemPropertyUtil.Get(PropLevel, DefaultLevel.ToString());
-            if (!Enum.TryParse(levelStr, true, out DetectionLevel level))
+            Logger = InternalLoggerFactory.GetInstance<ResourceLeakDetector>();
+
+            bool disabled = false;
+            if (SystemPropertyUtil.Get("io.netty.noResourceLeakDetection") is object)
             {
-                level = DefaultLevel;
+                disabled = SystemPropertyUtil.GetBoolean("io.netty.noResourceLeakDetection", false);
+                if (Logger.DebugEnabled) { Logger.Debug("-Dio.netty.noResourceLeakDetection: {}", disabled); }
+                Logger.Warn(
+                        "-Dio.netty.noResourceLeakDetection is deprecated. Use '-D{}={}' instead.",
+                        PropLevel, DefaultLevel.ToString().ToLowerInvariant());
             }
 
-            TargetRecords = SystemPropertyUtil.GetInt(PropTargetRecords, DefaultTargetRecords);
+            var defaultLevel = disabled ? DetectionLevel.Disabled : DefaultLevel;
+
+            // If new property name is present, use it
+            string levelStr = SystemPropertyUtil.Get(PropLevel, defaultLevel.ToString());
+            if (!Enum.TryParse(levelStr, true, out DetectionLevel level))
+            {
+                level = defaultLevel;
+            }
+
+            s_targetRecords = SystemPropertyUtil.GetInt(PropTargetRecords, DefaultTargetRecords);
+            s_samplingInterval = SystemPropertyUtil.GetInt(PropSamplingInterval, DefaultSamplingInterval);
             Level = level;
 
             if (Logger.DebugEnabled)
             {
                 Logger.Debug("-D{}: {}", PropLevel, level.ToString().ToLower());
-                Logger.Debug("-D{}: {}", PropTargetRecords, TargetRecords);
+                Logger.Debug("-D{}: {}", PropTargetRecords, s_targetRecords);
             }
         }
-
-        // Should be power of two.
-        const int DefaultSamplingInterval = 128;
 
         /// Returns <c>true</c> if resource leak detection is enabled.
         public static bool Enabled => Level > DetectionLevel.Disabled;
 
         /// <summary>
-        ///     Gets or sets resource leak detection level
+        /// Gets or sets resource leak detection level
         /// </summary>
         public static DetectionLevel Level { get; set; }
 
-        readonly ConditionalWeakTable<object, GCNotice> gcNotificationMap = new ConditionalWeakTable<object, GCNotice>();
-        readonly ConcurrentDictionary<string, bool> reportedLeaks = new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);
+        private readonly ConditionalWeakTable<object, GCNotice> _gcNotificationMap = new ConditionalWeakTable<object, GCNotice>();
+        private readonly ConcurrentDictionary<string, bool> _reportedLeaks = new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);
 
-        readonly string resourceType;
-        readonly int samplingInterval;
+        private readonly string _resourceType;
+        private readonly int _samplingInterval;
 
         public ResourceLeakDetector(string resourceType)
-            : this(resourceType, DefaultSamplingInterval)
+            : this(resourceType, s_samplingInterval)
         {
         }
 
@@ -129,8 +146,8 @@ namespace DotNetty.Common
                 ThrowHelper.ThrowArgumentException_Positive(samplingInterval, ExceptionArgument.samplingInterval);
             }
 
-            this.resourceType = resourceType;
-            this.samplingInterval = samplingInterval;
+            _resourceType = resourceType;
+            _samplingInterval = samplingInterval;
         }
 
         public static ResourceLeakDetector Create<T>() => new ResourceLeakDetector(StringUtil.SimpleClassName<T>());
@@ -151,7 +168,7 @@ namespace DotNetty.Common
 
             if (level < DetectionLevel.Paranoid)
             {
-                if (0u >= (uint)(PlatformDependent.GetThreadLocalRandom().Next(this.samplingInterval)))
+                if (0u >= (uint)(PlatformDependent.GetThreadLocalRandom().Next(_samplingInterval)))
                 {
                     return new DefaultResourceLeak(this, obj);
                 }
@@ -166,7 +183,7 @@ namespace DotNetty.Common
             }
         }
 
-        void ReportLeak(DefaultResourceLeak resourceLeak)
+        private void ReportLeak(DefaultResourceLeak resourceLeak)
         {
             if (!Logger.ErrorEnabled)
             {
@@ -175,15 +192,15 @@ namespace DotNetty.Common
             }
 
             string records = resourceLeak.Dump();
-            if (this.reportedLeaks.TryAdd(records, true))
+            if (_reportedLeaks.TryAdd(records, true))
             {
                 if (0u >= (uint)records.Length)
                 {
-                    this.ReportUntracedLeak(this.resourceType);
+                    ReportUntracedLeak(_resourceType);
                 }
                 else
                 {
-                    this.ReportTracedLeak(this.resourceType, records);
+                    ReportTracedLeak(_resourceType, records);
                 }
             }
         }
@@ -208,22 +225,22 @@ namespace DotNetty.Common
 
         sealed class DefaultResourceLeak : IResourceLeakTracker
         {
-            readonly ResourceLeakDetector owner;
+            private readonly ResourceLeakDetector _owner;
 
-            RecordEntry head;
-            long droppedRecords;
-            readonly WeakReference<GCNotice> gcNotice;
+            private RecordEntry v_head;
+            private long _droppedRecords;
+            private readonly WeakReference<GCNotice> _gcNotice;
 
             public DefaultResourceLeak(ResourceLeakDetector owner, object referent)
             {
                 Debug.Assert(referent is object);
 
-                this.owner = owner;
+                _owner = owner;
                 GCNotice gcNotice;
                 do
                 {
                     GCNotice gcNotice0 = null;
-                    gcNotice = owner.gcNotificationMap.GetValue(referent, referent0 =>
+                    gcNotice = owner._gcNotificationMap.GetValue(referent, referent0 =>
                     {
                         gcNotice0 = new GCNotice(referent0, owner);
                         return gcNotice0;
@@ -234,66 +251,65 @@ namespace DotNetty.Common
                     }
                 }
                 while (!gcNotice.Arm(this, owner, referent));
-                this.gcNotice = new WeakReference<GCNotice>(gcNotice);
-                this.head = RecordEntry.Bottom;
+                _gcNotice = new WeakReference<GCNotice>(gcNotice);
+                v_head = RecordEntry.Bottom;
                 Record();
             }
 
-            public void Record() => this.Record0(null);
+            public void Record() => Record0(null);
 
-            public void Record(object hint) => this.Record0(hint);
+            public void Record(object hint) => Record0(hint);
 
-            void Record0(object hint)
+            private void Record0(object hint)
             {
                 // Check TARGET_RECORDS > 0 here to avoid similar check before remove from and add to lastRecords
-                if (TargetRecords > 0)
-                {
-                    string stackTrace = Environment.StackTrace;
+                if (s_targetRecords <= 0) { return; }
 
-                    var thisHead = Volatile.Read(ref this.head);
-                    RecordEntry oldHead;
-                    RecordEntry prevHead;
-                    RecordEntry newHead;
-                    bool dropped;
-                    do
+                string stackTrace = Environment.StackTrace;
+
+                var thisHead = Volatile.Read(ref v_head);
+                RecordEntry oldHead;
+                RecordEntry prevHead;
+                RecordEntry newHead;
+                bool dropped;
+                do
+                {
+                    if ((prevHead = oldHead = thisHead) is null)
                     {
-                        if ((prevHead = oldHead = thisHead) is null)
-                        {
-                            // already closed.
-                            return;
-                        }
-                        int numElements = thisHead.Pos + 1;
-                        if (numElements >= TargetRecords)
-                        {
-                            int backOffFactor = Math.Min(numElements - TargetRecords, 30);
-                            dropped = PlatformDependent.GetThreadLocalRandom().Next(1 << backOffFactor) != 0;
-                            if (dropped)
-                            {
-                                prevHead = thisHead.Next;
-                            }
-                        }
-                        else
-                        {
-                            dropped = false;
-                        }
-                        newHead = hint is object ? new RecordEntry(prevHead, stackTrace, hint) : new RecordEntry(prevHead, stackTrace);
-                        thisHead = Interlocked.CompareExchange(ref this.head, newHead, thisHead);
+                        // already closed.
+                        return;
                     }
-                    while (thisHead != oldHead);
-                    if (dropped)
+                    int numElements = thisHead.Pos + 1;
+                    if (numElements >= s_targetRecords)
                     {
-                        _ = Interlocked.Increment(ref this.droppedRecords);
+                        int backOffFactor = Math.Min(numElements - s_targetRecords, 30);
+                        dropped = PlatformDependent.GetThreadLocalRandom().Next(1 << backOffFactor) != 0;
+                        if (dropped)
+                        {
+                            prevHead = thisHead.Next;
+                        }
                     }
+                    else
+                    {
+                        dropped = false;
+                    }
+                    newHead = hint is object ? new RecordEntry(prevHead, stackTrace, hint) : new RecordEntry(prevHead, stackTrace);
+                    thisHead = Interlocked.CompareExchange(ref v_head, newHead, thisHead);
+                }
+                while (thisHead != oldHead);
+                if (dropped)
+                {
+                    _ = Interlocked.Increment(ref _droppedRecords);
                 }
             }
 
             public bool Close(object trackedObject)
             {
-                if (gcNotice.TryGetTarget(out var notice))
+                if (_gcNotice.TryGetTarget(out var notice))
                 {
-                    if (notice.UnArm(this, owner, trackedObject))
+                    if (notice.UnArm(this, _owner, trackedObject))
                     {
-                        this.Dispose();
+                        Dispose();
                         return true;
                     }
                 }
@@ -304,22 +320,22 @@ namespace DotNetty.Common
             // This is called from GCNotice finalizer
             internal void CloseFinal()
             {
-                if (Volatile.Read(ref this.head) is object)
+                if (Volatile.Read(ref v_head) is object)
                 {
-                    this.owner.ReportLeak(this);
+                    _owner.ReportLeak(this);
                 }
             }
 
             public string Dump()
             {
-                RecordEntry oldHead = Interlocked.Exchange(ref this.head, null);
+                RecordEntry oldHead = Interlocked.Exchange(ref v_head, null);
                 if (oldHead is null)
                 {
                     // Already closed
                     return string.Empty;
                 }
 
-                long dropped = Interlocked.Read(ref this.droppedRecords);
+                long dropped = Interlocked.Read(ref _droppedRecords);
                 int duped = 0;
 
                 int present = oldHead.Pos + 1;
@@ -363,7 +379,7 @@ namespace DotNetty.Common
                     _ = buf.Append(": ")
                         .Append(dropped)
                         .Append(" leak records were discarded because the leak record count is targeted to ")
-                        .Append(TargetRecords)
+                        .Append(s_targetRecords)
                         .Append(". Use system property ")
                         .Append(PropTargetRecords)
                         .Append(" to increase the limit.")
@@ -376,7 +392,7 @@ namespace DotNetty.Common
 
             internal void Dispose()
             {
-                _ = Interlocked.Exchange(ref this.head, null);
+                _ = Interlocked.Exchange(ref v_head, null);
             }
         }
 
@@ -385,53 +401,54 @@ namespace DotNetty.Common
         {
             internal static readonly RecordEntry Bottom = new RecordEntry();
 
-            readonly string hintString;
             internal readonly RecordEntry Next;
             internal readonly int Pos;
-            readonly string stackTrace;
+
+            private readonly string _hintString;
+            private readonly string _stackTrace;
 
             internal RecordEntry(RecordEntry next, string stackTrace, object hint)
             {
                 // This needs to be generated even if toString() is never called as it may change later on.
-                this.hintString = hint is IResourceLeakHint leakHint ? leakHint.ToHintString() : null;
-                this.Next = next;
-                this.Pos = next.Pos + 1;
-                this.stackTrace = stackTrace;
+                _hintString = hint is IResourceLeakHint leakHint ? leakHint.ToHintString() : null;
+                Next = next;
+                Pos = next.Pos + 1;
+                _stackTrace = stackTrace;
             }
 
             internal RecordEntry(RecordEntry next, string stackTrace)
             {
-                this.hintString = null;
-                this.Next = next;
-                this.Pos = next.Pos + 1;
-                this.stackTrace = stackTrace;
+                _hintString = null;
+                Next = next;
+                Pos = next.Pos + 1;
+                _stackTrace = stackTrace;
             }
 
             // Used to terminate the stack
             RecordEntry()
             {
-                this.hintString = null;
-                this.Next = null;
-                this.Pos = -1;
-                this.stackTrace = string.Empty;
+                _hintString = null;
+                Next = null;
+                Pos = -1;
+                _stackTrace = string.Empty;
             }
 
             public override string ToString()
             {
                 var buf = new StringBuilder(2048);
-                if (this.hintString is object)
+                if (_hintString is object)
                 {
-                    _ = buf.Append("\tHint: ").Append(this.hintString).Append(StringUtil.Newline);
+                    _ = buf.Append("\tHint: ").Append(_hintString).Append(StringUtil.Newline);
                 }
 
                 // TODO: Use StackTrace class and support excludedMethods NETStandard2.0
                 // Append the stack trace.
-                _ = buf.Append(this.stackTrace).Append(StringUtil.Newline);
+                _ = buf.Append(_stackTrace).Append(StringUtil.Newline);
                 return buf.ToString();
             }
         }
 
-        class GCNotice
+        sealed class GCNotice
         {
             // ConditionalWeakTable
             //
@@ -447,63 +464,64 @@ namespace DotNetty.Common
             //    Once the key dies, the dictionary automatically removes
             //    the key/value entry.
             //
-            private readonly LinkedList<DefaultResourceLeak> leakList = new LinkedList<DefaultResourceLeak>();
-            object referent;
-            ResourceLeakDetector owner;
+            private readonly LinkedList<DefaultResourceLeak> _leakList = new LinkedList<DefaultResourceLeak>();
+            private object _referent;
+            private ResourceLeakDetector _owner;
+
             public GCNotice(object referent, ResourceLeakDetector owner)
             {
-                this.referent = referent;
-                this.owner = owner;
+                _referent = referent;
+                _owner = owner;
             }
 
             ~GCNotice()
             {
-                lock (this.leakList)
+                lock (_leakList)
                 {
-                    foreach (var leak in this.leakList)
+                    foreach (var leak in _leakList)
                     {
                         leak.CloseFinal();
                     }
-                    this.leakList.Clear();
+                    _leakList.Clear();
 
                     //Since we get here with finalizer, it's no needed to remove key from gcNotificationMap
 
-                    //this.referent = null;
-                    this.owner = null;
+                    //_referent = null;
+                    _owner = null;
                 }
             }
 
             public bool Arm(DefaultResourceLeak leak, ResourceLeakDetector owner, object referent)
             {
-                lock (this.leakList)
+                lock (_leakList)
                 {
-                    if (this.owner is null)
+                    if (_owner is null)
                     {
                         //Already disposed
                         return false;
                     }
-                    Debug.Assert(owner == this.owner);
-                    Debug.Assert(referent == this.referent);
+                    Debug.Assert(owner == _owner);
+                    Debug.Assert(referent == _referent);
 
-                    _ = this.leakList.AddLast(leak);
+                    _ = _leakList.AddLast(leak);
                     return true;
                 }
             }
 
             public bool UnArm(DefaultResourceLeak leak, ResourceLeakDetector owner, object referent)
             {
-                lock (this.leakList)
+                lock (_leakList)
                 {
-                    if (this.owner is null)
+                    if (_owner is null)
                     {
                         //Already disposed
                         return false;
                     }
-                    Debug.Assert(owner == this.owner);
-                    Debug.Assert(referent == this.referent);
+                    Debug.Assert(owner == _owner);
+                    Debug.Assert(referent == _referent);
 
-                    bool res = this.leakList.Remove(leak);
-                    if (0u >= (uint)this.leakList.Count)
+                    bool res = _leakList.Remove(leak);
+                    if (0u >= (uint)_leakList.Count)
                     {
                         // The close is called by byte buffer release, in this case
                         // we suppress the GCNotice finalize to prevent false positive
@@ -514,11 +532,11 @@ namespace DotNetty.Common
 
                         // Don't inline the variable, anything inside Debug.Assert()
                         // will be stripped out in Release builds
-                        bool removed = this.owner.gcNotificationMap.Remove(this.referent);
+                        bool removed = _owner._gcNotificationMap.Remove(_referent);
                         Debug.Assert(removed);
 
-                        //this.referent = null;
-                        this.owner = null;
+                        //_referent = null;
+                        _owner = null;
                     }
                     return res;
                 }
