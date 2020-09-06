@@ -1048,17 +1048,22 @@ namespace DotNetty.Common.Concurrency
             }
             else
             {
-                // netty 第一个任务进来，不管是否延迟任务，都会启动线程
-                // 防止线程启动后，第一个进来的就是 lazy task
-                var firstTask = _firstTask;
-                if (firstTask) { _firstTask = false; }
-                InternalExecute(task, firstTask);
+                InternalLazyExecute(task);
             }
         }
 
         public override void LazyExecute(IRunnable task)
         {
             InternalExecute(task, false);
+        }
+
+        protected virtual void InternalLazyExecute(IRunnable task)
+        {
+            // netty 第一个任务进来，不管是否延迟任务，都会启动线程
+            // 防止线程启动后，第一个进来的就是 lazy task
+            var firstTask = _firstTask;
+            if (firstTask) { _firstTask = false; }
+            InternalExecute(task, firstTask);
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
