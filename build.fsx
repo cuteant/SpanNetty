@@ -16,8 +16,8 @@ let solution = System.IO.Path.GetFullPath(string "./DotNetty.sln")
 // Directories
 let toolsDir = __SOURCE_DIRECTORY__ @@ "tools"
 let output = __SOURCE_DIRECTORY__  @@ "Artifacts"
-let outputTests = output @@ "TestResults"
-let outputPerfTests = output @@ "PerfResults"
+let outputTests = __SOURCE_DIRECTORY__ @@ "TestResults"
+let outputPerfTests = __SOURCE_DIRECTORY__ @@ "PerfResults"
 
 let buildNumber = environVarOrDefault "BUILD_NUMBER" "0"
 let hasTeamCity = (not (buildNumber = "0")) // check if we have the TeamCity environment variable for build # set

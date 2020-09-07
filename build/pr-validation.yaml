@@ -33,7 +33,7 @@ jobs:
         displayName: Windows Build
         inputs:
           filename: build.cmd
-          arguments: 'buildDebug incremental' # Run an incremental build
+          arguments: 'Build incremental' # Run an incremental build
         continueOnError: true
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
       - script: 'echo 1>&2'
@@ -46,7 +46,7 @@ jobs:
       name: 'netfx_tests_windows'
       displayName: '.NET Framework Unit Tests (Windows)'
       vmImage: 'vs2017-win2016'
-      scriptFileName: build.cmd
+      scriptFileName: azure_build.cmd
       scriptArgs: runTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'netfx_tests_windows-$(Build.BuildId)'
@@ -56,7 +56,7 @@ jobs:
       name: 'net_core_tests_windows'
       displayName: '.NET Core Unit Tests (Windows)'
       vmImage: 'vs2017-win2016'
-      scriptFileName: build.cmd
+      scriptFileName: azure_build.cmd
       scriptArgs: runTestsNetCore incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_windows-$(Build.BuildId)'

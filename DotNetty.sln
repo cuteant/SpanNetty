@@ -5,9 +5,9 @@ VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{013DFD29-E1DB-4968-A67B-C2342E6F5B6E}"
 	ProjectSection(SolutionItems) = preProject
-		Clean.cmd = Clean.cmd
-		Issue.txt = Issue.txt
 		NuGet.Config = NuGet.Config
+		README.md = README.md
+		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{01F3CC7E-F996-411E-AFD6-72673A826549}"
@@ -65,6 +65,13 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Protobuf.Tests", "test\DotNetty.Codecs.Protobuf.Tests\DotNetty.Codecs.Protobuf.Tests.csproj", "{76C629B7-0B58-4D82-9FAA-A620DFD5E588}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.TestSuite", "test\DotNetty.TestSuite\DotNetty.TestSuite.csproj", "{A785CDB4-B417-4783-9ECD-AB3DA2278CB4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{A8473C9F-08FF-47DE-8C23-D2BAF5EF4E0A}"
+	ProjectSection(SolutionItems) = preProject
+		build\azure-pipeline.template.yaml = build\azure-pipeline.template.yaml
+		build\linux-pr-validation.yaml = build\linux-pr-validation.yaml
+		build\pr-validation.yaml = build\pr-validation.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -525,6 +532,7 @@ Global
 		{2765A871-B237-4522-90FC-E558E4B1D496} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{76C629B7-0B58-4D82-9FAA-A620DFD5E588} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{A785CDB4-B417-4783-9ECD-AB3DA2278CB4} = {01F3CC7E-F996-411E-AFD6-72673A826549}
+		{A8473C9F-08FF-47DE-8C23-D2BAF5EF4E0A} = {013DFD29-E1DB-4968-A67B-C2342E6F5B6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A659CEFB-DDB3-49BE-AEDD-FF2F1B3297DB}
