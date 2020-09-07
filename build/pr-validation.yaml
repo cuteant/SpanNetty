@@ -1,0 +1,72 @@
+# Pull request validation for Windows against the `dev` and `master` branches
+# See https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema for reference
+trigger:
+  branches:
+    include:
+      - future
+      - release/*
+
+pr:
+  autoCancel: true # indicates whether additional pushes to a PR should cancel in-progress runs for the same PR. Defaults to true
+  branches:
+    include: [ future, release/* ] # branch names which will trigger a build
+
+name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+
+jobs:
+  - job: WindowsBuild
+    displayName: Windows Build
+    pool:
+      vmImage: vs2017-win2016
+      demands: Cmd
+    steps:
+      - checkout: self  # self represents the repo where the initial Pipelines YAML file was found
+        clean: false  # whether to fetch clean each time
+        submodules: recursive  # set to 'true' for a single level of submodules or 'recursive' to get submodules of submodules
+        persistCredentials: true
+      - task: UseDotNet@2
+        displayName: 'Use .NET Core SDK 3.1.401'
+        inputs:
+          packageType: sdk
+          version: 3.1.401
+      - task: BatchScript@1
+        displayName: Windows Build
+        inputs:
+          filename: build.cmd
+          arguments: 'buildDebug incremental' # Run an incremental build
+        continueOnError: true
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+      - script: 'echo 1>&2'
+        failOnStderr: true
+        displayName: 'If above is partially succeeded, then fail'
+        condition: eq(variables['Agent.JobStatus'], 'SucceededWithIssues')
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'netfx_tests_windows'
+      displayName: '.NET Framework Unit Tests (Windows)'
+      vmImage: 'vs2017-win2016'
+      scriptFileName: build.cmd
+      scriptArgs: runTests incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'netfx_tests_windows-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'net_core_tests_windows'
+      displayName: '.NET Core Unit Tests (Windows)'
+      vmImage: 'vs2017-win2016'
+      scriptFileName: build.cmd
+      scriptArgs: runTestsNetCore incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_tests_windows-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'net_core_tests_linux'
+      displayName: '.NET Core Unit Tests (Linux)'
+      vmImage: 'ubuntu-16.04'
+      scriptFileName: './build.sh'
+      scriptArgs: runTestsNetCore incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_tests_linux-$(Build.BuildId)'
