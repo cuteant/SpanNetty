@@ -1,7 +1,6 @@
 ﻿namespace DotNetty.Suite.Tests.Transport.Socket
 {
     using System;
-    using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -55,12 +54,6 @@
         [MemberData(nameof(GetAllocators))]
         public Task TestAutoReadOffNoDataReadUntilReadCalled_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && 
-                (allocator is ArrayPooledByteBufferAllocator || allocator is UnpooledByteBufferAllocator))
-            {
-                // TODO Ubuntu(Unpooled、ArrayPooled) 未通过
-                return TaskUtil.Completed;
-            }
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
             var cb = LibuvClientBootstrapFactory.Instance.NewInstance();
             Configure(sb, cb, allocator);

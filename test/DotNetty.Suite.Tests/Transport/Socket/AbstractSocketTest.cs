@@ -9,6 +9,11 @@
 
     public abstract class AbstractSocketTest : AbstractComboTestsuiteTest
     {
+        static AbstractSocketTest()
+        {
+            DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+        }
+
         public AbstractSocketTest(ITestOutputHelper output)
             : base(output)
         {
