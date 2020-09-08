@@ -345,3 +345,4 @@ TODO.txt
 /nuspecs
 /test/DotNetty.Transport.Tests.Performance/Perf
 /tools
+/global.json

@@ -20,7 +20,6 @@ let outputTests = __SOURCE_DIRECTORY__ @@ "TestResults"
 let outputPerfTests = __SOURCE_DIRECTORY__ @@ "PerfResults"
 
 let buildNumber = environVarOrDefault "BUILD_NUMBER" "0"
-let hasTeamCity = (not (buildNumber = "0")) // check if we have the TeamCity environment variable for build # set
 let preReleaseVersionSuffix = "beta" + (if (not (buildNumber = "0")) then (buildNumber) else DateTime.UtcNow.Ticks.ToString())
 
 let releaseNotes =
@@ -34,7 +33,7 @@ let versionFromReleaseNotes =
 
 let versionSuffix = 
     match (getBuildParam "nugetprerelease") with
-    | "dev" -> preReleaseVersionSuffix
+    | "future" -> preReleaseVersionSuffix
     | "" -> versionFromReleaseNotes
     | str -> str
     
@@ -89,8 +88,8 @@ let getAffectedProjects =
 Target "ComputeIncrementalChanges" (fun _ ->
     if runIncrementally then
         let targetBranch = match getBuildParam "targetBranch" with
-                            | "" -> "dev"
-                            | null -> "dev"
+                            | "" -> "future"
+                            | null -> "future"
                             | b -> b
         let incrementalistPath =
                 let incrementalistDir = toolsDir @@ "incrementalist"
@@ -217,10 +216,7 @@ Target "RunTests" (fun _ ->
         rawProjects |> Seq.choose filterProjects
     
     let runSingleProject project =
-        let arguments =
-            match (hasTeamCity) with
-            | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetFrameworkVersion outputTests)
-            | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
+        let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
 
         let result = ExecProcess(fun info ->
             info.FileName <- "dotnet"
@@ -242,10 +238,7 @@ Target "RunTestsNetCore" (fun _ ->
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
-            let arguments =
-                match (hasTeamCity) with
-                | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetCoreVersion outputTests)
-                | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
+            let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
 
             let result = ExecProcess(fun info ->
                 info.FileName <- "dotnet"

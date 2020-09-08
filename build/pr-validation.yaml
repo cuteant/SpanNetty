@@ -1,4 +1,4 @@
-# Pull request validation for Windows against the `dev` and `master` branches
+# Pull request validation for Windows against the `future` and `release/*` branches
 # See https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema for reference
 trigger:
   branches:

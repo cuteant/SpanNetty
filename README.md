@@ -3,12 +3,32 @@
 This is a fork from DotNetty project: https://github.com/azure/dotnetty
 
 ## Features
-  - Align with [Netty-4.1.51](https://github.com/netty/netty/tree/netty-4.1.51.Final).
+  - Align with [Netty-4.1.51.Final](https://github.com/netty/netty/tree/netty-4.1.51.Final)
+  - ArrayPooledByteBuffer
+  - Support **Span&#60;byte&#62;** and **Memory&#60;byte&#62;** in DotNetty.Buffer/Common APIs
+  - Add support for IBufferWriter&#60;byte&#62; to the **IByteBuffer**
+  - [ByteBufferReader](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Buffers/Reader) and [ByteBufferWriter](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Buffers/Writer)
+  - [HTTP 2 codec](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Codecs.Http2)
+  - Port [NetUV.Core](https://github.com/StormHub/NetUV)
 
 ## Use
 
 * Stable builds are available on [NuGet](https://www.nuget.org/packages?q=spannetty).
 * Nightly builds are available on [MyGet](https://www.myget.org/F/cuteant/api/v2).
+
+
+|NuGet Package|Status|
+|------|-------------|
+|SpanNetty.Common|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Common)](https://www.nuget.org/packages/SpanNetty.Common/)|
+|SpanNetty.Buffers|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Buffers)](https://www.nuget.org/packages/SpanNetty.Buffers/)|
+|SpanNetty.Codecs|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs)](https://www.nuget.org/packages/SpanNetty.Codecs/)|
+|SpanNetty.Codecs.Http|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Http)](https://www.nuget.org/packages/SpanNetty.Codecs.Http/)|
+|SpanNetty.Codecs.Http2|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Http2)](https://www.nuget.org/packages/SpanNetty.Codecs.Http2/)|
+|SpanNetty.Codecs.Mqtt|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Mqtt)](https://www.nuget.org/packages/SpanNetty.Codecs.Mqtt/)|
+|SpanNetty.Codecs.Protobuf|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Protobuf)](https://www.nuget.org/packages/SpanNetty.Codecs.Protobuf/)|
+|SpanNetty.Handlers|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Handlers)](https://www.nuget.org/packages/SpanNetty.Handlers/)|
+|SpanNetty.Transport|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Transport)](https://www.nuget.org/packages/SpanNetty.Transport/)|
+|SpanNetty.Transport.Libuv|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Transport.Libuv)](https://www.nuget.org/packages/SpanNetty.Transport.Libuv/)|
 
 ## Performance
 

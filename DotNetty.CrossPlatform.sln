@@ -5,9 +5,16 @@ VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{013DFD29-E1DB-4968-A67B-C2342E6F5B6E}"
 	ProjectSection(SolutionItems) = preProject
-		Clean.cmd = Clean.cmd
-		Issue.txt = Issue.txt
+		azure_build.cmd = azure_build.cmd
+		build.cmd = build.cmd
+		build.fsx = build.fsx
+		build.ps1 = build.ps1
+		build.sh = build.sh
+		DotnetCLIVersion.txt = DotnetCLIVersion.txt
+		global.json = global.json
 		NuGet.Config = NuGet.Config
+		README.md = README.md
+		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}"
@@ -37,6 +44,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Protobuf", "src\DotNetty.Codecs.Protobuf\DotNetty.Codecs.Protobuf.csproj", "{F5A34D9C-854C-4972-ABF3-8BAE4712386D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Microbench", "perf\DotNetty.Microbench\DotNetty.Microbench.csproj", "{10264C0F-F854-4201-AFCB-2B7315EFBCE0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{EC6681D3-3F9C-4CBB-B5D5-091E7F85D1C7}"
+	ProjectSection(SolutionItems) = preProject
+		build\azure-pipeline.template.yaml = build\azure-pipeline.template.yaml
+		build\pr-validation.yaml = build\pr-validation.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -259,6 +272,7 @@ Global
 		{85BC5580-3A11-4078-8DB7-3C113DA938A2} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{F5A34D9C-854C-4972-ABF3-8BAE4712386D} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{10264C0F-F854-4201-AFCB-2B7315EFBCE0} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
+		{EC6681D3-3F9C-4CBB-B5D5-091E7F85D1C7} = {013DFD29-E1DB-4968-A67B-C2342E6F5B6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A659CEFB-DDB3-49BE-AEDD-FF2F1B3297DB}
