@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\xunitSettings.props" />
+
+	<PropertyGroup>
+		<TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
+		<RootNamespace>DotNetty.Suite.Tests</RootNamespace>
+		<AssemblyName>DotNetty.Suite.Tests</AssemblyName>
+		<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(ImportLibs)' == 'netfx' ">
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNetTestSdkPackageVersion)" />
+		<PackageReference Include="xunit" Version="$(xUnitPackageVersion)" />
+		<PackageReference Include="xunit.analyzers" Version="$(xUnitAnalyzersPackageVersion)" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
+		<PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
+	</ItemGroup>
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+		<PackageReference Include="System.ValueTuple" Version="$(SystemValueTuplePackageVersion)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.csproj" />
+		<ProjectReference Include="..\DotNetty.Tests.Common\DotNetty.Tests.Common.csproj" />
+	</ItemGroup>
+
+</Project>
