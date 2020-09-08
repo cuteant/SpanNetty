@@ -1,50 +1,52 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
-    <RootNamespace>DotNetty.Codecs.Http.Tests</RootNamespace>
-    <AssemblyName>DotNetty.Codecs.Http.Tests</AssemblyName>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(ImportLibs)' == 'netfx' ">
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-  </PropertyGroup>
+	<Import Project="..\xunitSettings.props" />
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNetTestSdkPackageVersion)" />
-    <PackageReference Include="xunit" Version="$(xUnitPackageVersion)" />
-    <PackageReference Include="xunit.analyzers" Version="$(xUnitAnalyzersPackageVersion)" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
-    <PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
+		<RootNamespace>DotNetty.Codecs.Http.Tests</RootNamespace>
+		<AssemblyName>DotNetty.Codecs.Http.Tests</AssemblyName>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(ImportLibs)' == 'netfx' ">
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Multipart\file-01.txt" />
-    <None Remove="Multipart\file-02.txt" />
-    <None Remove="Multipart\file-03.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Multipart\file-01.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Multipart\file-02.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Multipart\file-03.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNetTestSdkPackageVersion)" />
+		<PackageReference Include="xunit" Version="$(xUnitPackageVersion)" />
+		<PackageReference Include="xunit.analyzers" Version="$(xUnitAnalyzersPackageVersion)" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
+		<PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
-    <ProjectReference Include="..\DotNetty.Tests.Common\DotNetty.Tests.Common.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="Multipart\file-01.txt" />
+		<None Remove="Multipart\file-02.txt" />
+		<None Remove="Multipart\file-03.txt" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="Multipart\file-01.txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Multipart\file-02.txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Multipart\file-03.txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj" />
+		<ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
+		<ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
+		<ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
+		<ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
+		<ProjectReference Include="..\DotNetty.Tests.Common\DotNetty.Tests.Common.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+	</ItemGroup>
 </Project>
