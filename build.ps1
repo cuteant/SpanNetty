@@ -31,7 +31,7 @@ Param(
 
 $FakeVersion = "4.63.0"
 $DotNetChannel = "LTS";
-$DotNetVersion = "3.1.401";
+$DotNetVersion = "3.1.402";
 $DotNetInstallerUri = "https://dot.net/v1/dotnet-install.ps1";
 $NugetVersion = "5.7.0";
 $NugetUrl = "https://dist.nuget.org/win-x86-commandline/v$NugetVersion/nuget.exe"
@@ -97,7 +97,7 @@ if($FoundDotNetCliVersion -ne $DotNetVersion) {
 $NugetPath = Join-Path $ToolPath "nuget.exe"
 if (!(Test-Path $NugetPath)) {
     Write-Host "Downloading NuGet.exe..."
-	[System.Net.ServicePointManager]::SecurityProtocol=[System.Net.SecurityProtocolType]::Tls12
+    [System.Net.ServicePointManager]::SecurityProtocol=[System.Net.SecurityProtocolType]::Tls12
     (New-Object System.Net.WebClient).DownloadFile($NugetUrl, $NugetPath);
 }
 

@@ -1,69 +1,69 @@
 <Project>
   <!-- Shared Package Versions -->
   <PropertyGroup>
-    <MicrosoftAspNetCoreAuthenticationAzureADUIPackageVersion>3.1.7</MicrosoftAspNetCoreAuthenticationAzureADUIPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationFacebookPackageVersion>3.1.7</MicrosoftAspNetCoreAuthenticationFacebookPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationGooglePackageVersion>3.1.7</MicrosoftAspNetCoreAuthenticationGooglePackageVersion>
-    <MicrosoftAspNetCoreAuthenticationJwtBearerPackageVersion>3.1.7</MicrosoftAspNetCoreAuthenticationJwtBearerPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationMicrosoftAccountPackageVersion>3.1.7</MicrosoftAspNetCoreAuthenticationMicrosoftAccountPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationOpenIdConnectPackageVersion>3.1.7</MicrosoftAspNetCoreAuthenticationOpenIdConnectPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationTwitterPackageVersion>3.1.7</MicrosoftAspNetCoreAuthenticationTwitterPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationWsFederationPackageVersion>3.1.7</MicrosoftAspNetCoreAuthenticationWsFederationPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationAzureADUIPackageVersion>3.1.8</MicrosoftAspNetCoreAuthenticationAzureADUIPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationFacebookPackageVersion>3.1.8</MicrosoftAspNetCoreAuthenticationFacebookPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationGooglePackageVersion>3.1.8</MicrosoftAspNetCoreAuthenticationGooglePackageVersion>
+    <MicrosoftAspNetCoreAuthenticationJwtBearerPackageVersion>3.1.8</MicrosoftAspNetCoreAuthenticationJwtBearerPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationMicrosoftAccountPackageVersion>3.1.8</MicrosoftAspNetCoreAuthenticationMicrosoftAccountPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationOpenIdConnectPackageVersion>3.1.8</MicrosoftAspNetCoreAuthenticationOpenIdConnectPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationTwitterPackageVersion>3.1.8</MicrosoftAspNetCoreAuthenticationTwitterPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationWsFederationPackageVersion>3.1.8</MicrosoftAspNetCoreAuthenticationWsFederationPackageVersion>
 
-    <MicrosoftAspNetCoreAuthorizationPackageVersion>3.1.7</MicrosoftAspNetCoreAuthorizationPackageVersion>
+    <MicrosoftAspNetCoreAuthorizationPackageVersion>3.1.8</MicrosoftAspNetCoreAuthorizationPackageVersion>
 
-    <MicrosoftAspNetCoreConnectionsAbstractionsPackageVersion>3.1.7</MicrosoftAspNetCoreConnectionsAbstractionsPackageVersion>
+    <MicrosoftAspNetCoreConnectionsAbstractionsPackageVersion>3.1.8</MicrosoftAspNetCoreConnectionsAbstractionsPackageVersion>
 
-    <MicrosoftAspNetCoreCryptographyInternalPackageVersion>3.1.7</MicrosoftAspNetCoreCryptographyInternalPackageVersion>
-    <MicrosoftAspNetCoreCryptographyKeyDerivationPackageVersion>3.1.7</MicrosoftAspNetCoreCryptographyKeyDerivationPackageVersion>
+    <MicrosoftAspNetCoreCryptographyInternalPackageVersion>3.1.8</MicrosoftAspNetCoreCryptographyInternalPackageVersion>
+    <MicrosoftAspNetCoreCryptographyKeyDerivationPackageVersion>3.1.8</MicrosoftAspNetCoreCryptographyKeyDerivationPackageVersion>
 
-    <MicrosoftAspNetCoreDataProtectionPackageVersion>3.1.7</MicrosoftAspNetCoreDataProtectionPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAbstractionsPackageVersion>3.1.7</MicrosoftAspNetCoreDataProtectionAbstractionsPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>3.1.7</MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>3.1.7</MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>
-    <MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>3.1.7</MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>3.1.7</MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>3.1.7</MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionPackageVersion>3.1.8</MicrosoftAspNetCoreDataProtectionPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAbstractionsPackageVersion>3.1.8</MicrosoftAspNetCoreDataProtectionAbstractionsPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>3.1.8</MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>3.1.8</MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>
+    <MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>3.1.8</MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>3.1.8</MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>3.1.8</MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>
 
-    <MicrosoftAspNetCoreHttpConnectionsClientPackageVersion>3.1.7</MicrosoftAspNetCoreHttpConnectionsClientPackageVersion>
-    <MicrosoftAspNetCoreHttpConnectionsCommonPackageVersion>3.1.7</MicrosoftAspNetCoreHttpConnectionsCommonPackageVersion>
-    <MicrosoftAspNetCoreHttpFeaturesPackageVersion>3.1.7</MicrosoftAspNetCoreHttpFeaturesPackageVersion>
+    <MicrosoftAspNetCoreHttpConnectionsClientPackageVersion>3.1.8</MicrosoftAspNetCoreHttpConnectionsClientPackageVersion>
+    <MicrosoftAspNetCoreHttpConnectionsCommonPackageVersion>3.1.8</MicrosoftAspNetCoreHttpConnectionsCommonPackageVersion>
+    <MicrosoftAspNetCoreHttpFeaturesPackageVersion>3.1.8</MicrosoftAspNetCoreHttpFeaturesPackageVersion>
 
-    <MicrosoftAspNetCoreMvcNewtonsoftJsonPackageVersion>3.1.7</MicrosoftAspNetCoreMvcNewtonsoftJsonPackageVersion>
-    <MicrosoftAspNetCoreMvcRazorRuntimeCompilationPackageVersion>3.1.7</MicrosoftAspNetCoreMvcRazorRuntimeCompilationPackageVersion>
+    <MicrosoftAspNetCoreMvcNewtonsoftJsonPackageVersion>3.1.8</MicrosoftAspNetCoreMvcNewtonsoftJsonPackageVersion>
+    <MicrosoftAspNetCoreMvcRazorRuntimeCompilationPackageVersion>3.1.8</MicrosoftAspNetCoreMvcRazorRuntimeCompilationPackageVersion>
 
-    <MicrosoftAspNetCoreSignalRClientPackageVersion>3.1.7</MicrosoftAspNetCoreSignalRClientPackageVersion>
-    <MicrosoftAspNetCoreSignalRClientCorePackageVersion>3.1.7</MicrosoftAspNetCoreSignalRClientCorePackageVersion>
-    <MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>3.1.7</MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>
-    <MicrosoftAspNetCoreSignalRCommonPackageVersion>3.1.7</MicrosoftAspNetCoreSignalRCommonPackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>3.1.7</MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>3.1.7</MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>3.1.7</MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>
-    <MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>3.1.7</MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>
+    <MicrosoftAspNetCoreSignalRClientPackageVersion>3.1.8</MicrosoftAspNetCoreSignalRClientPackageVersion>
+    <MicrosoftAspNetCoreSignalRClientCorePackageVersion>3.1.8</MicrosoftAspNetCoreSignalRClientCorePackageVersion>
+    <MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>3.1.8</MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>
+    <MicrosoftAspNetCoreSignalRCommonPackageVersion>3.1.8</MicrosoftAspNetCoreSignalRCommonPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>3.1.8</MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>3.1.8</MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>3.1.8</MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>
+    <MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>3.1.8</MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>
 
-    <MicrosoftAspNetCoreMvcTestingPackageVersion>3.1.7</MicrosoftAspNetCoreMvcTestingPackageVersion>
-    <MicrosoftAspNetCoreTestHostPackageVersion>3.1.7</MicrosoftAspNetCoreTestHostPackageVersion>
+    <MicrosoftAspNetCoreMvcTestingPackageVersion>3.1.8</MicrosoftAspNetCoreMvcTestingPackageVersion>
+    <MicrosoftAspNetCoreTestHostPackageVersion>3.1.8</MicrosoftAspNetCoreTestHostPackageVersion>
 	
-    <MicrosoftAspNetCoreRazorLanguagePackageVersion>3.1.7</MicrosoftAspNetCoreRazorLanguagePackageVersion>
-    <MicrosoftCodeAnalysisRazorPackageVersion>3.1.7</MicrosoftCodeAnalysisRazorPackageVersion>
+    <MicrosoftAspNetCoreRazorLanguagePackageVersion>3.1.8</MicrosoftAspNetCoreRazorLanguagePackageVersion>
+    <MicrosoftCodeAnalysisRazorPackageVersion>3.1.8</MicrosoftCodeAnalysisRazorPackageVersion>
 
-    <MicrosoftDataSqliteCorePackageVersion>3.1.7</MicrosoftDataSqliteCorePackageVersion>
-    <MicrosoftDataSqlitePackageVersion>3.1.7</MicrosoftDataSqlitePackageVersion>
+    <MicrosoftDataSqliteCorePackageVersion>3.1.8</MicrosoftDataSqliteCorePackageVersion>
+    <MicrosoftDataSqlitePackageVersion>3.1.8</MicrosoftDataSqlitePackageVersion>
 
-    <MicrosoftEntityFrameworkCorePackageVersion>3.1.7</MicrosoftEntityFrameworkCorePackageVersion>
-    <MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>3.1.7</MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>
-    <MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>3.1.7</MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>
-    <MicrosoftEntityFrameworkCoreDesignPackageVersion>3.1.7</MicrosoftEntityFrameworkCoreDesignPackageVersion>
-    <MicrosoftEntityFrameworkCoreInMemoryPackageVersion>3.1.7</MicrosoftEntityFrameworkCoreInMemoryPackageVersion>
-    <MicrosoftEntityFrameworkCoreRelationalPackageVersion>3.1.7</MicrosoftEntityFrameworkCoreRelationalPackageVersion>
-    <MicrosoftEntityFrameworkCoreSqlitePackageVersion>3.1.7</MicrosoftEntityFrameworkCoreSqlitePackageVersion>
-    <MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>3.1.7</MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>
-    <MicrosoftEntityFrameworkCoreSqlServerPackageVersion>3.1.7</MicrosoftEntityFrameworkCoreSqlServerPackageVersion>
-    <MicrosoftEntityFrameworkCoreToolsPackageVersion>3.1.7</MicrosoftEntityFrameworkCoreToolsPackageVersion>
+    <MicrosoftEntityFrameworkCorePackageVersion>3.1.8</MicrosoftEntityFrameworkCorePackageVersion>
+    <MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>3.1.8</MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>
+    <MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>3.1.8</MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>
+    <MicrosoftEntityFrameworkCoreDesignPackageVersion>3.1.8</MicrosoftEntityFrameworkCoreDesignPackageVersion>
+    <MicrosoftEntityFrameworkCoreInMemoryPackageVersion>3.1.8</MicrosoftEntityFrameworkCoreInMemoryPackageVersion>
+    <MicrosoftEntityFrameworkCoreRelationalPackageVersion>3.1.8</MicrosoftEntityFrameworkCoreRelationalPackageVersion>
+    <MicrosoftEntityFrameworkCoreSqlitePackageVersion>3.1.8</MicrosoftEntityFrameworkCoreSqlitePackageVersion>
+    <MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>3.1.8</MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>
+    <MicrosoftEntityFrameworkCoreSqlServerPackageVersion>3.1.8</MicrosoftEntityFrameworkCoreSqlServerPackageVersion>
+    <MicrosoftEntityFrameworkCoreToolsPackageVersion>3.1.8</MicrosoftEntityFrameworkCoreToolsPackageVersion>
 
-    <MicrosoftExtensionsIdentityCorePackageVersion>3.1.7</MicrosoftExtensionsIdentityCorePackageVersion>
-    <MicrosoftExtensionsIdentityStoresPackageVersion>3.1.7</MicrosoftExtensionsIdentityStoresPackageVersion>
-    <MicrosoftExtensionsWebEncodersPackageVersion>3.1.7</MicrosoftExtensionsWebEncodersPackageVersion>
+    <MicrosoftExtensionsIdentityCorePackageVersion>3.1.8</MicrosoftExtensionsIdentityCorePackageVersion>
+    <MicrosoftExtensionsIdentityStoresPackageVersion>3.1.8</MicrosoftExtensionsIdentityStoresPackageVersion>
+    <MicrosoftExtensionsWebEncodersPackageVersion>3.1.8</MicrosoftExtensionsWebEncodersPackageVersion>
 
     <MicrosoftAspNetCoreMvcVersioningPackageVersion>4.1.1</MicrosoftAspNetCoreMvcVersioningPackageVersion>
     <MicrosoftAspNetCoreMvcVersioningApiExplorerPackageVersion>4.1.1</MicrosoftAspNetCoreMvcVersioningApiExplorerPackageVersion>
