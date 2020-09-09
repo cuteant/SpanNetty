@@ -115,7 +115,7 @@
             loop.Execute(() => latch.Signal());
 
             // Wait for the event loop thread to start.
-            latch.Wait();
+            Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
 
             // Request the event loop thread to stop.
             loop.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(200), TimeSpan.FromSeconds(3));
