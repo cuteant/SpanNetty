@@ -211,8 +211,8 @@ module internal ResultHandling =
 Target "RunTests" (fun _ ->    
     let projects = 
         let rawProjects = match (isWindows) with 
-                            | true -> !! "./test/*.Tests/DotNetty.Transport.Tests.csproj"
-                            | _ -> !! "./test/*.Tests/DotNetty.Transport.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
+                            | true -> !! "./test/*.Tests/DotNetty.Suite.Tests.csproj"
+                            | _ -> !! "./test/*.Tests/DotNetty.Suite.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
         rawProjects |> Seq.choose filterProjects
     
     let runSingleProject project =
@@ -233,8 +233,8 @@ Target "RunTestsNetCore" (fun _ ->
     if not skipBuild.Value then
         let projects = 
             let rawProjects = match (isWindows) with 
-                                | true -> !! "./test/*.Tests/DotNetty.Transport.Tests.csproj"
-                                | _ -> !! "./test/*.Tests/DotNetty.Transport.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
+                                | true -> !! "./test/*.Tests/DotNetty.Suite.Tests.csproj"
+                                | _ -> !! "./test/*.Tests/DotNetty.Suite.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
