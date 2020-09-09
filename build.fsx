@@ -211,12 +211,12 @@ module internal ResultHandling =
 Target "RunTests" (fun _ ->    
     let projects = 
         let rawProjects = match (isWindows) with 
-                            | true -> !! "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                            | _ -> !! "./test/*.Tests/DotNetty.Suite.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
+                            | true -> !! "./test/*.Tests/*.Tests.csproj"
+                            | _ -> !! "./test/*.Tests/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
         rawProjects |> Seq.choose filterProjects
     
     let runSingleProject project =
-        let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=Minimal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
+        let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=Normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
 
         let result = ExecProcess(fun info ->
             info.FileName <- "dotnet"
@@ -233,12 +233,16 @@ Target "RunTestsNetCore" (fun _ ->
     if not skipBuild.Value then
         let projects = 
             let rawProjects = match (isWindows) with 
-                                | true -> !! "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                                | _ -> !! "./test/*.Tests/DotNetty.Suite.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
+                                | true -> !! "./test/*.Tests/*.Tests.csproj"
+                                          -- "./test/*.Tests/DotNetty.Transport.Tests.csproj"
+                                          -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
+                                | _ -> !! "./test/*.Tests/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
+                                       -- "./test/*.Tests/DotNetty.Transport.Tests.csproj"
+                                       -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
-            let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=Minimal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
+            let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=Normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
 
             let result = ExecProcess(fun info ->
                 info.FileName <- "dotnet"
