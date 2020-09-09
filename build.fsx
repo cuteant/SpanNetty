@@ -212,7 +212,9 @@ Target "RunTests" (fun _ ->
     let projects = 
         let rawProjects = match (isWindows) with 
                             | true -> !! "./test/*.Tests/*.Tests.csproj"
+                                      -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
                             | _ -> !! "./test/*.Tests/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
+                                   -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
         rawProjects |> Seq.choose filterProjects
     
     let runSingleProject project =
