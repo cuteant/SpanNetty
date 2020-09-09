@@ -318,7 +318,7 @@
                 {
                     try
                     {
-                        latch.Wait();
+                        Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
                     }
                     catch (Exception) { }
                 }

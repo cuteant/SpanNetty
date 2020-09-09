@@ -15,7 +15,7 @@ let solution = System.IO.Path.GetFullPath(string "./DotNetty.sln")
 
 // Directories
 let toolsDir = __SOURCE_DIRECTORY__ @@ "tools"
-let output = __SOURCE_DIRECTORY__  @@ "Artifacts"
+let output = __SOURCE_DIRECTORY__  @@ "bin"
 let outputTests = __SOURCE_DIRECTORY__ @@ "TestResults"
 let outputPerfTests = __SOURCE_DIRECTORY__ @@ "PerfResults"
 
@@ -216,7 +216,7 @@ Target "RunTests" (fun _ ->
         rawProjects |> Seq.choose filterProjects
     
     let runSingleProject project =
-        let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
+        let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=Minimal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
 
         let result = ExecProcess(fun info ->
             info.FileName <- "dotnet"
@@ -238,7 +238,7 @@ Target "RunTestsNetCore" (fun _ ->
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
-            let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
+            let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=Minimal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
 
             let result = ExecProcess(fun info ->
                 info.FileName <- "dotnet"
