@@ -86,7 +86,7 @@
             });
 
             // Wait for the event loop thread to start.
-            latch.Wait();
+            Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
 
             // Request the event loop thread to stop.
             _loopA.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
@@ -173,7 +173,7 @@
                 catch { }
                 allTimeStampsLatch.Signal();
             }, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
-            allTimeStampsLatch.Wait();
+            Assert.True(allTimeStampsLatch.Wait(TimeSpan.FromMinutes(1)));
             Assert.True(f.Cancel());
             Thread.Sleep(300);
             Assert.Equal(expectedTimeStamps, timestamps.Count);
@@ -228,7 +228,7 @@
                 }
                 allTimeStampsLatch.Signal();
             }, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
-            allTimeStampsLatch.Wait();
+            Assert.True(allTimeStampsLatch.Wait(TimeSpan.FromMinutes(1)));
             Assert.True(f.Cancel());
             Thread.Sleep(300);
             Assert.Equal(expectedTimeStamps, timestamps.Count);
@@ -285,7 +285,7 @@
                 catch { }
                 allTimeStampsLatch.Signal();
             }, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
-            allTimeStampsLatch.Wait();
+            Assert.True(allTimeStampsLatch.Wait(TimeSpan.FromMinutes(1)));
             Assert.True(f.Cancel());
             Thread.Sleep(300);
             Assert.Equal(expectedTimeStamps, timestamps.Count);
