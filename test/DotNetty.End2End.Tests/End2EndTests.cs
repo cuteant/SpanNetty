@@ -162,7 +162,7 @@ namespace DotNetty.End2End.Tests
                 this.Output.WriteLine("Connected channel: {0}", clientChannel);
 
                 await Task.WhenAll(this.RunMqttClientScenarioAsync(clientChannel, clientReadListener), this.RunMqttServerScenarioAsync(serverChannel, serverReadListener))
-                    .WithTimeout(TimeSpan.FromSeconds(30));
+                    .WithTimeout(TimeSpan.FromMinutes(1));
 
                 testPromise.TryComplete();
                 await testPromise.Task;
