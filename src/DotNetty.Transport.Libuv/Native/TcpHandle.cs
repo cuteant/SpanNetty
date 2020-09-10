@@ -89,7 +89,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         public int SendBufferSize(int value)
         {
-            if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+            if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
             Validate();
             var size = (IntPtr)value;
@@ -101,7 +101,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         public int ReceiveBufferSize(int value)
         {
-            if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+            if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
             Validate();
             var size = (IntPtr)value;

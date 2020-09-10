@@ -184,7 +184,7 @@ namespace DotNetty.Codecs.Http2
                 EnforceConstraint("server", "connection", _connection);
                 EnforceConstraint("server", "codec", _decoder);
                 EnforceConstraint("server", "codec", _encoder);
-                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
                 _maxReservedStreams = value;
             }
@@ -299,7 +299,7 @@ namespace DotNetty.Codecs.Http2
             set
             {
                 EnforceNonCodecConstraints("encoderEnforceMaxQueuedControlFrames");
-                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
                 _maxQueuedControlFrames = value;
             }
         }
@@ -365,7 +365,7 @@ namespace DotNetty.Codecs.Http2
             set
             {
                 EnforceNonCodecConstraints("maxConsecutiveEmptyFrames");
-                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
                 _maxConsecutiveEmptyFrames = value;
             }
         }

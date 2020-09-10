@@ -275,7 +275,7 @@ namespace DotNetty.Transport.Channels
             get { return Volatile.Read(ref _writeBufferHighWaterMark); }
             set
             {
-                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
                 if (value < Volatile.Read(ref _writeBufferLowWaterMark)) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
 
                 Interlocked.Exchange(ref _writeBufferHighWaterMark, value);
@@ -287,7 +287,7 @@ namespace DotNetty.Transport.Channels
             get { return Volatile.Read(ref _writeBufferLowWaterMark); }
             set
             {
-                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
                 if (value > Volatile.Read(ref _writeBufferHighWaterMark)) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
 
                 Interlocked.Exchange(ref _writeBufferLowWaterMark, value);

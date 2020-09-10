@@ -75,7 +75,7 @@ namespace DotNetty.Buffers
             int tinyCacheSize, int smallCacheSize, int normalCacheSize,
             int maxCachedBufferCapacity, int freeSweepAllocationThreshold)
         {
-            if (maxCachedBufferCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCachedBufferCapacity, ExceptionArgument.maxCachedBufferCapacity); }
+            if ((uint)maxCachedBufferCapacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCachedBufferCapacity, ExceptionArgument.maxCachedBufferCapacity); }
 
             _freeSweepAllocationThreshold = freeSweepAllocationThreshold;
             HeapArena = heapArena;

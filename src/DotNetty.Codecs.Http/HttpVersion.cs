@@ -172,11 +172,11 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            if (majorVersion < 0)
+            if ((uint)majorVersion > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(majorVersion, ExceptionArgument.majorVersion);
             }
-            if (minorVersion < 0)
+            if ((uint)minorVersion > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(minorVersion, ExceptionArgument.minorVersion);
             }

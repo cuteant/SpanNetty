@@ -64,10 +64,10 @@ namespace DotNetty.Transport.Channels
         public long TransferTo(Stream target, long pos)
         {
             if (target is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.target); }
-            if (pos < 0L) { ThrowHelper.ThrowArgumentException_PositiveOrZero(pos, ExceptionArgument.pos); }
+            if ((ulong)pos > SharedConstants.TooBigOrNegative64) { ThrowHelper.ThrowArgumentException_PositiveOrZero(pos, ExceptionArgument.pos); }
 
             long totalCount = this.Count - pos;
-            if (totalCount < 0L)
+            if ((ulong)totalCount > SharedConstants.TooBigOrNegative64)
             {
                 ThrowHelper.ThrowArgumentException_Position(pos, this.Count);
             }

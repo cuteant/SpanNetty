@@ -45,7 +45,7 @@ namespace DotNetty.Codecs.Http2
             bool validateHttpHeaders, bool propagateSettings)
         {
             if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
-            if (maxContentLength <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxContentLength, ExceptionArgument.maxContentLength); }
+            if ((uint)(maxContentLength - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(maxContentLength, ExceptionArgument.maxContentLength); }
 
             _connection = connection;
             _maxContentLength = maxContentLength;

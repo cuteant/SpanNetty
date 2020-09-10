@@ -44,10 +44,10 @@ namespace DotNetty.Buffers
             : base(maxCapacity)
         {
             if (alloc is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.alloc); }
-            if (initialCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(initialCapacity, ExceptionArgument.initialCapacity); }
-            if (maxCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCapacity, ExceptionArgument.maxCapacity); }
+            if ((uint)initialCapacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(initialCapacity, ExceptionArgument.initialCapacity); }
+            //if ((uint)maxCapacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCapacity, ExceptionArgument.maxCapacity); }
 
-            if (initialCapacity > maxCapacity)
+            if ((uint)initialCapacity > (uint)maxCapacity)
             {
                 ThrowHelper.ThrowArgumentException_InitialCapacity(initialCapacity, maxCapacity);
             }
@@ -63,7 +63,7 @@ namespace DotNetty.Buffers
             if (initialBuffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initialBuffer); }
 
             int initialCapacity = initialBuffer.Length;
-            if (initialCapacity > maxCapacity)
+            if ((uint)initialCapacity > (uint)maxCapacity)
             {
                 ThrowHelper.ThrowArgumentException_InitialCapacity(initialCapacity, maxCapacity);
             }

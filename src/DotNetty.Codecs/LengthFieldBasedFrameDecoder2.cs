@@ -98,16 +98,15 @@ namespace DotNetty.Codecs
             {
                 ThrowHelper.ThrowArgumentException_Positive(maxFrameLength, ExceptionArgument.maxFrameLength);
             }
-            if (lengthFieldOffset < 0)
+            if ((uint)lengthFieldOffset > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(lengthFieldOffset, ExceptionArgument.lengthFieldOffset);
-                throw new ArgumentOutOfRangeException(nameof(lengthFieldOffset), "lengthFieldOffset must be a non-negative integer: " + lengthFieldOffset);
             }
-            if (initialBytesToStrip < 0)
+            if ((uint)initialBytesToStrip > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(initialBytesToStrip, ExceptionArgument.initialBytesToStrip);
             }
-            if (lengthFieldOffset > maxFrameLength - lengthFieldLength)
+            if ((uint)(lengthFieldOffset + lengthFieldLength) > (uint)maxFrameLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(maxFrameLength), "maxFrameLength (" + maxFrameLength + ") " +
                     "must be equal to or greater than " +

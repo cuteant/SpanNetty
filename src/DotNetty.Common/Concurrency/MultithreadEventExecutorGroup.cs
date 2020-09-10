@@ -70,7 +70,7 @@ namespace DotNetty.Common.Concurrency
             IEventExecutorChooserFactory<TEventExecutor> chooserFactory,
             Func<TExecutorGroup, TEventExecutor> eventExecutorFactory)
         {
-            if (nThreads <= 0) { ThrowHelper.ThrowArgumentException_Positive(nThreads, ExceptionArgument.nThreads); }
+            if ((uint)(nThreads - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(nThreads, ExceptionArgument.nThreads); }
             if (chooserFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chooserFactory); }
             if (eventExecutorFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventExecutorFactory); }
 

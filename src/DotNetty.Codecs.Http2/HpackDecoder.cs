@@ -104,7 +104,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="maxHeaderTableSize"></param>
         internal HpackDecoder(long maxHeaderListSize, int maxHeaderTableSize)
         {
-            if (maxHeaderListSize <= 0L)
+            if ((ulong)(maxHeaderListSize - 1L) > SharedConstants.TooBigOrNegative64)
             {
                 ThrowHelper.ThrowArgumentException_Positive(maxHeaderListSize, ExceptionArgument.maxHeaderListSize);
             }

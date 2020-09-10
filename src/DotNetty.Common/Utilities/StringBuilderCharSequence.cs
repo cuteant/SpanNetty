@@ -156,8 +156,9 @@ namespace DotNetty.Common.Utilities
 
         public void Insert(int start, char value)
         {
-            if (start < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(start, ExceptionArgument.start); }
-            if (start >= this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
+            uint uStart = (uint)start;
+            if (uStart > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(start, ExceptionArgument.start); }
+            if (uStart >= (uint)this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
 
             _ = this.builder.Insert(this.offset + start, value);
             this.size++;

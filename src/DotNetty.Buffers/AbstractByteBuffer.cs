@@ -100,7 +100,7 @@ namespace DotNetty.Buffers
 
         protected void SetMaxCapacity(int newMaxCapacity)
         {
-            if (newMaxCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(newMaxCapacity, ExceptionArgument.newMaxCapacity); }
+            if ((uint)newMaxCapacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(newMaxCapacity, ExceptionArgument.newMaxCapacity); }
 
             _maxCapacity = newMaxCapacity;
         }
