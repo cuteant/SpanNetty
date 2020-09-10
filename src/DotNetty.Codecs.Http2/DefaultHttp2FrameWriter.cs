@@ -265,7 +265,7 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 if ((uint)(streamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
-                if (streamDependency <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamDependency); }
+                if ((uint)(streamDependency - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamDependency); }
                 VerifyWeight(weight);
 
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.PriorityFrameLength);
@@ -359,7 +359,7 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 if ((uint)(streamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
-                if (promisedStreamId <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.PromisedStreamId); }
+                if ((uint)(promisedStreamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.PromisedStreamId); }
                 Http2CodecUtil.VerifyPadding(padding);
 
                 // Encode the entire header block into an intermediate buffer.
@@ -423,7 +423,7 @@ namespace DotNetty.Codecs.Http2
             SimplePromiseAggregator promiseAggregator = new SimplePromiseAggregator(promise);
             try
             {
-                if (lastStreamId < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.LastStreamId); }
+                if ((uint)lastStreamId > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.LastStreamId); }
                 VerifyErrorCode((long)errorCode);
 
                 int payloadLength = 8 + debugData.ReadableBytes;
@@ -467,7 +467,7 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
-                if (streamId < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.StreamID); }
+                if ((uint)streamId > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.StreamID); }
                 VerifyWindowSizeIncrement(windowSizeIncrement);
 
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.WindowUpdateFrameLength);
@@ -488,7 +488,7 @@ namespace DotNetty.Codecs.Http2
             SimplePromiseAggregator promiseAggregator = new SimplePromiseAggregator(promise);
             try
             {
-                if (streamId < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.StreamID); }
+                if ((uint)streamId > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.StreamID); }
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.FrameHeaderLength);
                 // Assume nothing below will throw until buf is written. That way we don't have to take care of ownership
                 // in the catch block.
@@ -546,7 +546,7 @@ namespace DotNetty.Codecs.Http2
                 if ((uint)(streamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
                 if (hasPriority)
                 {
-                    if (streamDependency < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.StreamDependency); }
+                    if ((uint)streamDependency > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.StreamDependency); }
                     Http2CodecUtil.VerifyPadding(padding);
                     VerifyWeight(weight);
                 }

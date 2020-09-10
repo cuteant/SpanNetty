@@ -114,16 +114,16 @@ namespace DotNetty.Buffers
 
         public IByteBuffer Buffer() => _directByDefault ? DirectBuffer() : HeapBuffer();
 
-        public IByteBuffer Buffer(int initialCapacity) => 
+        public IByteBuffer Buffer(int initialCapacity) =>
             _directByDefault ? DirectBuffer(initialCapacity) : HeapBuffer(initialCapacity);
 
-        public IByteBuffer Buffer(int initialCapacity, int maxCapacity) => 
+        public IByteBuffer Buffer(int initialCapacity, int maxCapacity) =>
             _directByDefault ? DirectBuffer(initialCapacity, maxCapacity) : HeapBuffer(initialCapacity, maxCapacity);
 
         public IByteBuffer HeapBuffer() => HeapBuffer(DefaultInitialCapacity, DefaultMaxCapacity);
 
         public IByteBuffer HeapBuffer(int initialCapacity) => HeapBuffer(initialCapacity, DefaultMaxCapacity);
-        
+
         public IByteBuffer HeapBuffer(int initialCapacity, int maxCapacity)
         {
             if (0u >= (uint)initialCapacity && 0u >= (uint)maxCapacity)
@@ -149,20 +149,20 @@ namespace DotNetty.Buffers
             return NewDirectBuffer(initialCapacity, maxCapacity);
         }
 
-        public CompositeByteBuffer CompositeBuffer() => 
+        public CompositeByteBuffer CompositeBuffer() =>
             _directByDefault ? CompositeDirectBuffer() : CompositeHeapBuffer();
 
-        public CompositeByteBuffer CompositeBuffer(int maxComponents) => 
+        public CompositeByteBuffer CompositeBuffer(int maxComponents) =>
             _directByDefault ? CompositeDirectBuffer(maxComponents) : CompositeHeapBuffer(maxComponents);
 
         public CompositeByteBuffer CompositeHeapBuffer() => CompositeHeapBuffer(DefaultMaxComponents);
 
-        public virtual CompositeByteBuffer CompositeHeapBuffer(int maxNumComponents) => 
+        public virtual CompositeByteBuffer CompositeHeapBuffer(int maxNumComponents) =>
             ToLeakAwareBuffer(new CompositeByteBuffer(this, false, maxNumComponents));
 
         public unsafe CompositeByteBuffer CompositeDirectBuffer() => CompositeDirectBuffer(DefaultMaxComponents);
 
-        public unsafe virtual CompositeByteBuffer CompositeDirectBuffer(int maxNumComponents) => 
+        public unsafe virtual CompositeByteBuffer CompositeDirectBuffer(int maxNumComponents) =>
             ToLeakAwareBuffer(new CompositeByteBuffer(this, true, maxNumComponents));
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
@@ -177,7 +177,7 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         static void ThrowInvalidInitialCapacity(int initialCapacity, int maxCapacity)
         {
-            if (initialCapacity < 0)
+            if ((uint)initialCapacity > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(initialCapacity, ExceptionArgument.initialCapacity);
             }
@@ -237,7 +237,7 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void ThrowInvalidNewCapacity(int minNewCapacity, int maxCapacity)
         {
-            if (minNewCapacity < 0)
+            if ((uint)minNewCapacity > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(minNewCapacity, ExceptionArgument.minNewCapacity);
             }

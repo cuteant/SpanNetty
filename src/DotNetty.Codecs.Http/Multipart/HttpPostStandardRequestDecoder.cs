@@ -134,7 +134,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => _discardThreshold;
             set
             {
-                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
                 _discardThreshold = value;
             }
         }

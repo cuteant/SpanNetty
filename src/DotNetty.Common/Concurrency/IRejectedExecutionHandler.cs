@@ -57,7 +57,7 @@ namespace DotNetty.Common.Concurrency
 
         public FixedBackoffRejectedExecutionHandler(int retries, TimeSpan delay)
         {
-            if (retries <= 0) { ThrowHelper.ThrowArgumentException_Positive(retries, ExceptionArgument.retries); }
+            if ((uint)(retries - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(retries, ExceptionArgument.retries); }
             if (delay <= TimeSpan.Zero) { ThrowHelper.ArgumentOutOfRangeException_Positive(delay, ExceptionArgument.delay); }
 
             _retries = retries;
@@ -92,7 +92,7 @@ namespace DotNetty.Common.Concurrency
 
         public ExponentialBackoffRejectedExecutionHandler(int retries, TimeSpan minDelay, TimeSpan maxDelay, TimeSpan step)
         {
-            if (retries <= 0) { ThrowHelper.ThrowArgumentException_Positive(retries, ExceptionArgument.retries); }
+            if ((uint)(retries - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(retries, ExceptionArgument.retries); }
             if (minDelay <= TimeSpan.Zero) { ThrowHelper.ArgumentOutOfRangeException_Positive(minDelay, ExceptionArgument.minDelay); }
             if (maxDelay <= TimeSpan.Zero) { ThrowHelper.ArgumentOutOfRangeException_Positive(maxDelay, ExceptionArgument.maxDelay); }
             if (step <= TimeSpan.Zero) { ThrowHelper.ArgumentOutOfRangeException_Positive(step, ExceptionArgument.step); }

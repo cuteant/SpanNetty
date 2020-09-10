@@ -179,8 +179,8 @@ namespace DotNetty.Buffers
             int tinyCacheSize, int smallCacheSize, int normalCacheSize)
             : base(preferDirect)
         {
-            if (nHeapArena < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(nHeapArena, ExceptionArgument.nHeapArena); }
-            if (nDirectArena < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(nHeapArena, ExceptionArgument.nDirectArena); }
+            if ((uint)nHeapArena > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(nHeapArena, ExceptionArgument.nHeapArena); }
+            if ((uint)nDirectArena > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(nHeapArena, ExceptionArgument.nDirectArena); }
 
             _threadCache = new PoolThreadLocalCache(this);
             _tinyCacheSize = tinyCacheSize;
@@ -190,7 +190,12 @@ namespace DotNetty.Buffers
 
             int pageShifts = ValidateAndCalculatePageShifts(pageSize);
 
-            if (nHeapArena > 0)
+            if (0u >= (uint)nHeapArena)
+            {
+                _heapArenas = null;
+                _heapArenaMetrics = new IPoolArenaMetric[0];
+            }
+            else
             {
                 _heapArenas = NewArenaArray<byte[]>(nHeapArena);
                 var metrics = new List<IPoolArenaMetric>(_heapArenas.Length);
@@ -202,13 +207,13 @@ namespace DotNetty.Buffers
                 }
                 _heapArenaMetrics = metrics.AsReadOnly();
             }
-            else
-            {
-                _heapArenas = null;
-                _heapArenaMetrics = new IPoolArenaMetric[0];
-            }
 
-            if (nDirectArena > 0)
+            if (0u >= (uint)nDirectArena)
+            {
+                _directArenas = null;
+                _directArenaMetrics = new IPoolArenaMetric[0];
+            }
+            else
             {
                 _directArenas = NewArenaArray<byte[]>(nDirectArena);
                 var metrics = new List<IPoolArenaMetric>(_directArenas.Length);
@@ -219,11 +224,6 @@ namespace DotNetty.Buffers
                     metrics.Add(arena);
                 }
                 _directArenaMetrics = metrics.AsReadOnly();
-            }
-            else
-            {
-                _directArenas = null;
-                _directArenaMetrics = new IPoolArenaMetric[0];
             }
 
             _metric = new PooledByteBufferAllocatorMetric(this);

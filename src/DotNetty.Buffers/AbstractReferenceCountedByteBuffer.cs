@@ -42,7 +42,7 @@ namespace DotNetty.Buffers
         {
         }
 
-        public override bool IsAccessible => (uint)Volatile.Read(ref _referenceCount) > 0u ? true : false;
+        public override bool IsAccessible => 0u < (uint)Volatile.Read(ref _referenceCount);
 
         public override int ReferenceCount => Volatile.Read(ref _referenceCount);
 

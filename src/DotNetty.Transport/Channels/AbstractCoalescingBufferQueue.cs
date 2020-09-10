@@ -123,7 +123,7 @@ namespace DotNetty.Transport.Channels
         /// <returns>a <see cref="IByteBuffer"/> composed of the enqueued buffers.</returns>
         public IByteBuffer Remove(IByteBufferAllocator alloc, int bytes, IPromise aggregatePromise)
         {
-            if (bytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(bytes, ExceptionArgument.bytes); }
+            if ((uint)bytes > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(bytes, ExceptionArgument.bytes); }
             if (aggregatePromise is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.aggregatePromise); }
 
             // Use isEmpty rather than readableBytes==0 as we may have a promise associated with an empty buffer.

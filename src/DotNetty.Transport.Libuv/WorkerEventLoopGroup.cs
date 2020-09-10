@@ -114,7 +114,7 @@ namespace DotNetty.Transport.Libuv
         {
             if (eventLoopGroup is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoopGroup); }
             if (chooserFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chooserFactory); }
-            if (nThreads < 0) { ThrowHelper.ThrowArgumentException_Positive(nThreads, ExceptionArgument.nThreads); }
+            if ((uint)(nThreads - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(nThreads, ExceptionArgument.nThreads); }
 
             _dispatcherLoop = eventLoopGroup.Dispatcher;
             PipeName = _dispatcherLoop.PipeName;

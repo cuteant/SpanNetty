@@ -763,7 +763,7 @@ namespace DotNetty.Codecs.Http2
                 // Push is disallowed by default for servers and allowed for clients.
                 _pushToAllowed = !server;
                 _maxActiveStreams = int.MaxValue;
-                if (maxReservedStreams < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxReservedStreams, ExceptionArgument.maxReservedStreams); }
+                if ((uint)maxReservedStreams > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxReservedStreams, ExceptionArgument.maxReservedStreams); }
                 _maxReservedStreams = maxReservedStreams;
                 UpdateMaxStreams();
             }

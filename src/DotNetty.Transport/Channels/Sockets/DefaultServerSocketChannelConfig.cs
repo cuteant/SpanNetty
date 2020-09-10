@@ -174,7 +174,7 @@ namespace DotNetty.Transport.Channels.Sockets
             get { return Volatile.Read(ref _backlog); }
             set
             {
-                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
                 Interlocked.Exchange(ref _backlog, value);
             }

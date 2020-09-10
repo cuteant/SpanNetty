@@ -113,7 +113,7 @@ namespace DotNetty.Buffers
 
         public IByteBuffer EnsureWritable(int minWritableBytes)
         {
-            if (minWritableBytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
+            if ((uint)minWritableBytes > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
             if (minWritableBytes != 0)
             {
@@ -124,7 +124,7 @@ namespace DotNetty.Buffers
 
         public int EnsureWritable(int minWritableBytes, bool force)
         {
-            if (minWritableBytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
+            if ((uint)minWritableBytes > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
             return 0u >= (uint)minWritableBytes ? 0 : 1;
         }
@@ -425,11 +425,11 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         void CheckIndex0(int index, int length)
         {
-            if (length < 0)
+            if ((uint)length > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length);
             }
-            if ((uint)index > 0u || length > 0)
+            if ((uint)index > 0u || (uint)length > 0u)
             {
                 ThrowHelper.ThrowIndexOutOfRangeException();
             }
@@ -445,11 +445,11 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         void CheckLength0(int length)
         {
-            if (length < 0)
+            if ((uint)length > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length);
             }
-            if (length > 0)
+            if ((uint)length > 0u)
             {
                 ThrowHelper.ThrowIndexOutOfRangeException();
             }

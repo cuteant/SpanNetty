@@ -283,11 +283,11 @@ namespace DotNetty.Codecs
             {
                 ThrowHelper.ThrowArgumentException_Positive(maxFrameLength, ExceptionArgument.maxFrameLength);
             }
-            if (lengthFieldOffset < 0)
+            if ((uint)lengthFieldOffset > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(lengthFieldOffset, ExceptionArgument.lengthFieldOffset);
             }
-            if (initialBytesToStrip < 0)
+            if ((uint)initialBytesToStrip > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(initialBytesToStrip, ExceptionArgument.initialBytesToStrip);
             }

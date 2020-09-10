@@ -200,9 +200,10 @@ namespace DotNetty.Common.Utilities
 
         public static T ToHexString<T>(T dst, byte[] src, int offset, int length) where T : IAppendable
         {
-            if (length < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length); }
+            uint uLen = (uint)length;
+            if (uLen > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length); }
 
-            if (0u >= (uint)length)
+            if (0u >= uLen)
             {
                 return dst;
             }
@@ -243,7 +244,7 @@ namespace DotNetty.Common.Utilities
             const uint MaxHex2B = 15U;
             int hi = DecodeHexNibble(s[pos]);
             int lo = DecodeHexNibble(s[pos + 1]);
-            if(MaxHex2B >= (uint)hi && MaxHex2B >= (uint)lo)
+            if (MaxHex2B >= (uint)hi && MaxHex2B >= (uint)lo)
             {
                 return (byte)((hi << 4) + lo);
             }
