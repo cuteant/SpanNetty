@@ -8,6 +8,7 @@ namespace DotNetty.End2End.Tests
     using System.Net;
     using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
+    using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -162,7 +163,7 @@ namespace DotNetty.End2End.Tests
                 this.Output.WriteLine("Connected channel: {0}", clientChannel);
 
                 await Task.WhenAll(this.RunMqttClientScenarioAsync(clientChannel, clientReadListener), this.RunMqttServerScenarioAsync(serverChannel, serverReadListener))
-                    .WithTimeout(TimeSpan.FromMinutes(1));
+                    .WithTimeout(TimeSpan.FromMinutes(3));
 
                 testPromise.TryComplete();
                 await testPromise.Task;
