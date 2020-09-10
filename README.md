@@ -1,20 +1,20 @@
 # dotnetty-span-fork
 
-This is a fork from DotNetty project: https://github.com/azure/dotnetty
+This is a fork from [DotNetty](https://github.com/azure/dotnetty) project.
 
 ## Build Status
 
-| Stage                               	| Status                                                                                                                                                                                                                                                            	|
-|-------------------------------------	|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
-| Build (Windows)                      	| [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-validation?branchName=future&jobName=Windows%20Build)](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=2&branchName=future)	|
-| .NET Framework Unit Tests           	| [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-validation?branchName=future&jobName=.NET%20Framework%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=2&branchName=future) |
-| .NET Core (Windows) Unit Tests      	| [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=2&branchName=future) |
-| .NET Core (Linux) Unit Tests        	| [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(Linux))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=2&branchName=future) |
+| Stage                               | Status                                                                                                                                                                                                                                                            	|
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| Build                               | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-validation?branchName=future&jobName=Windows%20Build)](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=2&branchName=future)	|
+| .NET Framework Unit Tests           | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-validation?branchName=future&jobName=.NET%20Framework%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=2&branchName=future) |
+| .NET Core (Windows) Unit Tests      | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=2&branchName=future) |
+| .NET Core (Linux) Unit Tests        | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(Linux))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=2&branchName=future) |
 
 ## Features
   - Align with [Netty-4.1.51.Final](https://github.com/netty/netty/tree/netty-4.1.51.Final)
   - ArrayPooledByteBuffer
-  - Support **Span&#60;byte&#62;** and **Memory&#60;byte&#62;** in DotNetty.Buffer/Common APIs
+  - Support **Span&#60;byte&#62;** and **Memory&#60;byte&#62;** in Buffer/Common APIs
   - Add support for IBufferWriter&#60;byte&#62; to the **IByteBuffer**
   - [ByteBufferReader](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Buffers/Reader) and [ByteBufferWriter](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Buffers/Writer)
   - [HTTP 2 codec](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Codecs.Http2)
