@@ -11,8 +11,4 @@
   <PropertyGroup>
     <InformationalVersion>$(Version). Commit Hash: $(GitHeadSha)</InformationalVersion>
   </PropertyGroup>
-
-  <Target Name="VSTestIfTestProject">
-    <CallTarget Targets="VSTest" Condition="'$(IsTestProject)' == 'true'" />
-  </Target>
 </Project>

@@ -2,6 +2,12 @@
   <!-- Import parent Directory.build.props -->
   <Import Project="..\Directory.Build.props" />
 
+  <PropertyGroup>
+    <DeveloperBuildTfms>netstandard2.0</DeveloperBuildTfms>
+    <StandardTfms>$(DeveloperBuildTfms)</StandardTfms>
+    <StandardTfms Condition=" '$(OS)' == 'Windows_NT' ">$(StandardTfms);net471;net451</StandardTfms>
+  </PropertyGroup>
+
   <PropertyGroup Condition=" '$(Configuration)'=='Debug' ">
     <IsPackable>false</IsPackable>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>

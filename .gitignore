@@ -344,3 +344,5 @@ TODO.txt
 /src/CuteAnt.Features
 /nuspecs
 /test/DotNetty.Transport.Tests.Performance/Perf
+/tools
+/global.json

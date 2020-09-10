@@ -319,7 +319,7 @@
                 channel.Pipeline.AddLast(new ChannelInboundHandlerAdapter6(latch, counter));
 
                 channel.Pipeline.FireChannelReadComplete();
-                latch.Wait();
+                Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
                 Assert.Equal(1, counter.Value);
             }
             finally
@@ -341,7 +341,7 @@
                     new ChannelInboundHandlerAdapter6(latch, counter));
 
                 channel.Pipeline.FireExceptionCaught(new Exception());
-                latch.Wait();
+                Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
                 Assert.Equal(1, counter.Value);
             }
             finally
@@ -517,7 +517,7 @@
                     addLatch.Signal();
                 });
             }
-            addLatch.Wait();
+            Assert.True(addLatch.Wait(TimeSpan.FromMinutes(1)));
 
             // Change the order of remove operations over all handlers in the pipeline.
             //Collections.shuffle(handlers);
@@ -535,7 +535,7 @@
                     removeLatch.Signal();
                 });
             }
-            removeLatch.Wait();
+            Assert.True(removeLatch.Wait(TimeSpan.FromMinutes(1)));
         }
 
         [Fact]
@@ -845,7 +845,7 @@
             AtomicReference<Exception> error = new AtomicReference<Exception>();
             CountdownEvent latch = new CountdownEvent(1);
             EmbeddedChannel channel = new EmbeddedChannel(new ChannelInitializer0(exception, error, latch));
-            latch.Wait();
+            Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
             Assert.False(channel.IsActive);
             Assert.Same(exception, error.Value);
         }
@@ -938,7 +938,7 @@
             await handler._addedPromise.Task;
             pipeline.Replace(handler, null, new ChannelHandlerAdapter4(latch));
             await handler._removedPromise.Task;
-            latch.Wait();
+            Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
         }
 
         class ChannelHandlerAdapter4 : ChannelHandlerAdapter
@@ -1118,7 +1118,7 @@
                 pipeline.AddLast(group1, new CheckExceptionHandler(exceptionAdded, promise));
                 pipeline.AddFirst(handlerName, new ChannelHandlerAdapter1(latch, exceptionAdded, exceptionRemoved));
                 await _group.RegisterAsync(pipeline.Channel);
-                latch.Wait();
+                Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
                 Assert.Null(pipeline.Context(handlerName));
                 await promise.Task;
             }
@@ -1241,7 +1241,7 @@
                     eventLoop1.Execute(new TestTask(pipeline2, latch));
                     eventLoop2.Execute(new TestTask(pipeline1, latch));
                 }
-                latch.Wait();
+                Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
             }
             finally
             {
@@ -2021,7 +2021,7 @@
                 for (int i = 0; i < numHandlers; i++)
                 {
                     // Wait until the latch was countDown which means handlerRemoved(...) was called.
-                    latchList[i].Wait();
+                    Assert.True(latchList[i].Wait(TimeSpan.FromMinutes(1)));
                     Assert.Null(channel.Pipeline.Get("h" + i));
                 }
             }
@@ -2088,7 +2088,7 @@
                 LocalRun();
             }
 
-            doneLatch.Wait();
+            Assert.True(doneLatch.Wait(TimeSpan.FromMinutes(1)));
         }
 
         class ChannelInboundHandlerAdapter0 : ChannelHandlerAdapter

@@ -301,7 +301,8 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     if (TryResetState(StateFlags.Active))
                     {
-                        Socket.Shutdown(SocketShutdown.Both);
+                        // 交由 SafeClose 处理，忽略异常
+                        //Socket.Shutdown(SocketShutdown.Both);
                     }
                     Socket.SafeClose();
                 }

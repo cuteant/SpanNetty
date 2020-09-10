@@ -299,7 +299,7 @@
             await server.CloseCompletion;
 
             // Wait until the handler is removed from the pipeline and so no more events are handled by it.
-            latch.Wait();
+            Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
 
             Assert.Equal(1, invokeCount.Value);
             Assert.Equal(invokeCount.Value, completeCount.Value);

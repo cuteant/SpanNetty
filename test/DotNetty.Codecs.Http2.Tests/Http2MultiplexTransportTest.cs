@@ -62,10 +62,17 @@ namespace DotNetty.Codecs.Http2.Tests
                 serverConnectedChannel.CloseAsync().GetAwaiter().GetResult();
                 _serverConnectedChannel = null;
             }
-            Task.WaitAll(
-                _sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                _sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                _bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
+            try
+            {
+                Task.WaitAll(
+                    _sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                    _sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                    _bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         [Fact]
