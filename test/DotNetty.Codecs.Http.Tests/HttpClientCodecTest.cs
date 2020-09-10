@@ -196,8 +196,8 @@ namespace DotNetty.Codecs.Http.Tests
                  * See <a href="https://tools.ietf.org/html/rfc7230#section-3.3.3">RFC 7230, 3.3.3</a>.
                  */
 
-                sChannel.WriteAndFlushAsync(Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("HTTP/1.0 200 OK\r\n" + "Date: Fri, 31 Dec 1999 23:59:59 GMT\r\n" + "Content-Type: text/html\r\n\r\n")));
-                sChannel.WriteAndFlushAsync(Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("<html><body>hello half closed!</body></html>\r\n")));
+                sChannel.WriteAndFlushAsync(Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("HTTP/1.0 200 OK\r\n" + "Date: Fri, 31 Dec 1999 23:59:59 GMT\r\n" + "Content-Type: text/html\r\n\r\n"))).GetAwaiter().GetResult();
+                sChannel.WriteAndFlushAsync(Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("<html><body>hello half closed!</body></html>\r\n"))).GetAwaiter().GetResult();
                 sChannel.CloseAsync();
 
                 sChannel.CloseCompletion.LinkOutcome(this.completion);
