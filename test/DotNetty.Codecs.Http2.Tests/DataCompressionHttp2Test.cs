@@ -177,9 +177,9 @@ namespace DotNetty.Codecs.Http2.Tests
                 this.serverConnectedChannel = null;
             }
             Task.WaitAll(
-                this.sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                this.sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                this.cb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
+                this.sb.Group().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero),
+                this.sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero),
+                this.cb.Group().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero));
 
             this.serverOut?.Close();
         }

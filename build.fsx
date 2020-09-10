@@ -225,7 +225,7 @@ Target "RunTests" (fun _ ->
         let result = ExecProcess(fun info ->
             info.FileName <- "dotnet"
             info.WorkingDirectory <- (Directory.GetParent project).FullName
-            info.Arguments <- arguments) (TimeSpan.FromMinutes 60.0) 
+            info.Arguments <- arguments) (TimeSpan.FromMinutes 30.0) 
         
         ResultHandling.failBuildIfXUnitReportedError TestRunnerErrorLevel.Error result
 
@@ -251,7 +251,7 @@ Target "RunTestsNetCore" (fun _ ->
             let result = ExecProcess(fun info ->
                 info.FileName <- "dotnet"
                 info.WorkingDirectory <- (Directory.GetParent project).FullName
-                info.Arguments <- arguments) (TimeSpan.FromMinutes 60.0) 
+                info.Arguments <- arguments) (TimeSpan.FromMinutes 30.0) 
         
             ResultHandling.failBuildIfXUnitReportedError TestRunnerErrorLevel.Error result
 
