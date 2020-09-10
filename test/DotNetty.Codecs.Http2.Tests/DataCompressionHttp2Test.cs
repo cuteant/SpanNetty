@@ -430,8 +430,8 @@ namespace DotNetty.Codecs.Http2.Tests
             var port = ((IPEndPoint)this.serverChannel.LocalAddress).Port;
             var ccf = this.cb.ConnectAsync(loopback, port);
             this.clientChannel = ccf.GetAwaiter().GetResult();
-            Assert.True(prefaceWrittenLatch.Wait(TimeSpan.FromSeconds(5)));
-            Assert.True(serverChannelLatch.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(prefaceWrittenLatch.Wait(TimeSpan.FromSeconds(10)));
+            Assert.True(serverChannelLatch.Wait(TimeSpan.FromSeconds(10)));
         }
 
         sealed class TestChannelHandlerAdapter : ChannelHandlerAdapter

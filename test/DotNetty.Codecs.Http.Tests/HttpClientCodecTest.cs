@@ -163,7 +163,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             public bool WaitForCompletion()
             {
-                this.completion.Task.Wait(TimeSpan.FromSeconds(5));
+                this.completion.Task.Wait(TimeSpan.FromSeconds(10));
                 return this.completion.Task.Status == TaskStatus.RanToCompletion;
             }
 
@@ -180,7 +180,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             public bool WaitForCompletion()
             {
-                this.completion.Task.Wait(TimeSpan.FromSeconds(5));
+                this.completion.Task.Wait(TimeSpan.FromSeconds(10));
                 return this.completion.Task.Status == TaskStatus.RanToCompletion;
             }
 
