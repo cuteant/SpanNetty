@@ -350,10 +350,17 @@ namespace DotNetty.Codecs.Http.Tests
                 {
                     await serverChannel.CloseAsync();
                 }
-                await Task.WhenAll(
-                    sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                    sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                    bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
+                try
+                {
+                    await Task.WhenAll(
+                        sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                        sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                        bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
+                }
+                catch
+                {
+                    // Ignore RejectedExecutionException(on Azure DevOps)
+                }
             }
         }
 

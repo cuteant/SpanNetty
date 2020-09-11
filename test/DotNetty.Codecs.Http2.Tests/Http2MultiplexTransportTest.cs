@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http2.Tests
             }
             catch
             {
-                // ignore
+                // Ignore RejectedExecutionException(on Azure DevOps)
             }
         }
 
@@ -234,7 +234,14 @@ namespace DotNetty.Codecs.Http2.Tests
             }
             finally
             {
-                executorService.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+                try
+                {
+                    executorService.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+                }
+                catch
+                {
+                    // Ignore RejectedExecutionException(on Azure DevOps)
+                }
             }
         }
 

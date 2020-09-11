@@ -69,8 +69,14 @@ namespace DotNetty.Codecs.Http2.Tests
                 serverConnectedChannel.CloseAsync().GetAwaiter().GetResult();
                 this._serverConnectedChannel = null;
             }
-
-            _group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+            try
+            {
+                _group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+            }
+            catch
+            {
+                // Ignore RejectedExecutionException(on Azure DevOps)
+            }
         }
 
         [Fact]

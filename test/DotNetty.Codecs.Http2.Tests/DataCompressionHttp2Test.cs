@@ -176,18 +176,24 @@ namespace DotNetty.Codecs.Http2.Tests
                 serverConnectedChannel.CloseAsync().GetAwaiter().GetResult();
                 this.serverConnectedChannel = null;
             }
-            Task.WaitAll(
-                this.sb.Group().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero),
-                this.sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero),
-                this.cb.Group().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero));
-
+            try
+            {
+                Task.WaitAll(
+                    this.sb.Group().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero),
+                    this.sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero),
+                    this.cb.Group().ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero));
+            }
+            catch
+            {
+                // Ignore RejectedExecutionException(on Azure DevOps)
+            }
             this.serverOut?.Close();
         }
 
         [Fact]
-        public void JustHeadersNoData()
+        public async Task JustHeadersNoData()
         {
-            this.BootstrapEnv(0);
+            await this.BootstrapEnv(0);
             IHttp2Headers headers = new DefaultHttp2Headers() { Method = GET, Path = PATH };
             headers.Set(HttpHeaderNames.ContentEncoding, HttpHeaderValues.Gzip);
 
@@ -210,11 +216,11 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
-        public void GzipEncodingSingleEmptyMessage()
+        public async Task GzipEncodingSingleEmptyMessage()
         {
             string text = "";
             var data = Unpooled.CopiedBuffer(Encoding.UTF8.GetBytes(text));
-            this.BootstrapEnv(data.ReadableBytes);
+            await this.BootstrapEnv(data.ReadableBytes);
             try
             {
                 IHttp2Headers headers = new DefaultHttp2Headers() { Method = POST, Path = PATH };
@@ -236,11 +242,11 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
-        public void GzipEncodingSingleMessage()
+        public async Task GzipEncodingSingleMessage()
         {
             string text = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccc";
             var data = Unpooled.CopiedBuffer(Encoding.UTF8.GetBytes(text));
-            this.BootstrapEnv(data.ReadableBytes);
+            await this.BootstrapEnv(data.ReadableBytes);
             try
             {
                 IHttp2Headers headers = new DefaultHttp2Headers() { Method = POST, Path = PATH };
@@ -262,13 +268,13 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
-        public void GzipEncodingMultipleMessages()
+        public async Task GzipEncodingMultipleMessages()
         {
             string text1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccc";
             string text2 = "dddddddddddddddddddeeeeeeeeeeeeeeeeeeeffffffffffffffffffff";
             var data1 = Unpooled.CopiedBuffer(Encoding.UTF8.GetBytes(text1));
             var data2 = Unpooled.CopiedBuffer(Encoding.UTF8.GetBytes(text2));
-            this.BootstrapEnv(data1.ReadableBytes + data2.ReadableBytes);
+            await this.BootstrapEnv(data1.ReadableBytes + data2.ReadableBytes);
             try
             {
                 IHttp2Headers headers = new DefaultHttp2Headers() { Method = POST, Path = PATH };
@@ -292,12 +298,12 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
-        public void DeflateEncodingWriteLargeMessage()
+        public async Task DeflateEncodingWriteLargeMessage()
         {
             int BUFFER_SIZE = 1 << 12;
             byte[] bytes = new byte[BUFFER_SIZE];
             new Random().NextBytes(bytes);
-            this.BootstrapEnv(BUFFER_SIZE);
+            await this.BootstrapEnv(BUFFER_SIZE);
             var data = Unpooled.WrappedBuffer(bytes);
             try
             {
@@ -376,7 +382,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
         protected virtual int Port => 0;
 
-        private void BootstrapEnv(int serverOutSize)
+        private async Task BootstrapEnv(int serverOutSize)
         {
             var prefaceWrittenLatch = new CountdownEvent(1);
             this.serverOut = new MemoryStream(serverOutSize);
@@ -425,11 +431,11 @@ namespace DotNetty.Codecs.Http2.Tests
             }));
 
             var loopback = IPAddress.IPv6Loopback;
-            this.serverChannel = this.sb.BindAsync(loopback, Port).GetAwaiter().GetResult();
+            this.serverChannel = await this.sb.BindAsync(loopback, Port);
 
             var port = ((IPEndPoint)this.serverChannel.LocalAddress).Port;
             var ccf = this.cb.ConnectAsync(loopback, port);
-            this.clientChannel = ccf.GetAwaiter().GetResult();
+            this.clientChannel = await ccf;
             Assert.True(prefaceWrittenLatch.Wait(TimeSpan.FromSeconds(10)));
             Assert.True(serverChannelLatch.Wait(TimeSpan.FromSeconds(10)));
         }
