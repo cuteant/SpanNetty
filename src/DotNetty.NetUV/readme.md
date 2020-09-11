@@ -1,0 +1,2 @@
+- This library is primarily based on the **NetUV.Core** library.
+- You can refer (https://github.com/StormHub/NetUV/) for more details.

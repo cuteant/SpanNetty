@@ -8,7 +8,6 @@ namespace DotNetty.End2End.Tests
     using System.Net;
     using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
-    using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -99,13 +98,13 @@ namespace DotNetty.End2End.Tests
                 }
 
                 testPromise.TryComplete();
-                await testPromise.Task.WithTimeout(TimeSpan.FromSeconds(30));
+                await testPromise.Task.WithTimeout(TimeSpan.FromMinutes(5));
             }
             finally
             {
                 Task serverCloseTask = closeServerFunc();
                 clientChannel?.CloseAsync().Wait(TimeSpan.FromSeconds(5));
-                group.ShutdownGracefullyAsync().Wait(TimeSpan.FromSeconds(5));
+                group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).Wait(TimeSpan.FromSeconds(10));
                 if (!serverCloseTask.Wait(ShutdownTimeout))
                 {
                     this.Output.WriteLine("Didn't stop in time.");
@@ -163,7 +162,7 @@ namespace DotNetty.End2End.Tests
                 this.Output.WriteLine("Connected channel: {0}", clientChannel);
 
                 await Task.WhenAll(this.RunMqttClientScenarioAsync(clientChannel, clientReadListener), this.RunMqttServerScenarioAsync(serverChannel, serverReadListener))
-                    .WithTimeout(TimeSpan.FromMinutes(3));
+                    .WithTimeout(TimeSpan.FromMinutes(5));
 
                 testPromise.TryComplete();
                 await testPromise.Task;
@@ -172,7 +171,7 @@ namespace DotNetty.End2End.Tests
             {
                 Task serverCloseTask = closeServerFunc();
                 clientChannel?.CloseAsync().Wait(TimeSpan.FromSeconds(5));
-                group.ShutdownGracefullyAsync().Wait(TimeSpan.FromSeconds(5));
+                group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).Wait(TimeSpan.FromSeconds(10));
                 if (!serverCloseTask.Wait(ShutdownTimeout))
                 {
                     this.Output.WriteLine("Didn't stop in time.");
@@ -320,10 +319,8 @@ namespace DotNetty.End2End.Tests
                     }
                     finally
                     {
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                        bossGroup.ShutdownGracefullyAsync();
-                        workerGroup.ShutdownGracefullyAsync();
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+                        bossGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).Ignore();
+                        workerGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).Ignore();
                     }
                 };
             }
@@ -331,10 +328,8 @@ namespace DotNetty.End2End.Tests
             {
                 if (!started)
                 {
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                    bossGroup.ShutdownGracefullyAsync();
-                    workerGroup.ShutdownGracefullyAsync();
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+                    bossGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).Ignore();
+                    workerGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).Ignore();
                 }
             }
         }
