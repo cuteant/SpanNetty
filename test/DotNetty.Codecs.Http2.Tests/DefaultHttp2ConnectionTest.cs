@@ -41,7 +41,14 @@ namespace DotNetty.Codecs.Http2.Tests
 
         public void Dispose()
         {
-            _group.ShutdownGracefullyAsync();
+            try
+            {
+                _group.ShutdownGracefullyAsync();
+            }
+            catch
+            {
+                // Ignore RejectedExecutionException(on Azure DevOps)
+            }
         }
 
         [Fact]
