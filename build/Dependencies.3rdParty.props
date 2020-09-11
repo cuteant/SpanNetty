@@ -143,6 +143,7 @@
     <RabbitMQClientPackageVersion>5.1.0</RabbitMQClientPackageVersion>
 
     <LibuvPackageVersion>1.10.0</LibuvPackageVersion>
+    <LibuvSharedPackageVersion>1.34.0.266</LibuvSharedPackageVersion>
 
     <MimeKitPackageVersion>2.6.0</MimeKitPackageVersion>
     <MailKitPackageVersion>2.6.0</MailKitPackageVersion>
