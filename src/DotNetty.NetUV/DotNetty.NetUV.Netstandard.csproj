@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Libuv" Version="$(LibuvPackageVersion)" />
+    <PackageReference Include="libuv-shared" Version="$(LibuvSharedPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

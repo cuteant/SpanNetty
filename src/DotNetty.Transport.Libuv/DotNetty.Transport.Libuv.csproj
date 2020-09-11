@@ -19,7 +19,7 @@
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationPackageVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Libuv" Version="$(LibuvPackageVersion)" />
+    <PackageReference Include="libuv-shared" Version="$(LibuvSharedPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>
