@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 SET CMDHOME=%~dp0.
 if "%BUILD_FLAGS%"=="" SET BUILD_FLAGS=/m /v:m
 if not defined BuildConfiguration SET BuildConfiguration=Release
-if not defined PublishConfiguration SET PublishConfiguration=release
+if not defined PublishConfiguration SET PublishConfiguration=dev
 
 :: Clear the 'Platform' env variable for this session, as it's a per-project setting within the build, and
 :: misleading value (such as 'MCD' in HP PCs) may lead to build breakage (issue: #69).
