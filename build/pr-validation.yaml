@@ -33,10 +33,17 @@ jobs:
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
-          filename: build.cmd
+          filename: azure_build.cmd
           arguments: 'Build incremental' # Run an incremental build
         continueOnError: true
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
+      - task: CopyFiles@2
+        displayName: 'Copy Build Output'
+        inputs:
+          sourceFolder: Artifacts
+          contents: '*'
+          targetFolder: $(Build.ArtifactStagingDirectory)
+          continueOnError: boolean  # 'true' if future steps should run even if this step fails; defaults to 'false'
       - script: 'echo 1>&2'
         failOnStderr: true
         displayName: 'If above is partially succeeded, then fail'

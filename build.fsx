@@ -8,6 +8,7 @@ open System.Text
 
 open Fake
 open Fake.DotNetCli
+open Fake.NuGet.Install
 
 // Variables
 let configuration = "Debug"
@@ -15,11 +16,12 @@ let solution = System.IO.Path.GetFullPath(string "./DotNetty.sln")
 
 // Directories
 let toolsDir = __SOURCE_DIRECTORY__ @@ "tools"
-let output = __SOURCE_DIRECTORY__  @@ "bin"
+let output = __SOURCE_DIRECTORY__  @@ "Artifacts"
 let outputTests = __SOURCE_DIRECTORY__ @@ "TestResults"
 let outputPerfTests = __SOURCE_DIRECTORY__ @@ "PerfResults"
 
 let buildNumber = environVarOrDefault "BUILD_NUMBER" "0"
+let hasTeamCity = (not (buildNumber = "0")) // check if we have the TeamCity environment variable for build # set
 let preReleaseVersionSuffix = "beta" + (if (not (buildNumber = "0")) then (buildNumber) else DateTime.UtcNow.Ticks.ToString())
 
 let releaseNotes =
@@ -53,6 +55,7 @@ Target "Clean" (fun _ ->
     CleanDir outputTests
     CleanDir outputPerfTests
 
+    CleanDirs !! "./**/TestResults"
     CleanDirs !! "./**/bin"
     CleanDirs !! "./**/obj"
 )
@@ -220,7 +223,10 @@ Target "RunTests" (fun _ ->
         rawProjects |> Seq.choose filterProjects
     
     let runSingleProject project =
-        let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=Normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
+        let arguments =
+            match (hasTeamCity) with
+            | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetFrameworkVersion outputTests)
+            | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
 
         let result = ExecProcess(fun info ->
             info.FileName <- "dotnet"
@@ -246,7 +252,10 @@ Target "RunTestsNetCore" (fun _ ->
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
-            let arguments = (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=Normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
+            let arguments =
+                match (hasTeamCity) with
+                | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetCoreVersion outputTests)
+                | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
 
             let result = ExecProcess(fun info ->
                 info.FileName <- "dotnet"
