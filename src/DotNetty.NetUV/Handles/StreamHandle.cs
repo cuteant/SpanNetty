@@ -258,10 +258,13 @@ namespace DotNetty.NetUV.Handles
                     NativeMethods.TryWriteStream(InternalHandle, ref buf);
                 }
             }
+#if DEBUG
             catch (Exception exception)
             {
-#if DEBUG
                 if (Log.DebugEnabled) { Log.Debug($"{HandleType} Trying to write data failed.", exception); }
+#else
+            catch (Exception)
+            {
 #endif
                 throw;
             }

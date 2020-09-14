@@ -336,6 +336,7 @@ Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
+[Pp]erf[Rr]esult*/
 /Deploy
 TODO.txt
 *.GhostDoc.xml

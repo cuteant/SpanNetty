@@ -12,7 +12,7 @@ open Fake.NuGet.Install
 
 // Variables
 let configuration = "Debug"
-let solution = System.IO.Path.GetFullPath(string "./DotNetty.sln")
+let solution = System.IO.Path.GetFullPath(string "./DotNetty.Netstandard.sln")
 
 // Directories
 let toolsDir = __SOURCE_DIRECTORY__ @@ "tools"
@@ -46,7 +46,6 @@ let incrementalistReport = output @@ "incrementalist.txt"
 
 // Configuration values for tests
 let testNetFrameworkVersion = "net471"
-let testNetFramework451Version = "net452"
 let testNetCoreVersion = "netcoreapp3.1"
 let testNetCore21Version = "netcoreapp2.1"
 
@@ -213,72 +212,16 @@ module internal ResultHandling =
         buildErrorMessage
         >> Option.iter (failBuildWithMessage errorLevel)
 
-Target "RunTests" (fun _ ->    
-    let projects = 
-        let rawProjects = match (isWindows) with 
-                            | true -> !! "./test/*.Tests/*.Tests.csproj"
-                                      -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                                      -- "./test/*.Tests/DotNetty.Buffers.ReaderWriter.Tests"
-                            | _ -> !! "./test/*.Tests/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
-                                   -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                                   -- "./test/*.Tests/DotNetty.Buffers.ReaderWriter.Tests"
-        rawProjects |> Seq.choose filterProjects
-    
-    let runSingleProject project =
-        let arguments =
-            match (hasTeamCity) with
-            | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetFrameworkVersion outputTests)
-            | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
-
-        let result = ExecProcess(fun info ->
-            info.FileName <- "dotnet"
-            info.WorkingDirectory <- (Directory.GetParent project).FullName
-            info.Arguments <- arguments) (TimeSpan.FromMinutes 30.0) 
-        
-        ResultHandling.failBuildIfXUnitReportedError TestRunnerErrorLevel.Error result
-
-    CreateDir outputTests
-    projects |> Seq.iter (runSingleProject)
-)
-
-Target "RunTests451" (fun _ ->    
-    let projects = 
-        let rawProjects = match (isWindows) with 
-                            | true -> !! "./test/*.Tests/*.Tests.csproj"
-                                      -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                                      -- "./test/*.Tests/DotNetty.Buffers.ReaderWriter.Tests"
-                            | _ -> !! "./test/*.Tests/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
-                                   -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                                   -- "./test/*.Tests/DotNetty.Buffers.ReaderWriter.Tests"
-        rawProjects |> Seq.choose filterProjects
-    
-    let runSingleProject project =
-        let arguments =
-            match (hasTeamCity) with
-            | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetFramework451Version outputTests)
-            | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFramework451Version outputTests)
-
-        let result = ExecProcess(fun info ->
-            info.FileName <- "dotnet"
-            info.WorkingDirectory <- (Directory.GetParent project).FullName
-            info.Arguments <- arguments) (TimeSpan.FromMinutes 30.0) 
-        
-        ResultHandling.failBuildIfXUnitReportedError TestRunnerErrorLevel.Error result
-
-    CreateDir outputTests
-    projects |> Seq.iter (runSingleProject)
-)
-
-Target "RunTestsNetCore" (fun _ ->
+Target "RunTests" (fun _ ->
     if not skipBuild.Value then
         let projects = 
             let rawProjects = match (isWindows) with 
-                                | true -> !! "./test/*.Tests/*.Tests.csproj"
-                                          -- "./test/*.Tests/DotNetty.Transport.Tests.csproj"
-                                          -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                                | _ -> !! "./test/*.Tests/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
-                                       -- "./test/*.Tests/DotNetty.Transport.Tests.csproj"
-                                       -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
+                                | true -> !! "./test/*.Tests.Netstandard/*.Tests.csproj"
+                                          -- "./test/*.Tests.Netstandard/DotNetty.Transport.Tests.csproj"
+                                          -- "./test/*.Tests.Netstandard/DotNetty.Suite.Tests.csproj"
+                                | _ -> !! "./test/*.Tests.Netstandard/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
+                                       -- "./test/*.Tests.Netstandard/DotNetty.Transport.Tests.csproj"
+                                       -- "./test/*.Tests.Netstandard/DotNetty.Suite.Tests.csproj"
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
@@ -298,14 +241,14 @@ Target "RunTestsNetCore" (fun _ ->
         projects |> Seq.iter (runSingleProject)
 )
 
-Target "RunTestsNetCore21" (fun _ ->
+Target "RunTests21" (fun _ ->
     if not skipBuild.Value then
         let projects = 
             let rawProjects = match (isWindows) with 
-                                | true -> !! "./test/*.Tests/*.Tests.csproj"
-                                          -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                                | _ -> !! "./test/*.Tests/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
-                                       -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
+                                | true -> !! "./test/*.Tests.Netstandard/*.Tests.csproj"
+                                          -- "./test/*.Tests.Netstandard/DotNetty.Suite.Tests.csproj"
+                                | _ -> !! "./test/*.Tests.Netstandard/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
+                                       -- "./test/*.Tests.Netstandard/DotNetty.Suite.Tests.csproj"
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
@@ -369,14 +312,11 @@ Target "RunTestsNetCoreFull" DoNothing
 
 // tests dependencies
 "Build" ==> "RunTests"
-"Build" ==> "RunTests451"
-"Build" ==> "RunTestsNetCore"
-"Build" ==> "RunTestsNetCore21"
+"Build" ==> "RunTests21"
 
 // all
 "BuildDebug" ==> "All"
 "RunTests" ==> "All"
-"RunTests451" ==> "All"
-"RunTestsNetCore" ==> "All"
+"RunTests21" ==> "All"
 
 RunTargetOrDefault "Help"

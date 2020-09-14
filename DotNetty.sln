@@ -5,12 +5,14 @@ VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{013DFD29-E1DB-4968-A67B-C2342E6F5B6E}"
 	ProjectSection(SolutionItems) = preProject
-		azure_build.cmd = azure_build.cmd
 		build.cmd = build.cmd
 		build.fsx = build.fsx
 		build.ps1 = build.ps1
 		build.sh = build.sh
-		DotnetCLIVersion.txt = DotnetCLIVersion.txt
+		buildNetstandard.cmd = buildNetstandard.cmd
+		buildNetstandard.fsx = buildNetstandard.fsx
+		buildNetstandard.ps1 = buildNetstandard.ps1
+		buildNetstandard.sh = buildNetstandard.sh
 		global.json = global.json
 		NuGet.Config = NuGet.Config
 		README.md = README.md
@@ -69,9 +71,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Protobuf", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Protobuf.Tests", "test\DotNetty.Codecs.Protobuf.Tests\DotNetty.Codecs.Protobuf.Tests.csproj", "{76C629B7-0B58-4D82-9FAA-A620DFD5E588}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{A8473C9F-08FF-47DE-8C23-D2BAF5EF4E0A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure-pipelines", "azure-pipelines", "{A8473C9F-08FF-47DE-8C23-D2BAF5EF4E0A}"
 	ProjectSection(SolutionItems) = preProject
 		build\azure-pipeline.template.yaml = build\azure-pipeline.template.yaml
+		build\pr-netfx-validation.yaml = build\pr-netfx-validation.yaml
 		build\pr-validation.yaml = build\pr-validation.yaml
 	EndProjectSection
 EndProject
@@ -82,6 +85,16 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.NetUV", "src\DotNetty.NetUV\DotNetty.NetUV.csproj", "{68548ECD-222C-40C8-B975-46A17E5D5038}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.NetUV.Tests", "test\DotNetty.NetUV.Tests\DotNetty.NetUV.Tests.csproj", "{1C3FD988-6CBF-4EAE-A78D-F7D8BA085E0D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "local-build", "local-build", "{E27C94F8-A148-46D4-A1E0-2CC2B1FBECE9}"
+	ProjectSection(SolutionItems) = preProject
+		DotnetCLIVersion.txt = DotnetCLIVersion.txt
+		Ensure-DotNetSdk.cmd = Ensure-DotNetSdk.cmd
+		init-tools.cmd = init-tools.cmd
+		localBuild.cmd = localBuild.cmd
+		localPublish.cmd = localPublish.cmd
+		localRestore.cmd = localRestore.cmd
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -577,6 +590,7 @@ Global
 		{920F73C7-7FBE-44BE-8A99-3A394207D4C8} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{68548ECD-222C-40C8-B975-46A17E5D5038} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{1C3FD988-6CBF-4EAE-A78D-F7D8BA085E0D} = {01F3CC7E-F996-411E-AFD6-72673A826549}
+		{E27C94F8-A148-46D4-A1E0-2CC2B1FBECE9} = {013DFD29-E1DB-4968-A67B-C2342E6F5B6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A659CEFB-DDB3-49BE-AEDD-FF2F1B3297DB}
