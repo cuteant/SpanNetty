@@ -46,7 +46,7 @@ let incrementalistReport = output @@ "incrementalist.txt"
 
 // Configuration values for tests
 let testNetFrameworkVersion = "net471"
-let testNetFramework451Version = "net451"
+let testNetFramework452Version = "net452"
 let testNetCoreVersion = "netcoreapp3.1"
 let testNetCore21Version = "netcoreapp2.1"
 
@@ -255,8 +255,8 @@ Target "RunTests451" (fun _ ->
     let runSingleProject project =
         let arguments =
             match (hasTeamCity) with
-            | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetFramework451Version outputTests)
-            | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFramework451Version outputTests)
+            | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetFramework452Version outputTests)
+            | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetFramework452Version outputTests)
 
         let result = ExecProcess(fun info ->
             info.FileName <- "dotnet"

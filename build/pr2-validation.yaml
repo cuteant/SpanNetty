@@ -18,7 +18,7 @@ jobs:
   - job: WindowsBuild
     displayName: Windows Build
     pool:
-      vmImage: windows-2019
+      vmImage: vs2017-win2016
       demands: Cmd
     steps:
       - checkout: self  # self represents the repo where the initial Pipelines YAML file was found
@@ -26,10 +26,10 @@ jobs:
         submodules: recursive  # set to 'true' for a single level of submodules or 'recursive' to get submodules of submodules
         persistCredentials: true
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 3.1.402'
+        displayName: 'Use .NET Core SDK 2.1.614'
         inputs:
           packageType: sdk
-          version: 3.1.402
+          version: 2.1.614
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
@@ -51,30 +51,30 @@ jobs:
 
   - template: azure-pipeline.template.yaml
     parameters:
-      name: 'netfx_tests_windows'
-      displayName: '.NET Framework Unit Tests (Windows)'
-      vmImage: 'windows-2019'
+      name: 'netfx_451_tests_windows'
+      displayName: '.NET 451 Unit Tests (Windows)'
+      vmImage: 'vs2017-win2016'
       scriptFileName: azure_build.cmd
-      scriptArgs: runTests incremental
+      scriptArgs: runTests451 incremental
       outputDirectory: 'TestResults'
-      artifactName: 'netfx_tests_windows-$(Build.BuildId)'
+      artifactName: 'netfx_451_tests_windows-$(Build.BuildId)'
 
   - template: azure-pipeline.template.yaml
     parameters:
-      name: 'net_core_tests_windows'
-      displayName: '.NET Core Unit Tests (Windows)'
-      vmImage: 'windows-2019'
+      name: 'net_core_21_tests_windows'
+      displayName: '.NET Core 2.1 Unit Tests (Windows)'
+      vmImage: 'vs2017-win2016'
       scriptFileName: azure_build.cmd
-      scriptArgs: runTestsNetCore incremental
+      scriptArgs: runTestsNetCore21 incremental
       outputDirectory: 'TestResults'
-      artifactName: 'net_core_tests_windows-$(Build.BuildId)'
+      artifactName: 'net_core_21_tests_windows-$(Build.BuildId)'
 
   - template: azure-pipeline.template.yaml
     parameters:
-      name: 'net_core_tests_linux'
-      displayName: '.NET Core Unit Tests (Linux)'
-      vmImage: 'ubuntu-18.04'
+      name: 'net_core_21_tests_linux'
+      displayName: '.NET Core 2.1 Unit Tests (Linux)'
+      vmImage: 'ubuntu-16.04'
       scriptFileName: './build.sh'
-      scriptArgs: runTestsNetCore incremental
+      scriptArgs: runTestsNetCore21 incremental
       outputDirectory: 'TestResults'
-      artifactName: 'net_core_tests_linux-$(Build.BuildId)'
+      artifactName: 'net_core_21_tests_linux-$(Build.BuildId)'
