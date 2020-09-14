@@ -78,3 +78,13 @@ jobs:
       scriptArgs: runTestsNetCore21 incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_21_tests_linux-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'net_core_21_tests_mac'
+      displayName: '.NET Core 2.1 Unit Tests (Linux)'
+      vmImage: 'macOS-10.14'
+      scriptFileName: './build.sh'
+      scriptArgs: runTestsNetCore21 incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_21_tests_mac-$(Build.BuildId)'
