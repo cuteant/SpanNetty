@@ -61,6 +61,16 @@ jobs:
 
   - template: azure-pipeline.template.yaml
     parameters:
+      name: 'netfx_451_tests_windows'
+      displayName: '.NET 451 Unit Tests (Windows)'
+      vmImage: 'windows-2019'
+      scriptFileName: azure_build.cmd
+      scriptArgs: runTests451 incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'netfx_451_tests_windows-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
       name: 'net_core_tests_windows'
       displayName: '.NET Core Unit Tests (Windows)'
       vmImage: 'vs2017-win2016'
@@ -71,6 +81,16 @@ jobs:
 
   - template: azure-pipeline.template.yaml
     parameters:
+      name: 'net_core_21_tests_windows'
+      displayName: '.NET Core 2.1 Unit Tests (Windows)'
+      vmImage: 'windows-2019'
+      scriptFileName: azure_build.cmd
+      scriptArgs: runTestsNetCore21 incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_21_tests_windows-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
       name: 'net_core_tests_linux'
       displayName: '.NET Core Unit Tests (Linux)'
       vmImage: 'ubuntu-16.04'
@@ -78,3 +98,13 @@ jobs:
       scriptArgs: runTestsNetCore incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_linux-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'net_core_21_tests_linux'
+      displayName: '.NET Core 2.1 Unit Tests (Linux)'
+      vmImage: 'ubuntu-18.04'
+      scriptFileName: './build.sh'
+      scriptArgs: runTestsNetCore21 incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_21_tests_linux-$(Build.BuildId)'
