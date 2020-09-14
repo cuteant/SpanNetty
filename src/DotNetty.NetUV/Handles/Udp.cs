@@ -200,10 +200,13 @@ namespace DotNetty.NetUV.Handles
                     NativeMethods.UdpTrySend(InternalHandle, remoteEndPoint, ref buf);
                 }
             }
+#if DEBUG
             catch (Exception exception)
             {
-#if DEBUG
                 if (Log.DebugEnabled) { Log.Debug($"{HandleType} Trying to send data to {remoteEndPoint} failed.", exception); }
+#else
+            catch (Exception)
+            {
 #endif
                 throw;
             }

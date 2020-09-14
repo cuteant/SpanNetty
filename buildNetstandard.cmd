@@ -1,0 +1,1 @@
+PowerShell.exe -file "buildNetstandard.ps1" %* 

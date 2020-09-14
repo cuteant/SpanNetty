@@ -1,6 +1,6 @@
 # dotnetty-span-fork
 
-This is a fork from [DotNetty](https://github.com/azure/dotnetty) project.
+This is a fork of [DotNetty](https://github.com/azure/dotnetty).
 
 ## Build Status
 
