@@ -53,7 +53,7 @@ jobs:
     parameters:
       name: 'netfx_tests_windows'
       displayName: '.NET Framework Unit Tests (Windows)'
-      vmImage: 'windows-2019'
+      vmImage: 'wvs2017-win2016'
       scriptFileName: azure_build.cmd
       scriptArgs: runTests incremental
       outputDirectory: 'TestResults'
@@ -71,10 +71,40 @@ jobs:
 
   - template: azure-pipeline.template.yaml
     parameters:
-      name: 'net_core_tests_linux'
-      displayName: '.NET Core Unit Tests (Linux)'
+      name: 'net_core_tests_ubuntu_16'
+      displayName: '.NET Core Unit Tests (Ubuntu-16)'
+      vmImage: 'ubuntu-16.04'
+      scriptFileName: './build.sh'
+      scriptArgs: runTestsNetCore incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_tests_ubuntu_16-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'net_core_tests_ubuntu_18'
+      displayName: '.NET Core Unit Tests (Ubuntu-18)'
       vmImage: 'ubuntu-18.04'
       scriptFileName: './build.sh'
       scriptArgs: runTestsNetCore incremental
       outputDirectory: 'TestResults'
-      artifactName: 'net_core_tests_linux-$(Build.BuildId)'
+      artifactName: 'net_core_tests_ubuntu_18-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'net_core_tests_mac_1014'
+      displayName: '.NET Core Unit Tests (MacOS-10.14)'
+      vmImage: 'macOS-10.14'
+      scriptFileName: './build.sh'
+      scriptArgs: runTestsNetCore incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_tests_mac_1014-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'net_core_tests_mac_1015'
+      displayName: '.NET Core Unit Tests (MacOS-10.15)'
+      vmImage: 'macOS-10.15'
+      scriptFileName: './build.sh'
+      scriptArgs: runTestsNetCore incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_tests_mac_1015-$(Build.BuildId)'
