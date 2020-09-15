@@ -53,7 +53,7 @@ jobs:
     parameters:
       name: 'netfx_tests_windows'
       displayName: '.NET Framework Unit Tests (Windows)'
-      vmImage: 'vs2017-win2016'
+      vmImage: 'windows-2019'
       scriptFileName: build.cmd
       scriptArgs: runTests incremental
       outputDirectory: 'TestResults'
