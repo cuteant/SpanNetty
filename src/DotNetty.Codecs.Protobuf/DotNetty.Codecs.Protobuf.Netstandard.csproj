@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Protobuf</RootNamespace>
-    <AssemblyName>DotNetty.Codecs.Protobuf</AssemblyName>
+    <AssemblyName>SpanNetty.Codecs.Protobuf</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 

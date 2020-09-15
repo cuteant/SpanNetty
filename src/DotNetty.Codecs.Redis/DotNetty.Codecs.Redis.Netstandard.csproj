@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Redis</RootNamespace>
-    <AssemblyName>DotNetty.Codecs.Redis</AssemblyName>
+    <AssemblyName>SpanNetty.Codecs.Redis</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 

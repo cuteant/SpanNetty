@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(StandardTfms);netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <RootNamespace>DotNetty.Common</RootNamespace>
-    <AssemblyName>DotNetty.Common</AssemblyName>
+    <AssemblyName>SpanNetty.Common</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

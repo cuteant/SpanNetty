@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(StandardTfms);netcoreapp3.1</TargetFrameworks>
     <RootNamespace>DotNetty.NetUV</RootNamespace>
-    <AssemblyName>DotNetty.NetUV</AssemblyName>
+    <AssemblyName>SpanNetty.NetUV</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

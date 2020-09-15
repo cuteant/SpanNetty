@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Mqtt</RootNamespace>
-    <AssemblyName>DotNetty.Codecs.Mqtt</AssemblyName>
+    <AssemblyName>SpanNetty.Codecs.Mqtt</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 

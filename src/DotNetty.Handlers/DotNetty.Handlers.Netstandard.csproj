@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Handlers</RootNamespace>
-    <AssemblyName>DotNetty.Handlers</AssemblyName>
+    <AssemblyName>SpanNetty.Handlers</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 

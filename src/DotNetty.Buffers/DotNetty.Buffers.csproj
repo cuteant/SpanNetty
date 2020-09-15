@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(StandardTfms);netstandard2.1;netcoreapp2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Buffers</RootNamespace>
-    <AssemblyName>DotNetty.Buffers</AssemblyName>
+    <AssemblyName>SpanNetty.Buffers</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Buffers</RootNamespace>
-    <AssemblyName>DotNetty.Buffers</AssemblyName>
+    <AssemblyName>SpanNetty.Buffers</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

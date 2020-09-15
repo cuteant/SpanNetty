@@ -2,12 +2,12 @@
   <!-- Set common properties regarding assembly information and nuget packages -->
   <PropertyGroup>
     <Authors>Seabiscuit</Authors>
-    <Product>SpanNetty</Product>
+    <Product>Netty.Net</Product>
     <PackageIconUrl></PackageIconUrl>
-    <PackageProjectUrl>https://github.com/cuteant/dotnetty-span-fork</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/cuteant/SpanNetty</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/cuteant/dotnetty-span-fork.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/cuteant/SpanNetty.git</RepositoryUrl>
     <NeutralLanguage>en-US</NeutralLanguage>
     <IncludeSymbols>false</IncludeSymbols>
     <IncludeSource>false</IncludeSource>
