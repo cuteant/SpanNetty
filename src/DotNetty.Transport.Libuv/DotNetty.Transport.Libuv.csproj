@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(StandardTfms);netcoreapp3.1</TargetFrameworks>
     <RootNamespace>DotNetty.Transport.Libuv</RootNamespace>
-    <AssemblyName>DotNetty.Transport.Libuv</AssemblyName>
+    <AssemblyName>SpanNetty.Transport.Libuv</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(StandardTfms);netstandard2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Http2</RootNamespace>
-    <AssemblyName>DotNetty.Codecs.Http2</AssemblyName>
+    <AssemblyName>SpanNetty.Codecs.Http2</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
