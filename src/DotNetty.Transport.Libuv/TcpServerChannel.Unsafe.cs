@@ -29,14 +29,15 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
+    using DotNetty.NetUV.Handles;
     using DotNetty.Transport.Channels;
-    using DotNetty.Transport.Libuv.Native;
+    using DotNetty.Transport.Libuv.Internal;
 
     internal interface IServerNativeUnsafe
     {
         void Accept(RemoteConnection connection);
 
-        void Accept(NativeHandle handle);
+        void Accept(Tcp handle);
     }
 
     partial class TcpServerChannel<TServerChannel, TChannelFactory>
@@ -55,7 +56,7 @@ namespace DotNetty.Transport.Libuv
             void IServerNativeUnsafe.Accept(RemoteConnection connection)
             {
                 var ch = _channel;
-                NativeHandle client = connection.Client;
+                var client = connection.Client;
 
                 var connError = connection.Error;
                 // If the AutoRead is false, reject the connection
@@ -96,16 +97,16 @@ namespace DotNetty.Transport.Libuv
             }
 
             // Called from other Libuv loop/thread received tcp handle from pipe
-            void IServerNativeUnsafe.Accept(NativeHandle handle)
+            void IServerNativeUnsafe.Accept(Tcp tcp)
             {
                 var ch = _channel;
                 if (ch.EventLoop.InEventLoop)
                 {
-                    Accept((Tcp)handle);
+                    Accept(tcp);
                 }
                 else
                 {
-                    _channel.EventLoop.Execute(AcceptAction, this, handle);
+                    _channel.EventLoop.Execute(AcceptAction, this, tcp);
                 }
             }
 

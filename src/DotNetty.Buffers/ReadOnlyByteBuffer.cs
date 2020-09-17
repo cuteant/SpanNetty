@@ -46,8 +46,8 @@ namespace DotNetty.Buffers
 
             switch (buffer)
             {
-                case ReadOnlyByteBuffer _:
-                case UnpooledDuplicatedByteBuffer _:
+                case ReadOnlyByteBuffer:
+                case UnpooledDuplicatedByteBuffer:
                     _buffer = buffer.Unwrap();
                     break;
 

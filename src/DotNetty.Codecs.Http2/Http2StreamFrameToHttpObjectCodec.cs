@@ -61,8 +61,8 @@ namespace DotNetty.Codecs.Http2
 
         public override bool AcceptInboundMessage(object msg) => msg switch
         {
-            IHttp2HeadersFrame _ => true,
-            IHttp2DataFrame _ => true,
+            IHttp2HeadersFrame => true,
+            IHttp2DataFrame => true,
             _ => false,
         };
 

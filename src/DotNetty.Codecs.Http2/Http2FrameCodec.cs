@@ -381,7 +381,7 @@ namespace DotNetty.Codecs.Http2
                     _ = Encoder.WritePingAsync(ctx, pingFrame.Ack, pingFrame.Content, promise);
                     break;
 
-                case IHttp2SettingsAckFrame _:
+                case IHttp2SettingsAckFrame:
                     // In the event of manual SETTINGS ACK is is assumed the encoder will apply the earliest received but not
                     // yet ACKed settings.
                     _ = Encoder.WriteSettingsAckAsync(ctx, promise);

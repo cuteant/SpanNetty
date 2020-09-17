@@ -99,7 +99,7 @@ namespace DotNetty.Buffers
             {
                 switch (buf)
                 {
-                    case WrappedCompositeByteBuffer _:
+                    case WrappedCompositeByteBuffer:
                         // WrappedCompositeByteBuf is a sub-class of AbstractByteBuf so it needs special handling.
                         buf = buf.Unwrap();
                         break;
@@ -110,7 +110,7 @@ namespace DotNetty.Buffers
                         byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
                         return written;
 
-                    case WrappedByteBuffer _:
+                    case WrappedByteBuffer:
                         // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
                         buf = buf.Unwrap();
                         break;
@@ -288,7 +288,7 @@ namespace DotNetty.Buffers
             {
                 switch (buf)
                 {
-                    case WrappedCompositeByteBuffer _:
+                    case WrappedCompositeByteBuffer:
                         // WrappedCompositeByteBuf is a sub-class of AbstractByteBuf so it needs special handling.
                         buf = buf.Unwrap();
                         break;
@@ -299,7 +299,7 @@ namespace DotNetty.Buffers
                         _ = byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
                         return written;
 
-                    case WrappedByteBuffer _:
+                    case WrappedByteBuffer:
                         // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
                         buf = buf.Unwrap();
                         break;

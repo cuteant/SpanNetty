@@ -36,6 +36,7 @@ namespace DotNetty.Transport.Libuv
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
+    using DotNetty.Transport.Libuv.Requests;
 
     partial class NativeChannel<TChannel, TUnsafe>
     {

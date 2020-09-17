@@ -32,9 +32,10 @@ namespace DotNetty.Transport.Libuv
     using System.Diagnostics;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Transport.Libuv.Handles;
     using DotNetty.Transport.Libuv.Native;
 
-    public sealed class WorkerEventLoop : LoopExecutor
+    public sealed class WorkerEventLoop : AbstractUVEventLoop
     {
         private readonly Action<Pipe, int> _onReadAction;
         private readonly IPromise _connectCompletion;
@@ -68,7 +69,7 @@ namespace DotNetty.Transport.Libuv
         {
             Debug.Assert(_pipe is null);
 
-            _pipe = new Pipe(UnsafeLoop, true);
+            _pipe = UnsafeLoop.CreatePipe(true);
             PipeConnect request = null;
             try
             {
@@ -128,41 +129,41 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        sealed class PipeConnect : ConnectRequest
-        {
-            const int MaximumRetryCount = 10;
+        //sealed class PipeConnect : ConnectRequest
+        //{
+        //    const int MaximumRetryCount = 10;
 
-            readonly WorkerEventLoop _workerEventLoop;
-            int _retryCount;
+        //    readonly WorkerEventLoop _workerEventLoop;
+        //    int _retryCount;
 
-            public PipeConnect(WorkerEventLoop workerEventLoop)
-            {
-                Debug.Assert(workerEventLoop is object);
+        //    public PipeConnect(WorkerEventLoop workerEventLoop)
+        //    {
+        //        Debug.Assert(workerEventLoop is object);
 
-                _workerEventLoop = workerEventLoop;
-                Connect();
-                _retryCount = 0;
-            }
+        //        _workerEventLoop = workerEventLoop;
+        //        Connect();
+        //        _retryCount = 0;
+        //    }
 
-            protected override void OnWatcherCallback()
-            {
-                if (Error is object && _retryCount < MaximumRetryCount)
-                {
-                    if (Logger.InfoEnabled) Logger.FailedToConnectToDispatcher(_retryCount, Error);
-                    Connect();
-                    _retryCount++;
-                }
-                else
-                {
-                    _workerEventLoop.OnConnected(this);
-                }
-            }
+        //    protected override void OnWatcherCallback()
+        //    {
+        //        if (Error is object && _retryCount < MaximumRetryCount)
+        //        {
+        //            if (Logger.InfoEnabled) Logger.FailedToConnectToDispatcher(_retryCount, Error);
+        //            Connect();
+        //            _retryCount++;
+        //        }
+        //        else
+        //        {
+        //            _workerEventLoop.OnConnected(this);
+        //        }
+        //    }
 
-            void Connect() => NativeMethods.uv_pipe_connect(
-                Handle,
-                _workerEventLoop._pipe.Handle,
-                _workerEventLoop._pipeName,
-                WatcherCallback);
-        }
+        //    void Connect() => NativeMethods.uv_pipe_connect(
+        //        Handle,
+        //        _workerEventLoop._pipe.Handle,
+        //        _workerEventLoop._pipeName,
+        //        WatcherCallback);
+        //}
     }
 }

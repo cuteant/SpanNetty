@@ -29,8 +29,8 @@
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
-    using System.Net.Sockets;
     using System.Runtime.InteropServices;
+    using DotNetty.Common;
 
     static class UnixApi
     {
@@ -55,11 +55,11 @@ namespace DotNetty.Transport.Libuv.Native
             int value = 0;
             int status = 0;
             int optLen = sizeof(int);
-            if (PlatformApi.IsLinux)
+            if (Platform.IsLinux)
             {
                 status = getsockopt(socket.ToInt32(), SOL_SOCKET_LINUX, SO_REUSEADDR_LINUX, (byte*)&value, &optLen);
             }
-            else if (PlatformApi.IsDarwin)
+            else if (Platform.IsDarwin)
             {
                 status = getsockopt(socket.ToInt32(), SOL_SOCKET_OSX, SO_REUSEADDR_OSX, (byte*)&value, &optLen);
             }
@@ -74,11 +74,11 @@ namespace DotNetty.Transport.Libuv.Native
         internal static unsafe void SetReuseAddress(IntPtr socket, int value)
         {
             int status = 0;
-            if (PlatformApi.IsLinux)
+            if (Platform.IsLinux)
             {
                 status = setsockopt(socket.ToInt32(), SOL_SOCKET_LINUX, SO_REUSEADDR_LINUX, (IntPtr)(&value), sizeof(int));
             }
-            else if (PlatformApi.IsDarwin)
+            else if (Platform.IsDarwin)
             {
                 status = setsockopt(socket.ToInt32(), SOL_SOCKET_OSX, SO_REUSEADDR_OSX, (IntPtr)(&value), sizeof(int));
             }
@@ -93,11 +93,11 @@ namespace DotNetty.Transport.Libuv.Native
             int value = 0;
             int status = 0;
             int optLen = sizeof(int);
-            if (PlatformApi.IsLinux)
+            if (Platform.IsLinux)
             {
                 status = getsockopt(socket.ToInt32(), SOL_SOCKET_LINUX, SO_REUSEPORT_LINUX, (byte*)&value, &optLen);
             }
-            else if (PlatformApi.IsDarwin)
+            else if (Platform.IsDarwin)
             {
                 status = getsockopt(socket.ToInt32(), SOL_SOCKET_OSX, SO_REUSEPORT_OSX, (byte*)&value, &optLen);
             }
@@ -111,11 +111,11 @@ namespace DotNetty.Transport.Libuv.Native
         internal static unsafe void SetReusePort(IntPtr socket, int value)
         {
             int status = 0;
-            if (PlatformApi.IsLinux)
+            if (Platform.IsLinux)
             {
                 status = setsockopt(socket.ToInt32(), SOL_SOCKET_LINUX, SO_REUSEPORT_LINUX, (IntPtr)(&value), sizeof(int));
             }
-            else if (PlatformApi.IsDarwin)
+            else if (Platform.IsDarwin)
             {
                 status = setsockopt(socket.ToInt32(), SOL_SOCKET_OSX, SO_REUSEPORT_OSX, (IntPtr)(&value), sizeof(int));
             }

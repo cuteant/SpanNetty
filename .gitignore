@@ -385,3 +385,4 @@ TODO.txt
 /test/DotNetty.Transport.Tests.Performance/Perf
 /tools
 /global.json
+/src/DotNetty.Transport.Libuv/Kestrel

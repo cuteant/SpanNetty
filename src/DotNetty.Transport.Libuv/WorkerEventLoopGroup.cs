@@ -78,7 +78,7 @@ namespace DotNetty.Transport.Libuv
         }
 
         public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IThreadFactory threadFactory, IRejectedExecutionHandler rejectedHandler)
-            : this(eventLoopGroup, nThreads, threadFactory, rejectedHandler, LoopExecutor.DefaultBreakoutInterval)
+            : this(eventLoopGroup, nThreads, threadFactory, rejectedHandler, AbstractUVEventLoop.DefaultBreakoutInterval)
         {
         }
 
@@ -100,7 +100,7 @@ namespace DotNetty.Transport.Libuv
         }
 
         public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int nThreads, IEventExecutorChooserFactory<WorkerEventLoop> chooserFactory, IRejectedExecutionHandler rejectedHandler)
-            : this(eventLoopGroup, nThreads, chooserFactory, rejectedHandler, LoopExecutor.DefaultBreakoutInterval)
+            : this(eventLoopGroup, nThreads, chooserFactory, rejectedHandler, AbstractUVEventLoop.DefaultBreakoutInterval)
         {
         }
 
@@ -177,20 +177,20 @@ namespace DotNetty.Transport.Libuv
             var nativeChannel = channel as INativeChannel;
             if (nativeChannel is null)
             {
-                ThrowHelper.ThrowArgumentException_RegChannel();
+                return ThrowHelper.FromArgumentException_RegChannel();
             }
 
-            NativeHandle handle = nativeChannel.GetHandle();
+            var handle = (DotNetty.Transport.Libuv.Handles.IInternalScheduleHandle)nativeChannel.GetHandle();
             IntPtr loopHandle = handle.LoopHandle();
             for (int i = 0; i < _eventLoops.Length; i++)
             {
-                if (_eventLoops[i].UnsafeLoop.Handle == loopHandle)
+                if (_eventLoops[i].UnsafeLoop.InternalHandle == loopHandle)
                 {
                     return _eventLoops[i].RegisterAsync(nativeChannel);
                 }
             }
 
-            return ThrowHelper.ThrowInvalidOperationException(loopHandle);
+            return ThrowHelper.FromInvalidOperationException(loopHandle);
         }
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)

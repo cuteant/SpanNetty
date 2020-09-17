@@ -48,7 +48,7 @@ namespace DotNetty.Transport.Channels
             return writeCloseCompletion;
         }
 
-        private static readonly Action<Task, object> s_returnAfterWriteAction = (t, s) => ReturnAfterWriteAction(t, s);
-        private static void ReturnAfterWriteAction(Task t, object s) => ((ThreadLocalList<Task>)s).Return();
+        private static readonly Action<Task, object> s_returnAfterWriteAction = (t, s) => ReturnAfterWriteAction(s);
+        private static void ReturnAfterWriteAction(object s) => ((ThreadLocalList<Task>)s).Return();
     }
 }

@@ -332,7 +332,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     case IFullHttpResponse response:
                         return response.Status.CodeClass == HttpStatusClass.Informational;
-                    case IFullHttpRequest _:
+                    case IFullHttpRequest:
                         return msg.Headers.Contains(HttpHeaderNames.Expect);
                     default:
                         return false;

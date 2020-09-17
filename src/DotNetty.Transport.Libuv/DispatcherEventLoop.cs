@@ -32,9 +32,10 @@ namespace DotNetty.Transport.Libuv
     using System.Diagnostics;
     using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
+    using DotNetty.Common;
     using DotNetty.Transport.Libuv.Native;
 
-    public sealed class DispatcherEventLoop : LoopExecutor
+    public sealed class DispatcherEventLoop : AbstractUVEventLoop
     {
         private PipeListener _pipeListener;
         private IServerNativeUnsafe _nativeUnsafe;
@@ -49,10 +50,7 @@ namespace DotNetty.Transport.Libuv
         {
             if (parent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
 
-            string pipeName = "DotNetty_" + Guid.NewGuid().ToString("n");
-            PipeName = (PlatformApi.IsWindows
-                ? @"\\.\pipe\"
-                : "/tmp/") + pipeName;
+            PipeName = PlatformApis.GetPipeName();
             Start();
         }
 

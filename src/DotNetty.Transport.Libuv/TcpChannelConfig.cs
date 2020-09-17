@@ -32,12 +32,14 @@ namespace DotNetty.Transport.Libuv
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Net.Sockets;
+    using DotNetty.NetUV.Handles;
+    using DotNetty.NetUV.Native;
     using DotNetty.Transport.Channels;
-    using DotNetty.Transport.Libuv.Native;
+    using DotNetty.Transport.Libuv.Internal;
 
     sealed class TcpChannelConfig : DefaultChannelConfiguration
     {
-        readonly Dictionary<ChannelOption, int> options;
+        readonly Dictionary<ChannelOption, int> _options;
 
         public TcpChannelConfig(IChannel channel) : base(channel)
         {
@@ -50,7 +52,7 @@ namespace DotNetty.Transport.Libuv
             // 
             // 
 
-            this.options = new Dictionary<ChannelOption, int>(5, ChannelOptionComparer.Default)
+            _options = new Dictionary<ChannelOption, int>(5, ChannelOptionComparer.Default)
             {
                 { ChannelOption.TcpNodelay, 1 } // TCP_NODELAY by default
             };
@@ -60,23 +62,23 @@ namespace DotNetty.Transport.Libuv
         {
             if (ChannelOption.SoRcvbuf.Equals(option))
             {
-                return (T)(object)this.GetReceiveBufferSize();
+                return (T)(object)GetReceiveBufferSize();
             }
             if (ChannelOption.SoSndbuf.Equals(option))
             {
-                return (T)(object)this.GetSendBufferSize();
+                return (T)(object)GetSendBufferSize();
             }
             if (ChannelOption.TcpNodelay.Equals(option))
             {
-                return (T)(object)this.GetTcpNoDelay();
+                return (T)(object)GetTcpNoDelay();
             }
             if (ChannelOption.SoKeepalive.Equals(option))
             {
-                return (T)(object)this.GetKeepAlive();
+                return (T)(object)GetKeepAlive();
             }
             if (ChannelOption.SoReuseaddr.Equals(option))
             {
-                return (T)(object)this.GetReuseAddress();
+                return (T)(object)GetReuseAddress();
             }
 
             return base.GetOption(option);
@@ -91,23 +93,23 @@ namespace DotNetty.Transport.Libuv
 
             if (ChannelOption.SoRcvbuf.Equals(option))
             {
-                this.SetReceiveBufferSize((int)(object)value);
+                SetReceiveBufferSize((int)(object)value);
             }
             else if (ChannelOption.SoSndbuf.Equals(option))
             {
-                this.SetSendBufferSize((int)(object)value);
+                SetSendBufferSize((int)(object)value);
             }
             else if (ChannelOption.TcpNodelay.Equals(option))
             {
-                this.SetTcpNoDelay((bool)(object)value);
+                SetTcpNoDelay((bool)(object)value);
             }
             else if (ChannelOption.SoKeepalive.Equals(option))
             {
-                this.SetKeepAlive((bool)(object)value);
+                SetKeepAlive((bool)(object)value);
             }
             else if (ChannelOption.SoReuseaddr.Equals(option))
             {
-                this.SetReuseAddress((bool)(object)value);
+                SetReuseAddress((bool)(object)value);
             }
             else
             {
@@ -121,9 +123,9 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                var channel = (INativeChannel)this.Channel;
+                var channel = (INativeChannel)Channel;
                 var tcp = (Tcp)channel.GetHandle();
-                return tcp.ReceiveBufferSize(0);
+                return tcp.GetReceiveBufferSize();
             }
             catch (ObjectDisposedException ex)
             {
@@ -138,17 +140,17 @@ namespace DotNetty.Transport.Libuv
 
         void SetReceiveBufferSize(int value)
         {
-            var channel = (INativeChannel)this.Channel;
+            var channel = (INativeChannel)Channel;
             if (!channel.IsBound)
             {
                 // Defer until bound
-                if (!this.options.ContainsKey(ChannelOption.SoRcvbuf))
+                if (!_options.ContainsKey(ChannelOption.SoRcvbuf))
                 {
-                    this.options.Add(ChannelOption.SoRcvbuf, value);
+                    _options.Add(ChannelOption.SoRcvbuf, value);
                 }
                 else
                 {
-                    this.options[ChannelOption.SoRcvbuf] = value;
+                    _options[ChannelOption.SoRcvbuf] = value;
                 }
             }
             else
@@ -157,11 +159,11 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        static void SetReceiveBufferSize(Tcp tcpHandle, int value)
+        static void SetReceiveBufferSize(Tcp tcp, int value)
         {
             try
             {
-                _ = tcpHandle.ReceiveBufferSize(value);
+                _ = tcp.SetReceiveBufferSize(value);
             }
             catch (ObjectDisposedException ex)
             {
@@ -177,9 +179,9 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                var channel = (INativeChannel)this.Channel;
+                var channel = (INativeChannel)Channel;
                 var tcp = (Tcp)channel.GetHandle();
-                return tcp.SendBufferSize(0);
+                return tcp.GetSendBufferSize();
             }
             catch (ObjectDisposedException ex)
             {
@@ -194,17 +196,17 @@ namespace DotNetty.Transport.Libuv
 
         void SetSendBufferSize(int value)
         {
-            var channel = (INativeChannel)this.Channel;
+            var channel = (INativeChannel)Channel;
             if (!channel.IsBound)
             {
                 // Defer until bound
-                if (!this.options.ContainsKey(ChannelOption.SoSndbuf))
+                if (!_options.ContainsKey(ChannelOption.SoSndbuf))
                 {
-                    this.options.Add(ChannelOption.SoSndbuf, value);
+                    _options.Add(ChannelOption.SoSndbuf, value);
                 }
                 else
                 {
-                    this.options[ChannelOption.SoSndbuf] = value;
+                    _options[ChannelOption.SoSndbuf] = value;
                 }
             }
             else
@@ -213,11 +215,11 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        static void SetSendBufferSize(Tcp tcpHandle, int value)
+        static void SetSendBufferSize(Tcp tcp, int value)
         {
             try
             {
-                _ = tcpHandle.SendBufferSize(value);
+                _ = tcp.SetSendBufferSize(value);
             }
             catch (ObjectDisposedException ex)
             {
@@ -231,7 +233,7 @@ namespace DotNetty.Transport.Libuv
 
         bool GetTcpNoDelay()
         {
-            if (this.options.TryGetValue(ChannelOption.TcpNodelay, out int value))
+            if (_options.TryGetValue(ChannelOption.TcpNodelay, out int value))
             {
                 return value != 0;
             }
@@ -240,31 +242,31 @@ namespace DotNetty.Transport.Libuv
 
         void SetTcpNoDelay(bool value)
         {
-            int optionValue = value ? 1 : 0;
-            var channel = (INativeChannel)this.Channel;
+            var channel = (INativeChannel)Channel;
             if (!channel.IsBound)
             {
+                int optionValue = value ? 1 : 0;
                 // Defer until bound
-                if (!this.options.ContainsKey(ChannelOption.TcpNodelay))
+                if (!_options.ContainsKey(ChannelOption.TcpNodelay))
                 {
-                    this.options.Add(ChannelOption.TcpNodelay, optionValue);
+                    _options.Add(ChannelOption.TcpNodelay, optionValue);
                 }
                 else
                 {
-                    this.options[ChannelOption.TcpNodelay] = optionValue;
+                    _options[ChannelOption.TcpNodelay] = optionValue;
                 }
             }
             else
             {
-                SetTcpNoDelay((Tcp)channel.GetHandle(), optionValue);
+                SetTcpNoDelay((Tcp)channel.GetHandle(), value);
             }
         }
 
-        static void SetTcpNoDelay(Tcp tcpHandle, int value)
+        static void SetTcpNoDelay(Tcp tcp, bool value)
         {
             try
             {
-                tcpHandle.NoDelay(value);
+                tcp.NoDelay(value);
             }
             catch (ObjectDisposedException ex)
             {
@@ -278,7 +280,7 @@ namespace DotNetty.Transport.Libuv
 
         bool GetKeepAlive()
         {
-            if (this.options.TryGetValue(ChannelOption.SoKeepalive, out int value))
+            if (_options.TryGetValue(ChannelOption.SoKeepalive, out int value))
             {
                 return value != 0;
             }
@@ -287,31 +289,31 @@ namespace DotNetty.Transport.Libuv
 
         void SetKeepAlive(bool value)
         {
-            int optionValue = value ? 1 : 0;
-            var channel = (INativeChannel)this.Channel;
+            var channel = (INativeChannel)Channel;
             if (!channel.IsBound)
             {
+                int optionValue = value ? 1 : 0;
                 // Defer until bound
-                if (!this.options.ContainsKey(ChannelOption.SoKeepalive))
+                if (!_options.ContainsKey(ChannelOption.SoKeepalive))
                 {
-                    this.options.Add(ChannelOption.SoKeepalive, optionValue);
+                    _options.Add(ChannelOption.SoKeepalive, optionValue);
                 }
                 else
                 {
-                    this.options[ChannelOption.SoKeepalive] = optionValue;
+                    _options[ChannelOption.SoKeepalive] = optionValue;
                 }
             }
             else
             {
-                SetKeepAlive((Tcp)channel.GetHandle(), optionValue);
+                SetKeepAlive((Tcp)channel.GetHandle(), value);
             }
         }
 
-        static void SetKeepAlive(Tcp tcpHandle, int value)
+        static void SetKeepAlive(Tcp tcp, bool value)
         {
             try
             {
-                tcpHandle.KeepAlive(value, 1 /* Delay in seconds to take effect*/);
+                tcp.KeepAlive(value, 1 /* Delay in seconds to take effect*/);
             }
             catch (ObjectDisposedException ex)
             {
@@ -327,9 +329,9 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                var channel = (INativeChannel)this.Channel;
+                var channel = (INativeChannel)Channel;
                 var tcpListener = (Tcp)channel.GetHandle();
-                return PlatformApi.GetReuseAddress(tcpListener);
+                return PlatformApis.GetReuseAddress(tcpListener);
             }
             catch (ObjectDisposedException ex)
             {
@@ -345,17 +347,17 @@ namespace DotNetty.Transport.Libuv
         void SetReuseAddress(bool value)
         {
             int optionValue = value ? 1 : 0;
-            var channel = (INativeChannel)this.Channel;
+            var channel = (INativeChannel)Channel;
             if (!channel.IsBound)
             {
                 // Defer until registered
-                if (!this.options.ContainsKey(ChannelOption.SoReuseaddr))
+                if (!_options.ContainsKey(ChannelOption.SoReuseaddr))
                 {
-                    this.options.Add(ChannelOption.SoReuseaddr, optionValue);
+                    _options.Add(ChannelOption.SoReuseaddr, optionValue);
                 }
                 else
                 {
-                    this.options[ChannelOption.SoReuseaddr] = optionValue;
+                    _options[ChannelOption.SoReuseaddr] = optionValue;
                 }
             }
             else
@@ -368,7 +370,7 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                PlatformApi.SetReuseAddress(tcp, value);
+                PlatformApis.SetReuseAddress(tcp, value);
             }
             catch (ObjectDisposedException ex)
             {
@@ -385,31 +387,31 @@ namespace DotNetty.Transport.Libuv
         // is not yet created, it is deferred until channel register.
         internal void Apply()
         {
-            Debug.Assert(this.options.Count <= 5);
+            Debug.Assert(_options.Count <= 5);
 
-            var channel = (INativeChannel)this.Channel;
+            var channel = (INativeChannel)Channel;
             var tcp = (Tcp)channel.GetHandle();
-            foreach (ChannelOption option in this.options.Keys)
+            foreach (ChannelOption option in _options.Keys)
             {
                 if (ChannelOption.SoRcvbuf.Equals(option))
                 {
-                    SetReceiveBufferSize(tcp, this.options[ChannelOption.SoRcvbuf]);
+                    SetReceiveBufferSize(tcp, _options[ChannelOption.SoRcvbuf]);
                 }
                 else if (ChannelOption.SoSndbuf.Equals(option))
                 {
-                    SetSendBufferSize(tcp, this.options[ChannelOption.SoSndbuf]);
+                    SetSendBufferSize(tcp, _options[ChannelOption.SoSndbuf]);
                 }
                 else if (ChannelOption.TcpNodelay.Equals(option))
                 {
-                    SetTcpNoDelay(tcp, this.options[ChannelOption.TcpNodelay]);
+                    SetTcpNoDelay(tcp, _options[ChannelOption.TcpNodelay] != 0);
                 }
                 else if (ChannelOption.SoKeepalive.Equals(option))
                 {
-                    SetKeepAlive(tcp, this.options[ChannelOption.SoKeepalive]);
+                    SetKeepAlive(tcp, _options[ChannelOption.SoKeepalive] != 0);
                 }
                 else if (ChannelOption.SoReuseaddr.Equals(option))
                 {
-                    SetReuseAddress(tcp, this.options[ChannelOption.SoReuseaddr]);
+                    SetReuseAddress(tcp, _options[ChannelOption.SoReuseaddr]);
                 }
                 else
                 {

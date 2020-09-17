@@ -165,7 +165,7 @@ namespace DotNetty.Codecs.Http2
             _parentReadInProgress = true;
             switch (msg)
             {
-                case IHttp2WindowUpdateFrame _:
+                case IHttp2WindowUpdateFrame:
                     // We dont want to propagate update frames to the user
                     return;
 
