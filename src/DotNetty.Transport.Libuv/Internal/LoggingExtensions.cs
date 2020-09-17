@@ -22,66 +22,23 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using DotNetty.Buffers;
 using DotNetty.Common.Concurrency;
 using DotNetty.Common.Internal.Logging;
+using DotNetty.Transport.Libuv.Handles;
 using DotNetty.Transport.Libuv.Native;
+using DotNetty.Transport.Libuv.Requests;
 
 namespace DotNetty.Transport.Libuv
 {
-    internal static class LibuvLoggingExtensions
+    internal static partial class LibuvLoggingExtensions
     {
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopWalkingHandles(this IInternalLogger logger, IntPtr handle, int count)
-        {
-            logger.Debug($"Loop {handle} walking handles, count = {count}.");
-        }
+        #region -- Debug --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopRunningDefaultToCallCloseCallbacks(this IInternalLogger logger, IntPtr handle, int count)
+        public static void LoopDisposing(this IInternalLogger logger, IDisposable handle)
         {
-            logger.Debug($"Loop {handle} running default to call close callbacks, count = {count}.");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopCloseResult(this IInternalLogger logger, IntPtr handle, int result, int count)
-        {
-            logger.Debug($"Loop {handle} close result = {result}, count = {count}.");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopCloseAllHandlesLimit20TimesExceeded(this IInternalLogger logger, IntPtr handle)
-        {
-            logger.Warn($"Loop {handle} close all handles limit 20 times exceeded.");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopClosed(this IInternalLogger logger, IntPtr handle, int count)
-        {
-            logger.Info($"Loop {handle} closed, count = {count}.");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopGCHandleReleased(this IInternalLogger logger, IntPtr handle)
-        {
-            logger.Info($"Loop {handle} GCHandle released.");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopMemoryReleased(this IInternalLogger logger, IntPtr handle)
-        {
-            logger.Info($"Loop {handle} memory released.");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopWalkCallbackDisposed(this IInternalLogger logger, IntPtr handle, IntPtr loopHandle, IDisposable target)
-        {
-            logger.Debug($"Loop {loopHandle} walk callback disposed {handle} {target?.GetType()}");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopWalkCallbackAttemptToCloseHandleFailed(this IInternalLogger logger, IntPtr handle, IntPtr loopHandle, Exception exception)
-        {
-            logger.Warn($"Loop {loopHandle} Walk callback attempt to close handle {handle} failed. {exception}");
+            logger.Debug("Disposing {}", handle.GetType());
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -90,52 +47,62 @@ namespace DotNetty.Transport.Libuv
             logger.Debug($"Failed to close channel {channelObject} cleanly.", ex);
         }
 
+        #endregion
+
+        #region -- Info --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopAllocated(this IInternalLogger logger, IntPtr handle)
+        public static void HandleAllocated(this IInternalLogger logger, uv_handle_type handleType, IntPtr handle)
+        {
+            logger.Info("{} {} allocated.", handleType, handle);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void HandleClosedReleasingResourcesPending(this IInternalLogger logger, uv_handle_type handleType, IntPtr handle)
+        {
+            logger.Info("{} {} closed, releasing resources pending.", handleType, handle);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void LoopWalkCallbackDisposed(this IInternalLogger logger, IntPtr loopHandle, IntPtr handle, IDisposable target)
+        {
+            logger.Info($"Loop {loopHandle} walk callback disposed {handle} {target?.GetType()}");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Loop_memory_released(this IInternalLogger logger, IntPtr handle)
+        {
+            logger.Info($"Loop {handle} memory released.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Loop_GCHandle_released(this IInternalLogger logger, IntPtr handle)
+        {
+            logger.Info($"Loop {handle} GCHandle released.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Loop_closed(this IInternalLogger logger, IntPtr handle)
+        {
+            logger.Info($"Loop {handle} closed.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Loop_allocated(this IInternalLogger logger, IntPtr handle)
         {
             logger.Info($"Loop {handle} allocated.");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void ListeningOnPipe(this IInternalLogger logger, int loopThreadId, string pipeName)
+        public static void LoopThreadFinished(this IInternalLogger logger, XThread thread)
         {
-            logger.Info("{} ({}) listening on pipe {}.", nameof(DispatcherEventLoop), loopThreadId, pipeName);
+            logger.Info("Loop {}: thread finished.", thread.Name);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void DispatcherPipeConnected(this IInternalLogger logger, int loopThreadId, string pipeName)
+        public static void LoopDisposed(this IInternalLogger logger, XThread thread)
         {
-            logger.Info($"{nameof(WorkerEventLoop)} ({loopThreadId}) dispatcher pipe {pipeName} connected.");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopThreadFinished(this IInternalLogger logger, XThread thread, IntPtr handle)
-        {
-            logger.Info("Loop {}:{} thread finished.", thread.Name, handle);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopRunDefaultError(this IInternalLogger logger, XThread thread, IntPtr handle, Exception ex)
-        {
-            logger.Error("Loop {}:{} run default error.", thread.Name, handle, ex);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void ShuttingDownLoopError(this IInternalLogger logger, Exception ex)
-        {
-            logger.Error("{}: shutting down loop error", ex);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopDisposed(this IInternalLogger logger, XThread thread, IntPtr handle)
-        {
-            logger.Info("{}:{} disposed.", thread.Name, handle);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopDisposing(this IInternalLogger logger, IDisposable handle)
-        {
-            logger.Debug("Disposing {}", handle.GetType());
+            logger.Info("{}:disposed.", thread.Name);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -145,57 +112,61 @@ namespace DotNetty.Transport.Libuv
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToDisposeAClientConnection(this IInternalLogger logger, Exception ex)
-        {
-            logger.Warn("Failed to dispose a client connection.", ex);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void FailedToConnectToDispatcher(this IInternalLogger logger, int retryCount, OperationException error)
         {
             logger.Info($"{nameof(WorkerEventLoop)} failed to connect to dispatcher, Retry count = {retryCount}", error);
         }
 
+        #endregion
+
+        #region -- Warn --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void IPCPipeReadError(this IInternalLogger logger, OperationException error)
+        public static void Handle_receive_result_truncated(this IInternalLogger logger, IntPtr handle, IByteBuffer byteBuffer)
         {
-            logger.Warn("IPC Pipe read error", error);
+            logger.Warn($"{uv_handle_type.UV_UDP} {handle} receive result truncated, buffer size = {byteBuffer.Capacity}");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToWriteServerHandleToClient(this IInternalLogger logger, OperationException error)
+        public static void Udp_Exception_whilst_invoking_read_callback(this IInternalLogger logger, Exception exception)
         {
-            logger.Warn($"{nameof(PipeListener)} failed to write server handle to client", error);
+            logger.Warn($"{nameof(Udp)} Exception whilst invoking read callback.", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToSendServerHandleToClient(this IInternalLogger logger, Exception ex)
+        public static void Failed_to_close_and_releasing_resources(this IInternalLogger logger, HandleContext handle, Exception exception)
         {
-            logger.Warn($"{nameof(PipeListener)} failed to send server handle to client", ex);
+            logger.Warn($"{handle} Failed to close and releasing resources.", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void ReadError(this IInternalLogger logger, OperationException error)
+        public static void Failed_to_get_loop(this IInternalLogger logger, uv_handle_type handleType, Exception exception)
         {
-            logger.Warn($"{nameof(PipeListener)} read error", error);
+            logger.Warn($"{handleType} Failed to get loop.", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void TcpHandleReadCallbcakError(this IInternalLogger logger, IntPtr handle, Exception exception)
+        public static void Pipeline_Exception_whilst_invoking_read_callback(this IInternalLogger logger, Exception exception)
         {
-            logger.Warn($"Tcp {handle} read callbcak error.", exception);
+            logger.Warn($"Pipeline Exception whilst invoking read callback.", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void TerminatedWithNonEmptyTaskQueue(this IInternalLogger logger, int count)
+        public static void Loop_Walk_callback_attempt_to_close_handle_failed(this IInternalLogger logger, IntPtr loopHandle, IntPtr handle, Exception exception)
         {
-            logger.Warn($"{nameof(LoopExecutor)} terminated with non-empty task queue ({count})");
+            logger.Warn($"Loop {loopHandle} Walk callback attempt to close handle {handle} failed.", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LoopReleaseError(this IInternalLogger logger, XThread thread, IntPtr handle, Exception ex)
+        public static void Loop_close_all_handles_limit_20_times_exceeded(this IInternalLogger logger, IntPtr handle)
         {
-            logger.Warn("{}:{} release error {}", thread.Name, handle, ex);
+            logger.Warn($"Loop {handle} close all handles limit 20 times exceeded.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void LoopReleaseError(this IInternalLogger logger, XThread thread, Exception ex)
+        {
+            logger.Warn("{}:release error {}", thread.Name, ex);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -211,27 +182,111 @@ namespace DotNetty.Transport.Libuv
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToConnectToDispatcher(this IInternalLogger logger, ConnectRequest request)
+        public static void FailedToDisposeAClientConnection(this IInternalLogger logger, Exception ex)
         {
-            logger.Warn($"{nameof(WorkerEventLoop)} failed to connect to dispatcher", request.Error);
+            logger.Warn("Failed to dispose a client connection.", ex);
+        }
+
+        #endregion
+
+        #region -- Error --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RequestType_after_callback_error(this IInternalLogger logger, uv_req_type requestType, Exception exception)
+        {
+            logger.Error($"{requestType} after callback error", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void CallbackRrror(this IInternalLogger logger, uv_handle_type handleType, IntPtr handle, Exception exception)
+        public static void RequestType_work_callback_error(this IInternalLogger logger, uv_req_type requestType, Exception exception)
+        {
+            logger.Error($"{requestType} work callback error", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RequestType_OnWatcherCallback_error(this IInternalLogger logger, uv_req_type requestType, Exception exception)
+        {
+            logger.Error($"{requestType} OnWatcherCallback error.", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RequestType_OnWatcherCallback_error(this IInternalLogger logger, uv_req_type requestType, IntPtr handle, OperationException error)
+        {
+            logger.Error($"{requestType} {handle} error : {error.ErrorCode} {error.Name}.", error);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void UV_SHUTDOWN_callback_error(this IInternalLogger logger, Exception exception)
+        {
+            logger.Error("UV_SHUTDOWN callback error.", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void NativeHandle_error_whilst_closing_handle(this IInternalLogger logger, IntPtr handle, Exception exception)
+        {
+            logger.Error($"{nameof(NativeHandle)} {handle} error whilst closing handle.", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Handle_callback_error(this IInternalLogger logger, uv_handle_type handleType, IntPtr handle, Exception exception)
         {
             logger.Error($"{handleType} {handle} callback error.", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void ErrorWhilstClosingHandle(this IInternalLogger logger, uv_req_type requestType, IntPtr handle, Exception exception)
+        public static void Handle_read_error(this IInternalLogger logger, uv_handle_type handleType, IntPtr handle, int status, Exception exception)
         {
-            logger.Error($"{requestType} {handle} error whilst closing handle.", exception);
+            logger.Error($"{handleType} {handle} read error, status = {status}", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void ErrorWhilstClosingHandle(this IInternalLogger logger, IntPtr handle, Exception exception)
+        public static void Handle_faulted(this IInternalLogger logger, uv_handle_type handleType, Exception exception)
         {
-            logger.Error($"{nameof(NativeHandle)} {handle} error whilst closing handle.", exception);
+            logger.Error($"{handleType} faulted.", exception);
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Pipeline_Handle_faulted(this IInternalLogger logger, uv_handle_type handleType, Exception exception)
+        {
+            logger.Error($"Pipeline {handleType} faulted.", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Handle_close_handle_callback_error(this IInternalLogger logger, uv_handle_type handleType, Exception exception)
+        {
+            logger.Error($"{handleType} close handle callback error.", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Failed_to_close_handle(this IInternalLogger logger, uv_handle_type handleType, Exception exception)
+        {
+            logger.Error($"{handleType} Failed to close handle.", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Handle_failed_to_shutdown(this IInternalLogger logger, uv_handle_type handleType, IntPtr handle, Exception error)
+        {
+            logger.Error($"{handleType} {handle} failed to shutdown.", error);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Failed_to_write_data(this IInternalLogger logger, uv_handle_type handleType, WriteRequest request, Exception exception)
+        {
+            logger.Error($"{handleType} Failed to write data {request}.", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void LoopRunDefaultError(this IInternalLogger logger, XThread thread, Exception ex)
+        {
+            logger.Error("Loop {}:run default error.", thread.Name, ex);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ShuttingDownLoopError(this IInternalLogger logger, Exception ex)
+        {
+            logger.Error("{}: shutting down loop error", ex);
+        }
+
+        #endregion
     }
 }

@@ -22,6 +22,7 @@
 
 using System;
 using System.Net.Sockets;
+using DotNetty.Common;
 
 namespace DotNetty.Transport.Channels.Sockets
 {
@@ -94,7 +95,7 @@ namespace DotNetty.Transport.Channels.Sockets
         /// <remarks>Code take from Orleans(See https://github.com/dotnet/orleans/blob/main/src/Orleans.Core/Networking/Shared/SocketExtensions.cs). </remarks>
         internal static void EnableFastpath(this Socket socket)
         {
-            if (!PlatformApis.IsWindows) { return; }
+            if (!Platform.IsWindows) { return; }
 
             const int SIO_LOOPBACK_FAST_PATH = -1744830448;
             try
@@ -121,7 +122,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 case SocketError.OperationAborted:
                 case SocketError.Interrupted:
                 // Calling Dispose after ReceiveAsync can cause an "InvalidArgument" error on *nix.
-                case SocketError.InvalidArgument when !PlatformApis.IsWindows:
+                case SocketError.InvalidArgument when !Platform.IsWindows:
                     return true;
 
                 default:
@@ -136,9 +137,9 @@ namespace DotNetty.Transport.Channels.Sockets
                 case SocketError.ConnectionReset:
                 case SocketError.Shutdown:
                 // A connection reset can be reported as SocketError.ConnectionAborted on Windows.
-                case SocketError.ConnectionAborted when PlatformApis.IsWindows:
+                case SocketError.ConnectionAborted when Platform.IsWindows:
                 // ProtocolType can be removed once https://github.com/dotnet/corefx/issues/31927 is fixed.
-                case SocketError.ProtocolType when PlatformApis.IsDarwin:
+                case SocketError.ProtocolType when Platform.IsDarwin:
                     return true;
 
                 default:

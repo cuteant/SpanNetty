@@ -30,14 +30,8 @@ namespace DotNetty.Transport.Libuv
 {
     using System;
     using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Libuv.Handles;
     using DotNetty.Transport.Libuv.Native;
-
-    internal interface IServerNativeUnsafe
-    {
-        void Accept(RemoteConnection connection);
-
-        void Accept(NativeHandle handle);
-    }
 
     partial class TcpServerChannel<TServerChannel, TChannelFactory>
     {
@@ -45,17 +39,15 @@ namespace DotNetty.Transport.Libuv
         {
             static readonly Action<object, object> AcceptAction = (u, e) => OnAccept(u, e);
 
-            public TcpServerChannelUnsafe() : base()
-            {
-            }
+            public TcpServerChannelUnsafe() : base() { }
 
-            public override IntPtr UnsafeHandle => _channel._tcpListener.Handle;
+            public override IScheduleHandle UnsafeHandle => _channel._tcpListener.Handle;
 
             // Connection callback from Libuv thread
             void IServerNativeUnsafe.Accept(RemoteConnection connection)
             {
                 var ch = _channel;
-                NativeHandle client = connection.Client;
+                var client = connection.Client;
 
                 var connError = connection.Error;
                 // If the AutoRead is false, reject the connection
@@ -91,21 +83,21 @@ namespace DotNetty.Transport.Libuv
                 }
                 else
                 {
-                    Accept((Tcp)client);
+                    Accept(client);
                 }
             }
 
             // Called from other Libuv loop/thread received tcp handle from pipe
-            void IServerNativeUnsafe.Accept(NativeHandle handle)
+            void IServerNativeUnsafe.Accept(Tcp tcp)
             {
                 var ch = _channel;
                 if (ch.EventLoop.InEventLoop)
                 {
-                    Accept((Tcp)handle);
+                    Accept(tcp);
                 }
                 else
                 {
-                    _channel.EventLoop.Execute(AcceptAction, this, handle);
+                    _channel.EventLoop.Execute(AcceptAction, this, tcp);
                 }
             }
 

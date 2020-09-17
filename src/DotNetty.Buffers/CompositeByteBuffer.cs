@@ -342,9 +342,9 @@ namespace DotNetty.Buffers
                     unwrapped = unwrapped.Unwrap();
                     break;
 
-                case PooledDuplicatedByteBuffer _:
-                case ArrayPooledDuplicatedByteBuffer _:
-                case UnpooledDuplicatedByteBuffer _:
+                case PooledDuplicatedByteBuffer:
+                case ArrayPooledDuplicatedByteBuffer:
+                case UnpooledDuplicatedByteBuffer:
                     unwrapped = unwrapped.Unwrap();
                     break;
             }

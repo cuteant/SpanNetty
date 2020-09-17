@@ -28,17 +28,15 @@
 
 namespace DotNetty.Transport.Libuv
 {
-    using System;
+    using DotNetty.Transport.Libuv.Handles;
 
     partial class TcpChannel<TChannel>
     {
         public sealed class TcpChannelUnsafe : NativeChannelUnsafe
         {
-            public TcpChannelUnsafe() : base()
-            {
-            }
+            public TcpChannelUnsafe() : base() { }
 
-            public override IntPtr UnsafeHandle => _channel._tcp.Handle;
+            public override IScheduleHandle UnsafeHandle => _channel._tcp;
         }
     }
 }

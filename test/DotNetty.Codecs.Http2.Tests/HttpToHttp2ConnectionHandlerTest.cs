@@ -19,35 +19,35 @@ namespace DotNetty.Codecs.Http2.Tests
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Local;
     using DotNetty.Transport.Channels.Sockets;
-    using DotNetty.Transport.Libuv;
+    //using DotNetty.Transport.Libuv;
     using Moq;
     using Xunit;
     using Xunit.Abstractions;
 
-    public sealed class LibuvHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
-    {
-        static LibuvHttpToHttp2ConnectionHandlerTest()
-        {
-            DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
-        }
+    //public sealed class LibuvHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
+    //{
+    //    static LibuvHttpToHttp2ConnectionHandlerTest()
+    //    {
+    //        DotNetty.Common.ResourceLeakDetector.Level = Common.ResourceLeakDetector.DetectionLevel.Disabled;
+    //    }
 
-        public LibuvHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
+    //    public LibuvHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
 
-        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-        {
-            var dispatcher = new DispatcherEventLoopGroup();
-            var bossGroup = dispatcher;
-            var workGroup = new WorkerEventLoopGroup(dispatcher);
-            bootstrap.Group(bossGroup, workGroup)
-                     .Channel<TcpServerChannel>();
-            //bootstrap.Handler(new DotNetty.Handlers.Logging.LoggingHandler("LSTN"));
-        }
+    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+    //    {
+    //        var dispatcher = new DispatcherEventLoopGroup();
+    //        var bossGroup = dispatcher;
+    //        var workGroup = new WorkerEventLoopGroup(dispatcher);
+    //        bootstrap.Group(bossGroup, workGroup)
+    //                 .Channel<TcpServerChannel>();
+    //        //bootstrap.Handler(new DotNetty.Handlers.Logging.LoggingHandler("LSTN"));
+    //    }
 
-        protected override void SetupBootstrap(Bootstrap bootstrap)
-        {
-            bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
-        }
-    }
+    //    protected override void SetupBootstrap(Bootstrap bootstrap)
+    //    {
+    //        bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
+    //    }
+    //}
 
     //public sealed class SocketHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
     //{

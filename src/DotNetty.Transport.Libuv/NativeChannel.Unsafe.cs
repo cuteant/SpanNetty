@@ -35,17 +35,17 @@ namespace DotNetty.Transport.Libuv
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Libuv.Handles;
     using DotNetty.Transport.Libuv.Native;
+    using DotNetty.Transport.Libuv.Requests;
 
     partial class NativeChannel<TChannel, TUnsafe>
     {
-        public abstract class NativeChannelUnsafe : AbstractUnsafe, INativeUnsafe
+        public abstract class NativeChannelUnsafe : AbstractUnsafe, INativeChannelUnsafe
         {
             private static readonly Action<object, object> CancelConnectAction = (c, s) => CancelConnect(c, s);
 
-            protected NativeChannelUnsafe() : base()
-            {
-            }
+            protected NativeChannelUnsafe() : base() { }
 
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
@@ -95,7 +95,7 @@ namespace DotNetty.Transport.Libuv
             }
 
             // Connect request callback from libuv thread
-            void INativeUnsafe.FinishConnect(ConnectRequest request)
+            void INativeChannelUnsafe.FinishConnect(Tcp tcp, OperationException error)
             {
                 var ch = _channel;
                 _ = (ch._connectCancellationTask?.Cancel());
@@ -106,7 +106,6 @@ namespace DotNetty.Transport.Libuv
                 {
                     if (promise is object) // Not cancelled from timed out
                     {
-                        OperationException error = request.Error;
                         if (error is object)
                         {
                             if (error.ErrorCode == ErrorCode.ETIMEDOUT)
@@ -136,7 +135,6 @@ namespace DotNetty.Transport.Libuv
                 }
                 finally
                 {
-                    request.Dispose();
                     ch._connectPromise = null;
                     if (!success)
                     {
@@ -145,10 +143,10 @@ namespace DotNetty.Transport.Libuv
                 }
             }
 
-            public abstract IntPtr UnsafeHandle { get; }
+            public abstract IScheduleHandle UnsafeHandle { get; }
 
             // Allocate callback from libuv thread
-            uv_buf_t INativeUnsafe.PrepareRead(ReadOperation readOperation)
+            uv_buf_t INativeChannelUnsafe.PrepareRead(ReadOperation readOperation)
             {
                 Debug.Assert(readOperation is object);
 
@@ -164,7 +162,7 @@ namespace DotNetty.Transport.Libuv
             }
 
             // Read callback from libuv thread
-            void INativeUnsafe.FinishRead(ReadOperation operation)
+            void INativeChannelUnsafe.FinishRead(ReadOperation operation)
             {
                 var ch = _channel;
                 IChannelConfiguration config = ch.Configuration;
@@ -255,7 +253,7 @@ namespace DotNetty.Transport.Libuv
             }
 
             // Write request callback from libuv thread
-            void INativeUnsafe.FinishWrite(int bytesWritten, OperationException error)
+            void INativeChannelUnsafe.FinishWrite(int bytesWritten, OperationException error)
             {
                 var ch = _channel;
                 bool resetWritePending = ch.TryResetState(StateFlags.WriteScheduled);
@@ -285,18 +283,5 @@ namespace DotNetty.Transport.Libuv
                 Flush0();
             }
         }
-    }
-
-    internal interface INativeUnsafe
-    {
-        IntPtr UnsafeHandle { get; }
-
-        void FinishConnect(ConnectRequest request);
-
-        uv_buf_t PrepareRead(ReadOperation readOperation);
-
-        void FinishRead(ReadOperation readOperation);
-
-        void FinishWrite(int bytesWritten, OperationException error);
     }
 }

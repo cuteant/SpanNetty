@@ -33,9 +33,8 @@ namespace DotNetty.Transport.Libuv
     using System.Diagnostics;
     using System.Net.Sockets;
     using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Libuv.Handles;
     using DotNetty.Transport.Libuv.Native;
-
-    using TcpListener = Native.TcpListener;
 
     sealed class TcpServerChannelConfig : DefaultChannelConfiguration
     {
@@ -116,8 +115,8 @@ namespace DotNetty.Transport.Libuv
             try
             {
                 var channel = (INativeChannel)this.Channel;
-                var tcpListener = (TcpListener)channel.GetHandle();
-                return tcpListener.ReceiveBufferSize(0);
+                var tcpListener = (Tcp)channel.GetHandle();
+                return tcpListener.GetReceiveBufferSize();
             }
             catch (ObjectDisposedException ex)
             {
@@ -147,15 +146,15 @@ namespace DotNetty.Transport.Libuv
             }
             else
             {
-                SetReceiveBufferSize((TcpHandle)channel.GetHandle(), value);
+                SetReceiveBufferSize((Tcp)channel.GetHandle(), value);
             }
         }
 
-        static void SetReceiveBufferSize(TcpHandle tcpHandle, int value)
+        static void SetReceiveBufferSize(Tcp tcpHandle, int value)
         {
             try
             {
-                _ = tcpHandle.ReceiveBufferSize(value);
+                _ = tcpHandle.SetReceiveBufferSize(value);
             }
             catch (ObjectDisposedException ex)
             {
@@ -172,8 +171,8 @@ namespace DotNetty.Transport.Libuv
             try
             {
                 var channel = (INativeChannel)this.Channel;
-                var tcpListener = (TcpListener)channel.GetHandle();
-                return PlatformApi.GetReuseAddress(tcpListener);
+                var tcpListener = (Tcp)channel.GetHandle();
+                return PlatformApis.GetReuseAddress(tcpListener);
             }
             catch (ObjectDisposedException ex)
             {
@@ -204,15 +203,15 @@ namespace DotNetty.Transport.Libuv
             }
             else
             {
-                SetReuseAddress((TcpListener)channel.GetHandle(), optionValue);
+                SetReuseAddress((Tcp)channel.GetHandle(), optionValue);
             }
         }
 
-        static void SetReuseAddress(TcpListener listener, int value)
+        static void SetReuseAddress(Tcp listener, int value)
         {
             try
             {
-                PlatformApi.SetReuseAddress(listener, value);
+                PlatformApis.SetReuseAddress(listener, value);
             }
             catch (ObjectDisposedException ex)
             {
@@ -229,8 +228,8 @@ namespace DotNetty.Transport.Libuv
             try
             {
                 var channel = (INativeChannel)this.Channel;
-                var tcpListener = (TcpListener)channel.GetHandle();
-                return PlatformApi.GetReusePort(tcpListener);
+                var tcpListener = (Tcp)channel.GetHandle();
+                return PlatformApis.GetReusePort(tcpListener);
             }
             catch (ObjectDisposedException ex)
             {
@@ -261,15 +260,15 @@ namespace DotNetty.Transport.Libuv
             }
             else
             {
-                SetReusePort((TcpListener)channel.GetHandle(), optionValue);
+                SetReusePort((Tcp)channel.GetHandle(), optionValue);
             }
         }
 
-        static void SetReusePort(TcpListener listener, int value)
+        static void SetReusePort(Tcp listener, int value)
         {
             try
             {
-                PlatformApi.SetReusePort(listener, value);
+                PlatformApis.SetReusePort(listener, value);
             }
             catch (ObjectDisposedException ex)
             {
@@ -291,7 +290,7 @@ namespace DotNetty.Transport.Libuv
             Debug.Assert(this.options.Count <= 3);
 
             var channel = (INativeChannel)this.Channel;
-            var tcpListener = (TcpListener)channel.GetHandle();
+            var tcpListener = (Tcp)channel.GetHandle();
             foreach (ChannelOption option in this.options.Keys)
             {
                 if (ChannelOption.SoRcvbuf.Equals(option))

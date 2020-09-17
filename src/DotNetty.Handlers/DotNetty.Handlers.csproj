@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.csproj" />
-    <ProjectReference Include="..\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
   </ItemGroup>
 
   <ItemGroup>

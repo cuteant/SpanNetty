@@ -22,13 +22,14 @@
 
 using System;
 using DotNetty.Transport.Channels;
-using DotNetty.Transport.Libuv.Native;
+using DotNetty.Transport.Libuv.Handles;
 
 namespace DotNetty.Transport.Libuv
 {
     interface INativeChannel : IChannel
     {
         bool IsBound { get; }
-        NativeHandle GetHandle();
+
+        IInternalScheduleHandle GetHandle();
     }
 }

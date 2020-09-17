@@ -26,30 +26,30 @@
  * Licensed under the MIT license. See LICENSE file in the project root for full license information.
  */
 
-#pragma warning disable 414
-#pragma warning disable 169
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
     using System.Net.Sockets;
     using System.Runtime.InteropServices;
+    using DotNetty.Common;
+    using DotNetty.Transport.Libuv.Handles;
 
     //https://github.com/aspnet/KestrelHttpServer/blob/dev/src/Microsoft.AspNetCore.Server.Kestrel.Transport.Libuv/Internal/ListenerPrimary.cs
     sealed class WindowsApi : IDisposable
     {
-        IntPtr fileCompletionInfoPtr;
-        bool tryDetachFromIOCP = PlatformApi.IsWindows;
+        private IntPtr _fileCompletionInfoPtr;
+        private bool _tryDetachFromIOCP = Platform.IsWindows;
 
         public WindowsApi()
         {
             var fileCompletionInfo = new FILE_COMPLETION_INFORMATION { Key = IntPtr.Zero, Port = IntPtr.Zero };
-            this.fileCompletionInfoPtr = NativeMethods.Allocate(Marshal.SizeOf(fileCompletionInfo));
-            Marshal.StructureToPtr(fileCompletionInfo, this.fileCompletionInfoPtr, false);
+            _fileCompletionInfoPtr = PlatformApis.Allocate(Marshal.SizeOf(fileCompletionInfo));
+            Marshal.StructureToPtr(fileCompletionInfo, _fileCompletionInfoPtr, false);
         }
 
-        public void DetachFromIOCP(NativeHandle handle)
+        public void DetachFromIOCP(IStreamHandle handle)
         {
-            if (!this.tryDetachFromIOCP)
+            if (!_tryDetachFromIOCP)
             {
                 return;
             }
@@ -59,21 +59,17 @@ namespace DotNetty.Transport.Libuv.Native
             // https://msdn.microsoft.com/en-us/library/cc704588.aspx
             const uint STATUS_INVALID_INFO_CLASS = 0xC0000003;
 
-#pragma warning disable IDE0059 // 不需要赋值
             var statusBlock = new IO_STATUS_BLOCK();
-#pragma warning restore IDE0059 // 不需要赋值
             IntPtr socket = IntPtr.Zero;
-            _ = NativeMethods.uv_fileno(handle.Handle, ref socket);
+            handle.GetFileDescriptor(ref socket);
 
             uint len = (uint)Marshal.SizeOf<FILE_COMPLETION_INFORMATION>();
             if (NtSetInformationFile(socket,
-#pragma warning disable IDE0059 // 不需要赋值
-                out statusBlock, this.fileCompletionInfoPtr, len,
-#pragma warning restore IDE0059 // 不需要赋值
+                out statusBlock, _fileCompletionInfoPtr, len,
                 FileReplaceCompletionInformation) == STATUS_INVALID_INFO_CLASS)
             {
                 // Replacing IOCP information is only supported on Windows 8.1 or newer
-                this.tryDetachFromIOCP = false;
+                _tryDetachFromIOCP = false;
             }
         }
 
@@ -135,12 +131,12 @@ namespace DotNetty.Transport.Libuv.Native
 
         public void Dispose()
         {
-            IntPtr handle = this.fileCompletionInfoPtr;
+            IntPtr handle = _fileCompletionInfoPtr;
             if (handle != IntPtr.Zero)
             {
-                NativeMethods.FreeMemory(handle);
+                PlatformApis.FreeMemory(handle);
             }
-            this.fileCompletionInfoPtr = IntPtr.Zero;
+            _fileCompletionInfoPtr = IntPtr.Zero;
         }
     }
 }

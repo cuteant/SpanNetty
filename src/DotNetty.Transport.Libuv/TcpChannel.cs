@@ -30,7 +30,8 @@ namespace DotNetty.Transport.Libuv
 {
     using System.Net;
     using DotNetty.Transport.Channels;
-    using DotNetty.Transport.Libuv.Native;
+    using DotNetty.Transport.Libuv.Handles;
+    using DotNetty.Transport.Libuv.Requests;
 
     public sealed class TcpChannel : TcpChannel<TcpChannel>
     {
@@ -71,8 +72,8 @@ namespace DotNetty.Transport.Libuv
         {
             if (_tcp is null)
             {
-                var loopExecutor = (LoopExecutor)EventLoop;
-                _tcp = new Tcp(loopExecutor.UnsafeLoop);
+                var loopExecutor = (AbstractUVEventLoop)EventLoop;
+                _tcp = loopExecutor.UnsafeLoop.CreateTcp();
             }
             else
             {
@@ -80,7 +81,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        internal override NativeHandle GetHandle()
+        internal override IInternalScheduleHandle GetHandle()
         {
             if (_tcp is null)
             {
@@ -120,12 +121,13 @@ namespace DotNetty.Transport.Libuv
             {
                 if (TryResetState(StateFlags.Open | StateFlags.Active))
                 {
-                    if (_tcp is object)
+                    var tcp = _tcp;
+                    if (tcp is not null)
                     {
-                        _tcp.ReadStop();
-                        _tcp.CloseHandle();
+                        _tcp = null;
+                        tcp.ReadStop();
+                        tcp.CloseHandle();
                     }
-                    _tcp = null;
                 }
             }
             finally
@@ -136,10 +138,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override void DoBeginRead()
         {
-            if (!IsOpen)
-            {
-                return;
-            }
+            if (!IsOpen) { return; }
 
             ReadPending = true;
             if (!IsInState(StateFlags.ReadScheduled))
@@ -168,7 +167,7 @@ namespace DotNetty.Transport.Libuv
             if (input.Size > 0)
             {
                 SetState(StateFlags.WriteScheduled);
-                var loopExecutor = (LoopExecutor)EventLoop;
+                var loopExecutor = (AbstractUVEventLoop)EventLoop;
                 WriteRequest request = loopExecutor.WriteRequestPool.Take();
                 request.DoWrite(Unsafe, input);
             }

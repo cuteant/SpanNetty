@@ -50,11 +50,11 @@ namespace DotNetty.Buffers
                     _buffer = duplicated._buffer;
                     break;
 
-                case AbstractPooledDerivedByteBuffer _:
+                case AbstractPooledDerivedByteBuffer:
                     _buffer = (AbstractByteBuffer)buffer.Unwrap();
                     break;
 
-                case AbstractArrayPooledDerivedByteBuffer _:
+                case AbstractArrayPooledDerivedByteBuffer:
                     _buffer = (AbstractByteBuffer)buffer.Unwrap();
                     break;
 
