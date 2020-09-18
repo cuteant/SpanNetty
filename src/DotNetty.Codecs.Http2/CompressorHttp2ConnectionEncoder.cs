@@ -23,7 +23,6 @@
 namespace DotNetty.Codecs.Http2
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Compression;

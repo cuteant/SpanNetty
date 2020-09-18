@@ -143,7 +143,7 @@ namespace DotNetty.Codecs.Http2
                 // Default handler for any other types of errors that may have occurred. For example,
                 // the Header builder throws IllegalArgumentException if the key or value was invalid
                 // for any reason (e.g. the key was an invalid pseudo-header).
-                return ThrowHelper.ThrowConnectionError_FailedEncodingHe1adersBlock(e);
+                return ThrowHelper.FromConnectionError_FailedEncodingHe1adersBlock(e);
             }
         }
 

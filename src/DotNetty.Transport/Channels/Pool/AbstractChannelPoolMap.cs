@@ -89,7 +89,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         private Task<bool> RemoveAsyncIfSupported(TKey key)
         {
-            if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
+            if (key is null) { return ThrowHelper.FromArgumentNullException<bool>(ExceptionArgument.key); }
 
             if (_map.TryRemove(key, out TPool pool))
             {

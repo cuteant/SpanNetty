@@ -292,7 +292,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 CloseChannel(channel);
                 // Better include a stacktrace here as this is an user error.
-                return ThrowHelper.ThrowArgumentException_ChannelWasNotAcquiredFromPool(channel);
+                return ThrowHelper.FromArgumentException_ChannelWasNotAcquiredFromPool(channel);
             }
             else
             {

@@ -152,7 +152,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return CompareTo(attr);
             }
 
-            return ThrowHelper.ThrowArgumentException_CompareToHttpData(DataType, other.DataType);
+            return ThrowHelper.FromArgumentException_CompareToHttpData(DataType, other.DataType);
         }
 
         public int CompareTo(IAttribute attribute) => string.Compare(Name, attribute.Name, StringComparison.OrdinalIgnoreCase);

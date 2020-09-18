@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return CompareTo(fu);
             }
 
-            return ThrowHelper.ThrowArgumentException_CompareToHttpData(DataType, other.DataType);
+            return ThrowHelper.FromArgumentException_CompareToHttpData(DataType, other.DataType);
         }
 
         public int CompareTo(IFileUpload other) => FileUploadUtil.CompareTo(this, other);

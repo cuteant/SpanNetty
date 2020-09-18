@@ -138,7 +138,7 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception t)
             {
-                return ThrowHelper.ThrowStreamError_DecompressorErrorDetectedWhileDelegatingDataReadOnStream(stream.Id, t);
+                return ThrowHelper.FromStreamError_DecompressorErrorDetectedWhileDelegatingDataReadOnStream(stream.Id, t);
             }
 
         }
@@ -351,7 +351,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     // The stream should be closed at this point. We have already changed our state tracking the compressed
                     // bytes, and there is no guarantee we can recover if the underlying flow controller throws.
-                    return ThrowHelper.ThrowStreamError_ErrorWhileReturningBytesToFlowControlWindow(stream.Id, t);
+                    return ThrowHelper.FromStreamError_ErrorWhileReturningBytesToFlowControlWindow(stream.Id, t);
                 }
             }
 

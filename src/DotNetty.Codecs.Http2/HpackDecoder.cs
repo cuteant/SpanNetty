@@ -578,7 +578,7 @@ namespace DotNetty.Codecs.Http2
                 result += (b & 0x7FL) << shift;
             }
 
-            return ThrowHelper.ThrowHttp2Exception_DecodeULE128Decompression();
+            return ThrowHelper.FromHttp2Exception_DecodeULE128Decompression();
         }
     }
 

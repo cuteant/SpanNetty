@@ -1035,7 +1035,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             finally { _ = line.Release(); }
             _ = undecodedChunk.SetReaderIndex(readerIndex);
-            return ThrowHelper.ThrowNotEnoughDataDecoderException_ReadLineStandard();
+            return ThrowHelper.FromNotEnoughDataDecoderException_ReadLineStandard();
         }
 
         static StringCharSequence ReadLine(IByteBuffer undecodedChunk, Encoding charset)
@@ -1095,7 +1095,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 _ = line.Release();
             }
             _ = undecodedChunk.SetReaderIndex(readerIndex);
-            return ThrowHelper.ThrowNotEnoughDataDecoderException_ReadLine();
+            return ThrowHelper.FromNotEnoughDataDecoderException_ReadLine();
         }
 
         static StringBuilderCharSequence ReadDelimiterStandard(IByteBuffer undecodedChunk, ICharSequence delimiter)
@@ -1203,7 +1203,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 ThrowHelper.ThrowNotEnoughDataDecoderException(e);
             }
             _ = undecodedChunk.SetReaderIndex(readerIndex);
-            return ThrowHelper.ThrowNotEnoughDataDecoderException_ReadDelimiterStandard();
+            return ThrowHelper.FromNotEnoughDataDecoderException_ReadDelimiterStandard();
         }
 
         static StringBuilderCharSequence ReadDelimiter(IByteBuffer undecodedChunk, ICharSequence delimiter)
@@ -1349,7 +1349,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 ThrowHelper.ThrowNotEnoughDataDecoderException(e);
             }
             _ = undecodedChunk.SetReaderIndex(readerIndex);
-            return ThrowHelper.ThrowNotEnoughDataDecoderException_ReadDelimiter();
+            return ThrowHelper.FromNotEnoughDataDecoderException_ReadDelimiter();
         }
 
         static bool LoadDataMultipartStandard(IByteBuffer undecodedChunk, ICharSequence delimiter, IHttpData httpData)

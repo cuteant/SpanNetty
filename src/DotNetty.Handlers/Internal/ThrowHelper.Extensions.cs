@@ -266,7 +266,7 @@ namespace DotNetty.Handlers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static IIPFilterRule ThrowArgumentOutOfRangeException_OnlySupportIPv4AndIPv6Addresses()
+        internal static IIPFilterRule FromArgumentOutOfRangeException_OnlySupportIPv4AndIPv6Addresses()
         {
             throw GetArgumentOutOfRangeException();
 

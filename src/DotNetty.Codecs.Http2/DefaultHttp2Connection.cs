@@ -113,7 +113,7 @@ namespace DotNetty.Codecs.Http2
 
         public Task CloseAsync(IPromise promise)
         {
-            if (promise is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.promise); }
+            if (promise is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.promise); }
 
             // Since we allow this method to be called multiple times, we must make sure that all the promises are notified
             // when all streams are removed and the close operation completes.

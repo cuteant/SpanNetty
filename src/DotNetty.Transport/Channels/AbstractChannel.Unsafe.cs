@@ -79,17 +79,17 @@ namespace DotNetty.Transport.Channels
 
             public Task RegisterAsync(IEventLoop eventLoop)
             {
-                if (eventLoop is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoop); }
+                if (eventLoop is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.eventLoop); }
 
                 var ch = _channel;
                 if (ch.IsRegistered)
                 {
-                    return ThrowHelper.ThrowInvalidOperationException_RegisteredToEventLoopAlready();
+                    return ThrowHelper.FromInvalidOperationException_RegisteredToEventLoopAlready();
                 }
 
                 if (!ch.IsCompatible(eventLoop))
                 {
-                    return ThrowHelper.ThrowInvalidOperationException_IncompatibleEventLoopType(eventLoop);
+                    return ThrowHelper.FromInvalidOperationException_IncompatibleEventLoopType(eventLoop);
                 }
 
                 _ = Interlocked.Exchange(ref ch.v_eventLoop, eventLoop);
@@ -678,7 +678,7 @@ namespace DotNetty.Transport.Channels
                 return false;
             }
 
-            protected Task CreateClosedChannelExceptionTask() => ThrowHelper.ThrowClosedChannelException();
+            protected Task CreateClosedChannelExceptionTask() => ThrowHelper.FromClosedChannelException();
 
             protected void CloseIfClosed()
             {

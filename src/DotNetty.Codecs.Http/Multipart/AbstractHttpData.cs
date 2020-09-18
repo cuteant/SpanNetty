@@ -111,7 +111,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 catch (IOException e)
                 {
-                    return ThrowHelper.ThrowChannelException_IO<IByteBuffer>(e);
+                    return ThrowHelper.FromChannelException_IO<IByteBuffer>(e);
                 }
             }
         }
