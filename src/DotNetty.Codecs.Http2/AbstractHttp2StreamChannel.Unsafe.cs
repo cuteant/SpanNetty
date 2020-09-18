@@ -90,20 +90,27 @@ namespace DotNetty.Codecs.Http2
                 var ch = _channel;
                 if (ch.InternalRegistered)
                 {
-                    ThrowHelper.ThrowNotSupportedException_Re_register_is_not_supported();
+                    return ThrowHelper.FromNotSupportedException_Re_register_is_not_supported();
                 }
 
-                ch.InternalRegistered = true;
-
-                var pipeline = ch.Pipeline;
-
-                _ = pipeline.FireChannelRegistered();
-                if (ch.IsActive)
+                try
                 {
-                    _ = pipeline.FireChannelActive();
-                }
+                    ch.InternalRegistered = true;
 
-                return TaskUtil.Completed;
+                    var pipeline = ch.Pipeline;
+
+                    _ = pipeline.FireChannelRegistered();
+                    if (ch.IsActive)
+                    {
+                        _ = pipeline.FireChannelActive();
+                    }
+
+                    return TaskUtil.Completed;
+                }
+                catch (Exception exc)
+                {
+                    return TaskUtil.FromException(exc);
+                }
             }
 
             public Task BindAsync(EndPoint localAddress)

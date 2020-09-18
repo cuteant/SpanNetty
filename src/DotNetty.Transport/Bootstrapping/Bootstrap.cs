@@ -130,16 +130,16 @@ namespace DotNetty.Transport.Bootstrapping
         /// Connects an <see cref="IChannel"/> to the remote peer.
         /// </summary>
         /// <returns>The <see cref="IChannel"/>.</returns>
-        public Task<IChannel> ConnectAsync()
+        public async Task<IChannel> ConnectAsync()
         {
             Validate();
             EndPoint remoteAddress = InternalRemoteAddress;
             if (remoteAddress is null)
             {
-                return ThrowHelper.ThrowInvalidOperationException_RemoteAddrNotSet();
+                ThrowHelper.ThrowInvalidOperationException_RemoteAddrNotSet();
             }
 
-            return DoResolveAndConnectAsync(remoteAddress, LocalAddress());
+            return await DoResolveAndConnectAsync(remoteAddress, LocalAddress());
         }
 
         /// <summary>
@@ -163,12 +163,12 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         /// <param name="remoteAddress">The remote <see cref="EndPoint"/> to connect to.</param>
         /// <returns>The <see cref="IChannel"/>.</returns>
-        public Task<IChannel> ConnectAsync(EndPoint remoteAddress)
+        public async Task<IChannel> ConnectAsync(EndPoint remoteAddress)
         {
             if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
 
             Validate();
-            return DoResolveAndConnectAsync(remoteAddress, LocalAddress());
+            return await DoResolveAndConnectAsync(remoteAddress, LocalAddress());
         }
 
         /// <summary>
@@ -177,12 +177,12 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="remoteAddress">The remote <see cref="EndPoint"/> to connect to.</param>
         /// <param name="localAddress">The local <see cref="EndPoint"/> to connect to.</param>
         /// <returns>The <see cref="IChannel"/>.</returns>
-        public Task<IChannel> ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
+        public async Task<IChannel> ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
             if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
 
             Validate();
-            return DoResolveAndConnectAsync(remoteAddress, localAddress);
+            return await DoResolveAndConnectAsync(remoteAddress, localAddress);
         }
 
         /// <summary>

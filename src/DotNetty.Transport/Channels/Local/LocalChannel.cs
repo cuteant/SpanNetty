@@ -492,7 +492,7 @@ namespace DotNetty.Transport.Channels.Local
 
                 if (Volatile.Read(ref _channel.v_connectPromise) is object)
                 {
-                    ThrowHelper.ThrowConnectionPendingException();
+                    return ThrowHelper.FromConnectionPendingException();
                 }
 
                 _ = Interlocked.Exchange(ref _channel.v_connectPromise, promise);

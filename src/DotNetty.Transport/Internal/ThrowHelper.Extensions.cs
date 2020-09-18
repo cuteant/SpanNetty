@@ -299,7 +299,7 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static bool ThrowArgumentException_ChannelWasNotAcquiredFromPool(IChannel channel)
+        internal static bool FromArgumentException_ChannelWasNotAcquiredFromPool(IChannel channel)
         {
             throw GetArgumentException();
             ArgumentException GetArgumentException()
@@ -435,9 +435,9 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException_TooManyOutstandingAcquireOperations()
+        internal static ValueTask<IChannel> FromInvalidOperationException_TooManyOutstandingAcquireOperations()
         {
-            throw FixedChannelPool.FullException;
+            return new ValueTask<IChannel>(TaskUtil.FromException<IChannel>(FixedChannelPool.FullException));
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -447,9 +447,9 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException_PoolClosedOnAcquireException()
+        internal static ValueTask<IChannel> FromInvalidOperationException_PoolClosedOnAcquireException()
         {
-            throw FixedChannelPool.PoolClosedOnAcquireException;
+            return new ValueTask<IChannel>(TaskUtil.FromException<IChannel>(FixedChannelPool.PoolClosedOnAcquireException));
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -486,9 +486,9 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task<IChannel> ThrowInvalidOperationException_RemoteAddrNotSet()
+        internal static void ThrowInvalidOperationException_RemoteAddrNotSet()
         {
-            return TaskUtil.FromException<IChannel>(GetInvalidOperationException());
+            throw GetInvalidOperationException();
 
             static InvalidOperationException GetInvalidOperationException()
             {
@@ -629,7 +629,7 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowInvalidOperationException_WritabilityMask(int index)
+        internal static int FromInvalidOperationException_WritabilityMask(int index)
         {
             throw GetInvalidOperationException();
             InvalidOperationException GetInvalidOperationException()
@@ -669,7 +669,7 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowInvalidOperationException_RegisteredToEventLoopAlready()
+        internal static Task FromInvalidOperationException_RegisteredToEventLoopAlready()
         {
             return TaskUtil.FromException(GetInvalidOperationException());
 
@@ -680,7 +680,7 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowInvalidOperationException_IncompatibleEventLoopType(IEventLoop eventLoop)
+        internal static Task FromInvalidOperationException_IncompatibleEventLoopType(IEventLoop eventLoop)
         {
             return TaskUtil.FromException(GetInvalidOperationException());
             InvalidOperationException GetInvalidOperationException()
@@ -797,7 +797,7 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowChannelException_Get_Int(ObjectDisposedException ex)
+        internal static int FromChannelException_Get_Int(ObjectDisposedException ex)
         {
             throw GetException();
             ChannelException GetException()
@@ -807,7 +807,7 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowChannelException_Get_Int(SocketException ex)
+        internal static int FromChannelException_Get_Int(SocketException ex)
         {
             throw GetException();
             ChannelException GetException()
@@ -841,7 +841,7 @@ namespace DotNetty.Transport
         #region -- ClosedChannelException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowClosedChannelException()
+        internal static Task FromClosedChannelException()
         {
             return TaskUtil.FromException(GetClosedChannelException());
         }
@@ -889,6 +889,12 @@ namespace DotNetty.Transport
         #endregion
 
         #region -- NotSupportedException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static Task FromNotSupportedException()
+        {
+            return TaskUtil.FromException(new NotSupportedException());
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static NotSupportedException GetNotSupportedException()
@@ -958,9 +964,9 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowConnectionPendingException()
+        internal static Task FromConnectionPendingException()
         {
-            throw GetException();
+            return TaskUtil.FromException(GetException());
 
             static ConnectionPendingException GetException()
             {

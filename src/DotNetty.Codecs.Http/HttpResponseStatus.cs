@@ -329,7 +329,7 @@ namespace DotNetty.Codecs.Http
             }
             catch (Exception e)
             {
-                return ThrowHelper.ThrowArgumentException_ParseLine(line, e);
+                return ThrowHelper.FromArgumentException_ParseLine(line, e);
             }
         }
 
@@ -353,7 +353,7 @@ namespace DotNetty.Codecs.Http
             }
             catch (Exception e)
             {
-                return ThrowHelper.ThrowArgumentException_ParseLine(line, e);
+                return ThrowHelper.FromArgumentException_ParseLine(line, e);
             }
         }
 

@@ -78,7 +78,7 @@ namespace DotNetty.Common.Utilities
                 return this.CompareTo(signal);
             }
 
-            return ThrowHelper.ThrowException_CompareSignal();
+            return ThrowHelper.FromException_CompareSignal();
         }
 
         public int CompareTo(Signal other)

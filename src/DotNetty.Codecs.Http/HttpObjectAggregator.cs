@@ -208,7 +208,7 @@ namespace DotNetty.Codecs.Http
                 case IHttpResponse response:
                     return new AggregatedFullHttpResponse(response, content, null);
                 default:
-                    return ThrowHelper.ThrowCodecException_InvalidType(start);
+                    return ThrowHelper.FromCodecException_InvalidType(start);
             }
         }
 

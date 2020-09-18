@@ -247,17 +247,17 @@ namespace DotNetty.Transport.Bootstrapping
         /// <summary>
         /// Creates a new <see cref="IChannel"/> and registers it with an <see cref="IEventLoop"/>.
         /// </summary>
-        public Task<IChannel> RegisterAsync()
+        public async Task<IChannel> RegisterAsync()
         {
             Validate();
-            return InitAndRegisterAsync();
+            return await InitAndRegisterAsync();
         }
 
         /// <summary>
         /// Creates a new <see cref="IChannel"/> and binds it to the endpoint specified via the <see cref="LocalAddress(EndPoint)"/> methods.
         /// </summary>
         /// <returns>The bound <see cref="IChannel"/>.</returns>
-        public Task<IChannel> BindAsync()
+        public async Task<IChannel> BindAsync()
         {
             Validate();
             EndPoint address = InternalLocalAddress;
@@ -265,7 +265,7 @@ namespace DotNetty.Transport.Bootstrapping
             {
                 ThrowHelper.ThrowInvalidOperationException_LocalAddrMustBeSetBeforehand();
             }
-            return DoBindAsync(address);
+            return await DoBindAsync(address);
         }
 
         /// <summary>
@@ -299,12 +299,12 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         /// <param name="localAddress">The <see cref="EndPoint"/> instance to bind the local "end" to.</param>
         /// <returns>The bound <see cref="IChannel"/>.</returns>
-        public Task<IChannel> BindAsync(EndPoint localAddress)
+        public async Task<IChannel> BindAsync(EndPoint localAddress)
         {
             Validate();
             if (localAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
 
-            return DoBindAsync(localAddress);
+            return await DoBindAsync(localAddress);
         }
 
         async Task<IChannel> DoBindAsync(EndPoint localAddress)

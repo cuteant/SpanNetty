@@ -265,7 +265,7 @@ namespace DotNetty.Codecs.Http
                 return this.CompareTo(httpVersion);
             }
 
-            return ThrowHelper.ThrowArgumentException_CompareToHttpVersion();
+            return ThrowHelper.FromArgumentException_CompareToHttpVersion();
         }
 
         internal void Encode(IByteBuffer buf)

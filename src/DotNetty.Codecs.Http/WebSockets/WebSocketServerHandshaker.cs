@@ -249,7 +249,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 ctx = p.Context<HttpServerCodec>();
                 if (ctx is null)
                 {
-                    return ThrowHelper.ThrowInvalidOperationException_NoHttpDecoderAndServerCodec();
+                    return ThrowHelper.FromInvalidOperationException_NoHttpDecoderAndServerCodec();
                 }
             }
 
@@ -328,7 +328,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="frame">Closing Frame that was received</param>
         public virtual Task CloseAsync(IChannel channel, CloseWebSocketFrame frame)
         {
-            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.channel); }
 
             return channel.WriteAndFlushAsync(frame).CloseOnComplete(channel);
         }

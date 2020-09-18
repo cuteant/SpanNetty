@@ -586,7 +586,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             catch (ArgumentException e)
             {
-                return ThrowHelper.ThrowErrorDataDecoderException_BadString(s, e);
+                return ThrowHelper.FromErrorDataDecoderException_BadString(s, e);
             }
         }
 

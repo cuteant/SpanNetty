@@ -21,9 +21,11 @@
  */
 
 using System;
-using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using DotNetty.Codecs.Http2.Internal;
+using DotNetty.Common.Utilities;
 
 namespace DotNetty.Codecs.Http2
 {
@@ -136,6 +138,18 @@ namespace DotNetty.Codecs.Http2
 
 
         #region -- Throw ArgumentNullException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task FromArgumentNullException(ExceptionArgument argument)
+        {
+            return TaskUtil.FromException(GetArgumentNullException(argument));
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task<T> ThrowArgumentNullException<T>(ExceptionArgument argument)
+        {
+            return TaskUtil.FromException<T>(GetArgumentNullException(argument));
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentNullException(ExceptionArgument argument)

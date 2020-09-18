@@ -230,7 +230,7 @@ namespace DotNetty.Codecs.Http.Cookies
                     return CompareTo(cookie);
 
                 default:
-                    return ThrowHelper.ThrowArgumentException_CompareToCookie();
+                    return ThrowHelper.FromArgumentException_CompareToCookie();
             }
         }
 

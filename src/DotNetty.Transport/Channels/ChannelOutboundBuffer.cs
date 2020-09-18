@@ -608,7 +608,7 @@ namespace DotNetty.Transport.Channels
             {
                 return 1 << index;
             }
-            return ThrowHelper.ThrowInvalidOperationException_WritabilityMask(index); // index < 1 || index > 31
+            return ThrowHelper.FromInvalidOperationException_WritabilityMask(index); // index < 1 || index > 31
         }
 
         void SetWritable(bool invokeLater)

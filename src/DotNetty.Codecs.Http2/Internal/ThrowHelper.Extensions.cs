@@ -23,6 +23,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 using DotNetty.Buffers;
 using DotNetty.Common.Utilities;
 using DotNetty.Codecs.Http;
@@ -868,7 +869,7 @@ namespace DotNetty.Codecs.Http2
         #region -- Http2Exception --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static long ThrowHttp2Exception_DecodeULE128Decompression()
+        internal static long FromHttp2Exception_DecodeULE128Decompression()
         {
             throw HpackDecoder.DecodeULE128DecompressionException;
         }
@@ -1074,7 +1075,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static IHttp2Headers ThrowConnectionError_FailedEncodingHe1adersBlock(Exception e)
+        internal static IHttp2Headers FromConnectionError_FailedEncodingHe1adersBlock(Exception e)
         {
             throw Http2Exception.ConnectionError(Http2Error.CompressionError, e, e.Message);
         }
@@ -1517,13 +1518,13 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static bool ThrowStreamError_ErrorWhileReturningBytesToFlowControlWindow(int streamId, Exception t)
+        internal static bool FromStreamError_ErrorWhileReturningBytesToFlowControlWindow(int streamId, Exception t)
         {
             throw Http2Exception.StreamError(streamId, Http2Error.InternalError, t, "Error while returning bytes to flow control window");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowStreamError_DecompressorErrorDetectedWhileDelegatingDataReadOnStream(int streamId, Exception t)
+        internal static int FromStreamError_DecompressorErrorDetectedWhileDelegatingDataReadOnStream(int streamId, Exception t)
         {
             throw Http2Exception.StreamError(streamId, Http2Error.InternalError, t,
                     "Decompressor error detected while delegating data read on streamId {0}", streamId);
@@ -1625,9 +1626,9 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowNotSupportedException_Re_register_is_not_supported()
+        internal static Task FromNotSupportedException_Re_register_is_not_supported()
         {
-            throw GetException();
+            return TaskUtil.FromException(GetException());
 
             static NotSupportedException GetException()
             {

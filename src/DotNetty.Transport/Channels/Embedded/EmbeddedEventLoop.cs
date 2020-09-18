@@ -47,7 +47,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         public override bool IsShuttingDown => false;
 
-        public override Task TerminationCompletion => throw ThrowHelper.GetNotSupportedException();
+        public override Task TerminationCompletion => ThrowHelper.FromNotSupportedException();
 
         public override bool IsShutdown => false;
 
@@ -72,7 +72,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            throw ThrowHelper.GetNotSupportedException();
+            return ThrowHelper.FromNotSupportedException();
         }
 
         internal long NextScheduledTask() => NextScheduledTaskNanos();

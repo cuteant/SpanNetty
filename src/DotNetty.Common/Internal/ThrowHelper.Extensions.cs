@@ -186,7 +186,7 @@ namespace DotNetty.Common
         #region -- Exception --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowException_CompareConstant()
+        internal static int FromException_CompareConstant()
         {
             throw GetException();
 
@@ -197,7 +197,7 @@ namespace DotNetty.Common
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowException_CompareSignal()
+        internal static int FromException_CompareSignal()
         {
             throw GetException();
 
