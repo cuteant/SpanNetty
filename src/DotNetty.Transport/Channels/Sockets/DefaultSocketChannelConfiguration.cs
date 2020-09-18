@@ -158,11 +158,11 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 catch (ObjectDisposedException ex)
                 {
-                    return ThrowHelper.ThrowChannelException_Get_Int(ex);
+                    return ThrowHelper.FromChannelException_Get_Int(ex);
                 }
                 catch (SocketException ex)
                 {
-                    return ThrowHelper.ThrowChannelException_Get_Int(ex);
+                    return ThrowHelper.FromChannelException_Get_Int(ex);
                 }
             }
             set
@@ -192,11 +192,11 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 catch (ObjectDisposedException ex)
                 {
-                    return ThrowHelper.ThrowChannelException_Get_Int(ex);
+                    return ThrowHelper.FromChannelException_Get_Int(ex);
                 }
                 catch (SocketException ex)
                 {
-                    return ThrowHelper.ThrowChannelException_Get_Int(ex);
+                    return ThrowHelper.FromChannelException_Get_Int(ex);
                 }
             }
             set
@@ -227,11 +227,11 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 catch (ObjectDisposedException ex)
                 {
-                    return ThrowHelper.ThrowChannelException_Get_Int(ex);
+                    return ThrowHelper.FromChannelException_Get_Int(ex);
                 }
                 catch (SocketException ex)
                 {
-                    return ThrowHelper.ThrowChannelException_Get_Int(ex);
+                    return ThrowHelper.FromChannelException_Get_Int(ex);
                 }
             }
             set

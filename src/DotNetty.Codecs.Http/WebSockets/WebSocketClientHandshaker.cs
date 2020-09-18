@@ -174,7 +174,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 var codec = pipeline.Get<HttpClientCodec>();
                 if (codec is null)
                 {
-                    return ThrowHelper.ThrowInvalidOperationException_HttpResponseDecoder();
+                    return ThrowHelper.FromInvalidOperationException_HttpResponseDecoder();
                 }
             }
 
@@ -456,7 +456,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <returns></returns>
         public Task CloseAsync(IChannel channel, CloseWebSocketFrame frame)
         {
-            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.channel); }
             var completionSource = channel.NewPromise();
             _ = channel.WriteAndFlushAsync(frame, completionSource);
             ApplyForceCloseTimeout(channel, completionSource);

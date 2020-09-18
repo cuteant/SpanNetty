@@ -110,7 +110,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return this.CompareTo(attr);
             }
 
-            return ThrowHelper.ThrowArgumentException_CompareToHttpData(this.DataType, other.DataType);
+            return ThrowHelper.FromArgumentException_CompareToHttpData(this.DataType, other.DataType);
         }
 
         public int CompareTo(IAttribute attribute) => string.Compare(this.Name, attribute.Name, StringComparison.OrdinalIgnoreCase);

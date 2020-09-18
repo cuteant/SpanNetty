@@ -190,7 +190,7 @@ namespace DotNetty.Codecs.Mqtt
                     if (_isServer) ValidateClientPacketExpected(packetSignature);
                     return PingRespPacket.Instance;
                 default:
-                    return ThrowHelper.ThrowDecoderException_FirstPacketByteValueIsInvalid(packetSignature);
+                    return ThrowHelper.FromDecoderException_FirstPacketByteValueIsInvalid(packetSignature);
             }
         }
 

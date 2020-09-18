@@ -123,7 +123,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     maxFramePayloadLength, forceCloseTimeoutMillis);
             }
 
-            return ThrowHelper.ThrowWebSocketHandshakeException_InvalidVersion(version);
+            return ThrowHelper.FromWebSocketHandshakeException_InvalidVersion(version);
         }
 
         /// <summary>Creates a new handshaker.</summary>
@@ -174,7 +174,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     maxFramePayloadLength, forceCloseTimeoutMillis, absoluteUpgradeUrl);
             }
 
-            return ThrowHelper.ThrowWebSocketHandshakeException_InvalidVersion(version);
+            return ThrowHelper.FromWebSocketHandshakeException_InvalidVersion(version);
         }
     }
 }

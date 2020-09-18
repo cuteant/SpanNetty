@@ -120,7 +120,7 @@ namespace DotNetty.Codecs.Http
             }
 
             // Otherwise we don't.
-            return ThrowHelper.ThrowFormatException_HeaderNotFound();
+            return ThrowHelper.FromFormatException_HeaderNotFound();
         }
 
         public static long GetContentLength(IHttpMessage message, long defaultValue)

@@ -556,7 +556,7 @@ namespace DotNetty.Transport.Channels
 
         public Task BindAsync(EndPoint localAddress)
         {
-            if (localAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
+            if (localAddress is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.localAddress); }
             // todo: check for cancellation
             //if (!validatePromise(ctx, promise, false)) {
             //    // promise cancelled
@@ -599,7 +599,7 @@ namespace DotNetty.Transport.Channels
         public Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
             AbstractChannelHandlerContext next = FindContextOutbound(SkipFlags.Connect);
-            if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
+            if (remoteAddress is null) { return ThrowHelper.FromArgumentNullException(ExceptionArgument.remoteAddress); }
             // todo: check for cancellation
 
             IEventExecutor nextExecutor = next.Executor;

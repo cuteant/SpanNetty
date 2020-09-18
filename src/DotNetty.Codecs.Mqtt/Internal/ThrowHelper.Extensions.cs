@@ -208,7 +208,7 @@ namespace DotNetty.Codecs.Mqtt
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Packet ThrowDecoderException_FirstPacketByteValueIsInvalid(int packetSignature)
+        internal static Packet FromDecoderException_FirstPacketByteValueIsInvalid(int packetSignature)
         {
             throw GetException();
             DecoderException GetException()

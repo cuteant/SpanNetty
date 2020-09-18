@@ -167,7 +167,7 @@ namespace DotNetty.Buffers
         #region -- Exception --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static T ThrowException_ShouldNotReachHere<T>()
+        internal static T FromException_ShouldNotReachHere<T>()
         {
             throw GetException();
 

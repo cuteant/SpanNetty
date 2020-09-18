@@ -283,7 +283,7 @@ namespace DotNetty.Transport.Channels.Pool
 
             if (IsClosed)
             {
-                ThrowHelper.ThrowInvalidOperationException_PoolClosedOnAcquireException();
+                return ThrowHelper.FromInvalidOperationException_PoolClosedOnAcquireException();
             }
 
             if (Volatile.Read(ref v_acquiredChannelCount) < _maxConnections)
@@ -295,7 +295,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 if (Volatile.Read(ref v_pendingAcquireCount) >= _maxPendingAcquires)
                 {
-                    ThrowHelper.ThrowInvalidOperationException_TooManyOutstandingAcquireOperations(); return default;
+                    return ThrowHelper.FromInvalidOperationException_TooManyOutstandingAcquireOperations();
                 }
                 else
                 {
@@ -312,7 +312,7 @@ namespace DotNetty.Transport.Channels.Pool
                     }
                     else
                     {
-                        ThrowHelper.ThrowInvalidOperationException_TooManyOutstandingAcquireOperations();
+                        return ThrowHelper.FromInvalidOperationException_TooManyOutstandingAcquireOperations();
                     }
 
                     return new ValueTask<IChannel>(promise.Task);
@@ -537,7 +537,7 @@ namespace DotNetty.Transport.Channels.Pool
                     }
                     else
                     {
-                        ThrowHelper.ThrowInvalidOperationException_PoolClosedOnAcquireException();
+                        return ThrowHelper.FromInvalidOperationException_PoolClosedOnAcquireException();
                     }
                 }
 

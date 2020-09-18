@@ -210,7 +210,7 @@ namespace DotNetty.Codecs.Http.Cors
             }
             catch (Exception exception)
             {
-                return ThrowHelper.ThrowInvalidOperationException_Cqrs(callable, exception);
+                return ThrowHelper.FromInvalidOperationException_Cqrs(callable, exception);
             }
         }
 

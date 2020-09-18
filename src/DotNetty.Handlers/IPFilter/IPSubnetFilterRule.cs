@@ -67,7 +67,7 @@ namespace DotNetty.Handlers.IPFilter
                     return new IP6SubnetFilterRule(ipAddress, cidrPrefix, ruleType);
 
                 default:
-                    return ThrowHelper.ThrowArgumentOutOfRangeException_OnlySupportIPv4AndIPv6Addresses();
+                    return ThrowHelper.FromArgumentOutOfRangeException_OnlySupportIPv4AndIPv6Addresses();
             }
         }
 

@@ -542,7 +542,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowArgumentException_CompareToCookie()
+        internal static int FromArgumentException_CompareToCookie()
         {
             throw GetException();
 
@@ -553,7 +553,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowArgumentException_CompareToHttpVersion()
+        internal static int FromArgumentException_CompareToHttpVersion()
         {
             throw GetException();
 
@@ -564,7 +564,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowArgumentException_CompareToHttpData(HttpDataType x, HttpDataType y)
+        internal static int FromArgumentException_CompareToHttpData(HttpDataType x, HttpDataType y)
         {
             throw GetException();
             ArgumentException GetException()
@@ -700,7 +700,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static HttpResponseStatus ThrowArgumentException_ParseLine<T>(T line, Exception e)
+        internal static HttpResponseStatus FromArgumentException_ParseLine<T>(T line, Exception e)
         {
             throw GetException();
             ArgumentException GetException()
@@ -837,7 +837,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowInvalidOperationException_HttpResponseDecoder()
+        internal static Task FromInvalidOperationException_HttpResponseDecoder()
         {
             return TaskUtil.FromException(GetInvalidOperationException<HttpResponseDecoder>());
         }
@@ -848,7 +848,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowInvalidOperationException_NoHttpDecoderAndServerCodec()
+        internal static Task FromInvalidOperationException_NoHttpDecoderAndServerCodec()
         {
             return TaskUtil.FromException(GetInvalidOperationException_NoHttpDecoderAndServerCodec());
         }
@@ -865,7 +865,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static object ThrowInvalidOperationException_Cqrs(object callable, Exception exception)
+        internal static object FromInvalidOperationException_Cqrs(object callable, Exception exception)
         {
             throw GetException();
             InvalidOperationException GetException()
@@ -1037,7 +1037,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static T ThrowChannelException_IO<T>(IOException e)
+        internal static T FromChannelException_IO<T>(IOException e)
         {
             throw GetException();
             ChannelException GetException()
@@ -1065,7 +1065,7 @@ namespace DotNetty.Codecs.Http
         #region -- FormatException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static long ThrowFormatException_HeaderNotFound()
+        internal static long FromFormatException_HeaderNotFound()
         {
             throw GetException();
 
@@ -1136,7 +1136,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static StringCharSequence ThrowNotEnoughDataDecoderException_ReadLineStandard()
+        internal static StringCharSequence FromNotEnoughDataDecoderException_ReadLineStandard()
         {
             throw GetException();
 
@@ -1147,7 +1147,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static StringCharSequence ThrowNotEnoughDataDecoderException_ReadLine()
+        internal static StringCharSequence FromNotEnoughDataDecoderException_ReadLine()
         {
             throw GetException();
 
@@ -1158,7 +1158,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static StringBuilderCharSequence ThrowNotEnoughDataDecoderException_ReadDelimiterStandard()
+        internal static StringBuilderCharSequence FromNotEnoughDataDecoderException_ReadDelimiterStandard()
         {
             throw GetException();
 
@@ -1169,7 +1169,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static StringBuilderCharSequence ThrowNotEnoughDataDecoderException_ReadDelimiter()
+        internal static StringBuilderCharSequence FromNotEnoughDataDecoderException_ReadDelimiter()
         {
             throw GetException();
 
@@ -1304,7 +1304,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static string ThrowErrorDataDecoderException_BadString(string s, Exception e)
+        internal static string FromErrorDataDecoderException_BadString(string s, Exception e)
         {
             throw GetErrorDataDecoderException();
             ErrorDataDecoderException GetErrorDataDecoderException()
@@ -1386,7 +1386,7 @@ namespace DotNetty.Codecs.Http
         #region -- CodecException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static IFullHttpMessage ThrowCodecException_InvalidType(IHttpMessage start)
+        internal static IFullHttpMessage FromCodecException_InvalidType(IHttpMessage start)
         {
             throw GetException();
             CodecException GetException()
@@ -1508,7 +1508,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static WebSocketClientHandshaker ThrowWebSocketHandshakeException_InvalidVersion(WebSocketVersion version)
+        internal static WebSocketClientHandshaker FromWebSocketHandshakeException_InvalidVersion(WebSocketVersion version)
         {
             throw GetException();
             WebSocketHandshakeException GetException()
