@@ -74,8 +74,36 @@ namespace DotNetty.Buffers
             //       freeBytes = 16777216 == freeMaxThreshold: 16777216, usage = 0 < minUsage: 1, chunkSize: 16777216
             //     At the same time we want to have zero thresholds in case of (maxUsage == 100) and (minUsage == 100).
             //
-            _freeMinThreshold = (maxUsage == 100) ? 0 : (int)(uint)(chunkSize * (100.0d - maxUsage + 0.99999999d) / 100L);
-            _freeMaxThreshold = (minUsage == 100) ? 0 : (int)(uint)(chunkSize * (100.0d - minUsage + 0.99999999d) / 100L);
+            _freeMinThreshold = CalculateThresholdWithOverflow(chunkSize, maxUsage);
+            _freeMaxThreshold = CalculateThresholdWithOverflow(chunkSize, minUsage);
+        }
+
+        // https://github.com/cuteant/SpanNetty/issues/29
+        private static int CalculateThresholdWithOverflow(int chunkSize, int usage)
+        {
+            int freeThreshold;
+            if (usage == 100)
+            {
+                freeThreshold = 0;
+            }
+            else
+            {
+                var tmp = chunkSize * (100.0d - usage + 0.99999999d) / 100L;
+                if (tmp <= int.MinValue)
+                {
+                    freeThreshold = int.MinValue;
+                }
+                else if (tmp >= int.MaxValue)
+                {
+                    freeThreshold = int.MaxValue;
+                }
+                else
+                {
+                    freeThreshold = (int)tmp;
+                }
+            }
+
+            return freeThreshold;
         }
 
         /// Calculates the maximum capacity of a buffer that will ever be possible to allocate out of the {@link PoolChunk}s
