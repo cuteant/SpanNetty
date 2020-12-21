@@ -34,14 +34,12 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Net.NetworkInformation;
     using System.Net.Sockets;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
-#if DESKTOPCLR
-    using System.Threading;
-#endif
 
     public sealed class SocketDatagramChannel : SocketDatagramChannel<SocketDatagramChannel>
     {
@@ -154,21 +152,10 @@ namespace DotNetty.Transport.Channels.Sockets
 #endif
 
             bool pending;
-#if NETCOREAPP || NETSTANDARD
-            pending = Socket.ReceiveFromAsync(operation);
-#else
-            if (ExecutionContext.IsFlowSuppressed())
+            using (ExecutionContext.IsFlowSuppressed() ? default(AsyncFlowControl?) : ExecutionContext.SuppressFlow())
             {
                 pending = Socket.ReceiveFromAsync(operation);
             }
-            else
-            {
-                using (ExecutionContext.SuppressFlow())
-                {
-                    pending = Socket.ReceiveFromAsync(operation);
-                }
-            }
-#endif
             if (!pending)
             {
                 EventLoop.Execute(ReceiveFromCompletedSyncCallback, Unsafe, operation);
