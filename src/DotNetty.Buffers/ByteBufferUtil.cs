@@ -212,20 +212,33 @@ namespace DotNetty.Buffers
         ///     Toggles the endianness of the specified 64-bit long integer.
         /// </summary>
         public static long SwapLong(long value)
+#if !NETFRAMEWORK
+            => System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(value);
+#else
             => ((SwapInt((int)value) & 0xFFFFFFFF) << 32)
                 | (SwapInt((int)(value >> 32)) & 0xFFFFFFFF);
+#endif
 
         /// <summary>
         ///     Toggles the endianness of the specified 32-bit integer.
         /// </summary>
         public static int SwapInt(int value)
+#if !NETFRAMEWORK
+            => System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(value);
+#else
             => ((SwapShort((short)value) & 0xFFFF) << 16)
                 | (SwapShort((short)(value >> 16)) & 0xFFFF);
+#endif
 
         /// <summary>
         ///     Toggles the endianness of the specified 16-bit integer.
         /// </summary>
-        public static short SwapShort(short value) => (short)(((value & 0xFF) << 8) | (value >> 8) & 0xFF);
+        public static short SwapShort(short value)
+#if !NETFRAMEWORK
+            => System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(value);
+#else
+            => (short)(((value & 0xFF) << 8) | (value >> 8) & 0xFF);
+#endif
 
     }
 }

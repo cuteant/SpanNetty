@@ -25,6 +25,10 @@
 
 namespace DotNetty.Buffers
 {
+#if !NETFRAMEWORK
+    using System;
+    using System.Buffers.Binary;
+#endif
     using System.Runtime.CompilerServices;
 
     static class HeapByteBufferUtil
@@ -33,15 +37,23 @@ namespace DotNetty.Buffers
         internal static byte GetByte(byte[] memory, int index) => memory[index];
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        internal static short GetShort(byte[] memory, int index) => 
+        internal static short GetShort(byte[] memory, int index) =>
+#if !NETFRAMEWORK
+            BinaryPrimitives.ReadInt16BigEndian(memory.AsSpan(index));
+#else
             unchecked((short)(memory[index] << 8 | memory[index + 1]));
+#endif
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        internal static short GetShortLE(byte[] memory, int index) => 
+        internal static short GetShortLE(byte[] memory, int index) =>
+#if !NETFRAMEWORK
+            BinaryPrimitives.ReadInt16LittleEndian(memory.AsSpan(index));
+#else
             unchecked((short)(memory[index] | memory[index + 1] << 8));
+#endif
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        internal static int GetUnsignedMedium(byte[] memory, int index) => 
+        internal static int GetUnsignedMedium(byte[] memory, int index) =>
             unchecked(
                 memory[index] << 16 |
                 memory[index + 1] << 8 |
@@ -55,23 +67,34 @@ namespace DotNetty.Buffers
                 memory[index + 2] << 16);
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        internal static int GetInt(byte[] memory, int index) => 
+        internal static int GetInt(byte[] memory, int index) =>
+#if !NETFRAMEWORK
+            BinaryPrimitives.ReadInt32BigEndian(memory.AsSpan(index));
+#else
             unchecked(
                 memory[index] << 24 |
                 memory[index + 1] << 16 |
                 memory[index + 2] << 8 |
                 memory[index + 3]);
+#endif
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        internal static int GetIntLE(byte[] memory, int index) => 
+        internal static int GetIntLE(byte[] memory, int index) =>
+#if !NETFRAMEWORK
+            BinaryPrimitives.ReadInt32LittleEndian(memory.AsSpan(index));
+#else
             unchecked(
                 memory[index] |
                 memory[index + 1] << 8 |
                 memory[index + 2] << 16 |
                 memory[index + 3] << 24);
+#endif
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        internal static long GetLong(byte[] memory, int index) => 
+        internal static long GetLong(byte[] memory, int index) =>
+#if !NETFRAMEWORK
+            BinaryPrimitives.ReadInt64BigEndian(memory.AsSpan(index));
+#else
             unchecked(
                 (long)memory[index] << 56 |
                 (long)memory[index + 1] << 48 |
@@ -81,9 +104,13 @@ namespace DotNetty.Buffers
                 (long)memory[index + 5] << 16 |
                 (long)memory[index + 6] << 8 |
                 memory[index + 7]);
+#endif
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        internal static long GetLongLE(byte[] memory, int index) => 
+        internal static long GetLongLE(byte[] memory, int index) =>
+#if !NETFRAMEWORK
+            BinaryPrimitives.ReadInt64LittleEndian(memory.AsSpan(index));
+#else
             unchecked(
                 memory[index] |
                 (long)memory[index + 1] << 8 |
@@ -93,6 +120,7 @@ namespace DotNetty.Buffers
                 (long)memory[index + 5] << 40 |
                 (long)memory[index + 6] << 48 |
                 (long)memory[index + 7] << 56);
+#endif
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetByte(byte[] memory, int index, int value)
@@ -106,21 +134,29 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetShort(byte[] memory, int index, int value)
         {
+#if !NETFRAMEWORK
+            BinaryPrimitives.WriteInt16BigEndian(memory.AsSpan(index), unchecked((short)value));
+#else
             unchecked
             {
                 memory[index] = (byte)((ushort)value >> 8);
                 memory[index + 1] = (byte)value;
             }
+#endif
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetShortLE(byte[] memory, int index, int value)
         {
+#if !NETFRAMEWORK
+            BinaryPrimitives.WriteInt16LittleEndian(memory.AsSpan(index), unchecked((short)value));
+#else
             unchecked
             {
                 memory[index] = (byte)value;
                 memory[index + 1] = (byte)((ushort)value >> 8);
             }
+#endif
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
@@ -150,6 +186,9 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetInt(byte[] memory, int index, int value)
         {
+#if !NETFRAMEWORK
+            BinaryPrimitives.WriteInt32BigEndian(memory.AsSpan(index), value);
+#else
             unchecked
             {
                 uint unsignedValue = (uint)value;
@@ -158,11 +197,15 @@ namespace DotNetty.Buffers
                 memory[index + 2] = (byte)(unsignedValue >>8);
                 memory[index + 3] = (byte)unsignedValue;
             }
+#endif
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetIntLE(byte[] memory, int index, int value)
         {
+#if !NETFRAMEWORK
+            BinaryPrimitives.WriteInt32LittleEndian(memory.AsSpan(index), value);
+#else
             unchecked
             {
                 uint unsignedValue = (uint)value;
@@ -171,11 +214,15 @@ namespace DotNetty.Buffers
                 memory[index + 2] = (byte)(unsignedValue >> 16);
                 memory[index + 3] = (byte)(unsignedValue >> 24);
             }
+#endif
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetLong(byte[] memory, int index, long value)
         {
+#if !NETFRAMEWORK
+            BinaryPrimitives.WriteInt64BigEndian(memory.AsSpan(index), value);
+#else
             unchecked
             {
                 ulong unsignedValue = (ulong)value;
@@ -188,11 +235,15 @@ namespace DotNetty.Buffers
                 memory[index + 6] = (byte)(unsignedValue >> 8);
                 memory[index + 7] = (byte)unsignedValue;
             }
+#endif
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetLongLE(byte[] memory, int index, long value)
         {
+#if !NETFRAMEWORK
+            BinaryPrimitives.WriteInt64LittleEndian(memory.AsSpan(index), value);
+#else
             unchecked
             {
                 ulong unsignedValue = (ulong)value;
@@ -205,6 +256,7 @@ namespace DotNetty.Buffers
                 memory[index + 6] = (byte)(unsignedValue >> 48);
                 memory[index + 7] = (byte)(unsignedValue >> 56);
             }
+#endif
         }
     }
 }
