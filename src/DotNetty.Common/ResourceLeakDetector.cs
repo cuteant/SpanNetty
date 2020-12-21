@@ -158,6 +158,7 @@ namespace DotNetty.Common
         ///     related resource is deallocated.
         /// </summary>
         /// <returns>the <see cref="IResourceLeakTracker" /> or <c>null</c></returns>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public IResourceLeakTracker Track(object obj)
         {
             DetectionLevel level = Level;
@@ -231,6 +232,7 @@ namespace DotNetty.Common
             private long _droppedRecords;
             private readonly WeakReference<GCNotice> _gcNotice;
 
+            [MethodImpl(MethodImplOptions.NoInlining)]
             public DefaultResourceLeak(ResourceLeakDetector owner, object referent)
             {
                 Debug.Assert(referent is object);
@@ -256,16 +258,19 @@ namespace DotNetty.Common
                 Record();
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Record() => Record0(null);
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Record(object hint) => Record0(hint);
 
+            [MethodImpl(MethodImplOptions.NoInlining)]
             private void Record0(object hint)
             {
                 // Check TARGET_RECORDS > 0 here to avoid similar check before remove from and add to lastRecords
                 if (s_targetRecords <= 0) { return; }
 
-                string stackTrace = Environment.StackTrace;
+                StackTrace stackTrace = null;
 
                 var thisHead = Volatile.Read(ref v_head);
                 RecordEntry oldHead;
@@ -293,6 +298,7 @@ namespace DotNetty.Common
                     {
                         dropped = false;
                     }
+                    stackTrace ??= new StackTrace(skipFrames: 3, fNeedFileInfo: true);
                     newHead = hint is object ? new RecordEntry(prevHead, stackTrace, hint) : new RecordEntry(prevHead, stackTrace);
                     thisHead = Interlocked.CompareExchange(ref v_head, newHead, thisHead);
                 }
@@ -405,9 +411,9 @@ namespace DotNetty.Common
             internal readonly int Pos;
 
             private readonly string _hintString;
-            private readonly string _stackTrace;
+            private readonly StackTrace _stackTrace;
 
-            internal RecordEntry(RecordEntry next, string stackTrace, object hint)
+            internal RecordEntry(RecordEntry next, StackTrace stackTrace, object hint)
             {
                 // This needs to be generated even if toString() is never called as it may change later on.
                 _hintString = hint is IResourceLeakHint leakHint ? leakHint.ToHintString() : null;
@@ -416,7 +422,7 @@ namespace DotNetty.Common
                 _stackTrace = stackTrace;
             }
 
-            internal RecordEntry(RecordEntry next, string stackTrace)
+            internal RecordEntry(RecordEntry next, StackTrace stackTrace)
             {
                 _hintString = null;
                 Next = next;
@@ -430,7 +436,7 @@ namespace DotNetty.Common
                 _hintString = null;
                 Next = null;
                 Pos = -1;
-                _stackTrace = string.Empty;
+                _stackTrace = null;
             }
 
             public override string ToString()
@@ -441,10 +447,18 @@ namespace DotNetty.Common
                     _ = buf.Append("\tHint: ").Append(_hintString).Append(StringUtil.Newline);
                 }
 
-                // TODO: Use StackTrace class and support excludedMethods NETStandard2.0
                 // Append the stack trace.
-                _ = buf.Append(_stackTrace).Append(StringUtil.Newline);
+                _ = AppendStackTrace(buf, _stackTrace).Append(StringUtil.Newline);
                 return buf.ToString();
+            }
+
+            private static StringBuilder AppendStackTrace(StringBuilder sb, StackTrace stackTrace)
+            {
+                if (stackTrace == null)
+                    return sb;
+
+                // TODO: Support excludedMethods NETStandard2.0
+                return sb.Append(stackTrace);
             }
         }
 
