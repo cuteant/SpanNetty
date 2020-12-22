@@ -2,22 +2,22 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- Common packages -->
-    <BenDemystifierPackageVersion>0.1.4</BenDemystifierPackageVersion>
+    <BenDemystifierPackageVersion>0.1.6</BenDemystifierPackageVersion>
     <CommandLineParserPackageVersion>2.3.0</CommandLineParserPackageVersion>
-    <CronExpressionDescriptorPackageVersion>2.13.0</CronExpressionDescriptorPackageVersion>
+    <CronExpressionDescriptorPackageVersion>2.16.0</CronExpressionDescriptorPackageVersion>
     <FastMemberSigned13PackageVersion>1.3.0</FastMemberSigned13PackageVersion>
     <FastMemberSignedPackageVersion>1.5.0</FastMemberSignedPackageVersion>
     <MoreLinq2PackageVersion>2.10.0</MoreLinq2PackageVersion>
-    <MoreLinqPackageVersion>3.2.0</MoreLinqPackageVersion>
+    <MoreLinqPackageVersion>3.3.2</MoreLinqPackageVersion>
     <NCrontabSignedPackageVersion>3.3.2</NCrontabSignedPackageVersion>
     <OptionalPackageVersion>4.0.0</OptionalPackageVersion>
-    <SystemLinqDynamicCorePackageVersion>1.0.19</SystemLinqDynamicCorePackageVersion>
-    <SuperpowerPackageVersion>1.0.2</SuperpowerPackageVersion>
+    <SystemLinqDynamicCorePackageVersion>1.2.6</SystemLinqDynamicCorePackageVersion>
+    <SuperpowerPackageVersion>2.3.0</SuperpowerPackageVersion>
 
-    <AutoMapperPackageVersion>9.0.0</AutoMapperPackageVersion>
+    <AutoMapperPackageVersion>10.1.1</AutoMapperPackageVersion>
     <AutoMapperCollectionPackageVersion>5.0.0</AutoMapperCollectionPackageVersion>
 
-    <ToolGoodWordsPackageVersion>3.0.1.2</ToolGoodWordsPackageVersion>
+    <ToolGoodWordsPackageVersion>3.0.2.4</ToolGoodWordsPackageVersion>
 
     <PollyPackageVersion>7.2.1</PollyPackageVersion>
     <PollyCachingDistributedPackageVersion>3.0.1</PollyCachingDistributedPackageVersion>
@@ -33,21 +33,21 @@
     <CastleCorePackageVersion>4.4.1</CastleCorePackageVersion>
 
     <!-- Ioc related packages -->
-    <AutofacPackageVersion>5.2.0</AutofacPackageVersion>
-    <AutofacConfigurationPackageVersion>5.1.0</AutofacConfigurationPackageVersion>
-    <AutofacExtensionsDependencyInjectionPackageVersion>6.0.0</AutofacExtensionsDependencyInjectionPackageVersion>
-    <AutofacExtrasDynamicProxyPackageVersion>5.0.0</AutofacExtrasDynamicProxyPackageVersion>
+    <AutofacPackageVersion>6.1.0</AutofacPackageVersion>
+    <AutofacConfigurationPackageVersion>6.0.0</AutofacConfigurationPackageVersion>
+    <AutofacExtensionsDependencyInjectionPackageVersion>7.1.0</AutofacExtensionsDependencyInjectionPackageVersion>
+    <AutofacExtrasDynamicProxyPackageVersion>6.0.0</AutofacExtrasDynamicProxyPackageVersion>
 
     <!-- Compression related packages -->
     <BrotliNativePackageVersion>0.0.1</BrotliNativePackageVersion>
-    <K4osCompressionLZ4PackageVersion>1.2.1-beta</K4osCompressionLZ4PackageVersion>
-    <K4osCompressionLZ4StreamsPackageVersion>1.2.1-beta</K4osCompressionLZ4StreamsPackageVersion>
+    <K4osCompressionLZ4PackageVersion>1.2.6</K4osCompressionLZ4PackageVersion>
+    <K4osCompressionLZ4StreamsPackageVersion>1.2.6</K4osCompressionLZ4StreamsPackageVersion>
     <K4osHashxxHashPackageVersion>1.0.6</K4osHashxxHashPackageVersion>
     <Lz4netPackageVersion>1.0.15.93</Lz4netPackageVersion>
     <Lz4netNETCoreSignedPackageVersion>1.0.15.93</Lz4netNETCoreSignedPackageVersion>
 
     <!-- Database related packages -->
-    <CsvHelperPackageVersion>15.0.4</CsvHelperPackageVersion>
+    <CsvHelperPackageVersion>18.0.0</CsvHelperPackageVersion>
     <DocumentFormatOpenXmlPackageVersion>2.10.1</DocumentFormatOpenXmlPackageVersion>
     <ExcelNumberFormatPackageVersion>1.0.10</ExcelNumberFormatPackageVersion>
     <RemotionLinqPackageVersion>2.2.0</RemotionLinqPackageVersion>
@@ -83,31 +83,31 @@
     <TopshelfSerilogPackageVersion>4.2.1</TopshelfSerilogPackageVersion>
 
     <!-- Logging related packages -->
-    <NLogPackageVersion>4.7.2</NLogPackageVersion>
-    <NLogDevPackageVersion>4.7.2</NLogDevPackageVersion>
-    <NLogExtensionsHostingPackageVersion>1.6.4</NLogExtensionsHostingPackageVersion>
-    <NLogExtensionsLoggingPackageVersion>1.6.4</NLogExtensionsLoggingPackageVersion>
-    <NLogWebAspNetCorePackageVersion>4.9.2</NLogWebAspNetCorePackageVersion>
+    <NLogPackageVersion>4.7.6</NLogPackageVersion>
+    <NLogDevPackageVersion>4.7.6</NLogDevPackageVersion>
+    <NLogExtensionsHostingPackageVersion>1.6.5</NLogExtensionsHostingPackageVersion>
+    <NLogExtensionsLoggingPackageVersion>1.6.5</NLogExtensionsLoggingPackageVersion>
+    <NLogWebAspNetCorePackageVersion>4.9.3</NLogWebAspNetCorePackageVersion>
 
-    <SerilogPackageVersion>2.9.0</SerilogPackageVersion>
-    <SerilogDevPackageVersion>2.9.0</SerilogDevPackageVersion>
-    <SerilogAspNetCorePackageVersion>3.2.0</SerilogAspNetCorePackageVersion>
-    <SerilogExtensionsLoggingPackageVersion>3.0.1</SerilogExtensionsLoggingPackageVersion>
-    <SerilogExtensionsHostingPackageVersion>3.0.0</SerilogExtensionsHostingPackageVersion>
-    <SerilogExtensionsLoggingFilePackageVersion>2.0.0-dev-00039</SerilogExtensionsLoggingFilePackageVersion>
-    <SerilogFormattingCompactPackageVersion>1.1.0</SerilogFormattingCompactPackageVersion>
-    <SerilogSinksAsyncPackageVersion>1.4.0</SerilogSinksAsyncPackageVersion>
-    <SerilogSinksConsolePackageVersion>4.0.0-dev-00834</SerilogSinksConsolePackageVersion>
-    <SerilogSinksDebugPackageVersion>1.0.1</SerilogSinksDebugPackageVersion>
-    <SerilogSinksFilePackageVersion>4.1.0</SerilogSinksFilePackageVersion>
+    <SerilogPackageVersion>2.10.0</SerilogPackageVersion>
+    <SerilogDevPackageVersion>2.10.0</SerilogDevPackageVersion>
+    <SerilogAspNetCorePackageVersion>3.4.0</SerilogAspNetCorePackageVersion>
+    <SerilogExtensionsLoggingPackageVersion>3.0.2-dev-10281</SerilogExtensionsLoggingPackageVersion>
+    <SerilogExtensionsHostingPackageVersion>4.0.0-dev-00051</SerilogExtensionsHostingPackageVersion>
+    <SerilogExtensionsLoggingFilePackageVersion>2.0.0</SerilogExtensionsLoggingFilePackageVersion>
+    <SerilogFormattingCompactPackageVersion>1.1.1-dev-00940</SerilogFormattingCompactPackageVersion>
+    <SerilogSinksAsyncPackageVersion>1.4.1-dev-00073</SerilogSinksAsyncPackageVersion>
+    <SerilogSinksConsolePackageVersion>4.0.0-dev-00839</SerilogSinksConsolePackageVersion>
+    <SerilogSinksDebugPackageVersion>1.0.2-dev-00023</SerilogSinksDebugPackageVersion>
+    <SerilogSinksFilePackageVersion>5.0.0-dev-00905</SerilogSinksFilePackageVersion>
     <SerilogSinksRollingFilePackageVersion>3.3.1-dev-00771</SerilogSinksRollingFilePackageVersion>
 
-    <SerilogSettingsAppSettingsPackageVersion>2.2.2</SerilogSettingsAppSettingsPackageVersion>
-    <SerilogSettingsConfigurationPackageVersion>3.1.1-dev-00209</SerilogSettingsConfigurationPackageVersion>
+    <SerilogSettingsAppSettingsPackageVersion>2.2.3-dev-00063</SerilogSettingsAppSettingsPackageVersion>
+    <SerilogSettingsConfigurationPackageVersion>3.2.0-dev-00264</SerilogSettingsConfigurationPackageVersion>
 
-    <SerilogEnrichersEnvironmentPackageVersion>2.1.3</SerilogEnrichersEnvironmentPackageVersion>
-    <SerilogEnrichersProcessPackageVersion>2.0.1</SerilogEnrichersProcessPackageVersion>
-    <SerilogEnrichersThreadPackageVersion>3.1.0</SerilogEnrichersThreadPackageVersion>
+    <SerilogEnrichersEnvironmentPackageVersion>2.2.0-dev-00773</SerilogEnrichersEnvironmentPackageVersion>
+    <SerilogEnrichersProcessPackageVersion>2.0.2-dev-00741</SerilogEnrichersProcessPackageVersion>
+    <SerilogEnrichersThreadPackageVersion>3.2.0-dev-00747</SerilogEnrichersThreadPackageVersion>
 
     <!-- NetTopologySuite related packages -->
     <GeoAPICorePackageVersion>1.7.5</GeoAPICorePackageVersion>
@@ -128,7 +128,7 @@
 
     <!-- Network related packages -->
     <BouncyCastlePackageVersion>1.8.6.1</BouncyCastlePackageVersion>
-    <PortableBouncyCastlePackageVersion>1.8.6.7</PortableBouncyCastlePackageVersion>
+    <PortableBouncyCastlePackageVersion>1.8.9</PortableBouncyCastlePackageVersion>
     <DotNettyBuffersPackageVersion>0.6.0</DotNettyBuffersPackageVersion>
     <DotNettyCodecsHttpPackageVersion>0.6.0</DotNettyCodecsHttpPackageVersion>
     <DotNettyCodecsMqttPackageVersion>0.6.0</DotNettyCodecsMqttPackageVersion>
@@ -145,20 +145,20 @@
     <LibuvPackageVersion>1.10.0</LibuvPackageVersion>
     <LibuvSharedPackageVersion>1.34.0.266</LibuvSharedPackageVersion>
 
-    <MimeKitPackageVersion>2.6.0</MimeKitPackageVersion>
-    <MailKitPackageVersion>2.6.0</MailKitPackageVersion>
+    <MimeKitPackageVersion>2.10.1</MimeKitPackageVersion>
+    <MailKitPackageVersion>2.10.1</MailKitPackageVersion>
 
     <!-- Serialization related packages -->
     <GoogleApiCommonProtosPackageVersion>1.6.0</GoogleApiCommonProtosPackageVersion>
     <GoogleProtobufPackageVersion>3.12.3</GoogleProtobufPackageVersion>
     <GoogleProtobufToolsPackageVersion>3.12.3</GoogleProtobufToolsPackageVersion>
-    <HyperionPackageVersion>0.9.15</HyperionPackageVersion>
+    <HyperionPackageVersion>0.9.16</HyperionPackageVersion>
     <MessagePackAnalyzerPackageVersion>1.7.3.7</MessagePackAnalyzerPackageVersion>
     <NewtonsoftJsonBsonPackageVersion>1.0.2</NewtonsoftJsonBsonPackageVersion>
     <NewtonsoftJsonPackageVersion>12.0.3</NewtonsoftJsonPackageVersion>
     <ProtobufNetPackageVersion>2.4.6</ProtobufNetPackageVersion>
     <ProtobufNetDevPackageVersion>3.0.0-alpha.155</ProtobufNetDevPackageVersion>
     <ProtobufNetDataPackageVersion>3.0.1</ProtobufNetDataPackageVersion>
-    <YamlDotNetPackageVersion>8.1.2</YamlDotNetPackageVersion>
+    <YamlDotNetPackageVersion>9.1.0</YamlDotNetPackageVersion>
   </PropertyGroup>
 </Project>
