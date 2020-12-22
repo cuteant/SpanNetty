@@ -31,12 +31,10 @@ namespace DotNetty.Transport.Channels.Sockets
     using System;
     using System.Net.Sockets;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
-#if DESKTOPCLR
-    using System.Threading;
-#endif
 
     /// <summary>
     /// <see cref="AbstractSocketChannel{TChannel, TUnsafe}"/> base class for <see cref="IChannel"/>s that operate on bytes.
@@ -86,21 +84,10 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             var operation = ReadOperation;
             bool pending;
-#if NETCOREAPP || NETSTANDARD
-            pending = Socket.ReceiveAsync(operation);
-#else
-            if (ExecutionContext.IsFlowSuppressed())
+            using (ExecutionContext.IsFlowSuppressed() ? default(AsyncFlowControl?) : ExecutionContext.SuppressFlow())
             {
                 pending = Socket.ReceiveAsync(operation);
             }
-            else
-            {
-                using (ExecutionContext.SuppressFlow())
-                {
-                    pending = Socket.ReceiveAsync(operation);
-                }
-            }
-#endif
             if (!pending)
             {
                 // todo: potential allocation / non-static field?
@@ -254,21 +241,10 @@ namespace DotNetty.Transport.Channels.Sockets
                 SetState(StateFlags.WriteScheduled);
                 bool pending;
 
-#if NETCOREAPP || NETSTANDARD
-                pending = Socket.SendAsync(operation);
-#else
-                if (ExecutionContext.IsFlowSuppressed())
+                using (ExecutionContext.IsFlowSuppressed() ? default(AsyncFlowControl?) : ExecutionContext.SuppressFlow())
                 {
                     pending = Socket.SendAsync(operation);
                 }
-                else
-                {
-                    using (ExecutionContext.SuppressFlow())
-                    {
-                        pending = Socket.SendAsync(operation);
-                    }
-                }
-#endif
 
                 if (!pending)
                 {

@@ -106,17 +106,20 @@ namespace DotNetty.Common.Internal
                                     goto LongCodeWithMask16;
 
                                 // Unfortunately, endianness sensitive
-#if BIGENDIAN
-                                *pDst = (char)((ch >> 8) & 0x7F);
-                                pSrc += 2;
-                                *(pDst + 1) = (char)(ch & 0x7F);
-                                pDst += 2;
-#else // BIGENDIAN
-                                *pDst = (char)(ch & 0x7F);
-                                pSrc += 2;
-                                *(pDst + 1) = (char)((ch >> 8) & 0x7F);
-                                pDst += 2;
-#endif // BIGENDIAN
+                                if (!BitConverter.IsLittleEndian)
+                                {
+                                    *pDst = (char)((ch >> 8) & 0x7F);
+                                    pSrc += 2;
+                                    *(pDst + 1) = (char)(ch & 0x7F);
+                                    pDst += 2;
+                                }
+                                else
+                                {
+                                    *pDst = (char)(ch & 0x7F);
+                                    pSrc += 2;
+                                    *(pDst + 1) = (char)((ch >> 8) & 0x7F);
+                                    pDst += 2;
+                                }
                             }
 
                             // Run 8 characters at a time!
@@ -128,44 +131,51 @@ namespace DotNetty.Common.Internal
                                     goto LongCodeWithMask32;
 
                                 // Unfortunately, endianness sensitive
-#if BIGENDIAN
-                                *pDst = (char)((ch >> 24) & 0x7F);
-                                *(pDst+1) = (char)((ch >> 16) & 0x7F);
-                                *(pDst+2) = (char)((ch >> 8) & 0x7F);
-                                *(pDst+3) = (char)(ch & 0x7F);
-                                pSrc += 8;
-                                *(pDst+4) = (char)((chb >> 24) & 0x7F);
-                                *(pDst+5) = (char)((chb >> 16) & 0x7F);
-                                *(pDst+6) = (char)((chb >> 8) & 0x7F);
-                                *(pDst+7) = (char)(chb & 0x7F);
-                                pDst += 8;
-#else // BIGENDIAN
-                                *pDst = (char)(ch & 0x7F);
-                                *(pDst + 1) = (char)((ch >> 8) & 0x7F);
-                                *(pDst + 2) = (char)((ch >> 16) & 0x7F);
-                                *(pDst + 3) = (char)((ch >> 24) & 0x7F);
-                                pSrc += 8;
-                                *(pDst + 4) = (char)(chb & 0x7F);
-                                *(pDst + 5) = (char)((chb >> 8) & 0x7F);
-                                *(pDst + 6) = (char)((chb >> 16) & 0x7F);
-                                *(pDst + 7) = (char)((chb >> 24) & 0x7F);
-                                pDst += 8;
-#endif // BIGENDIAN
+                                if (!BitConverter.IsLittleEndian)
+                                {
+                                    *pDst = (char)((ch >> 24) & 0x7F);
+                                    *(pDst+1) = (char)((ch >> 16) & 0x7F);
+                                    *(pDst+2) = (char)((ch >> 8) & 0x7F);
+                                    *(pDst+3) = (char)(ch & 0x7F);
+                                    pSrc += 8;
+                                    *(pDst+4) = (char)((chb >> 24) & 0x7F);
+                                    *(pDst+5) = (char)((chb >> 16) & 0x7F);
+                                    *(pDst+6) = (char)((chb >> 8) & 0x7F);
+                                    *(pDst+7) = (char)(chb & 0x7F);
+                                    pDst += 8;
+                                }
+                                else
+                                {
+                                    *pDst = (char)(ch & 0x7F);
+                                    *(pDst + 1) = (char)((ch >> 8) & 0x7F);
+                                    *(pDst + 2) = (char)((ch >> 16) & 0x7F);
+                                    *(pDst + 3) = (char)((ch >> 24) & 0x7F);
+                                    pSrc += 8;
+                                    *(pDst + 4) = (char)(chb & 0x7F);
+                                    *(pDst + 5) = (char)((chb >> 8) & 0x7F);
+                                    *(pDst + 6) = (char)((chb >> 16) & 0x7F);
+                                    *(pDst + 7) = (char)((chb >> 24) & 0x7F);
+                                    pDst += 8;
+                                }
                             }
 
                             break;
 
-#if BIGENDIAN
-                            LongCodeWithMask32:
+                        LongCodeWithMask32:
+                            if (!BitConverter.IsLittleEndian)
+                            {
                                 // be careful about the sign extension
                                 ch = (int)(((uint)ch) >> 16);
-                            LongCodeWithMask16:
-                                ch = (int)(((uint)ch) >> 8);
-#else // BIGENDIAN
-                        LongCodeWithMask32:
+                            }
                         LongCodeWithMask16:
-                            ch &= 0xFF;
-#endif // BIGENDIAN
+                            if (!BitConverter.IsLittleEndian)
+                            {
+                                ch = (int)(((uint)ch) >> 8);
+                            }
+                            else
+                            {
+                                ch &= 0xFF;
+                            }
                             pSrc++;
                             if (ch <= 0x7F)
                             {
