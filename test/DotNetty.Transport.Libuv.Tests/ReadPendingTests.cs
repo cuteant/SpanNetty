@@ -88,7 +88,7 @@ namespace DotNetty.Transport.Libuv.Tests
         sealed class ReadPendingInitializer : ChannelInitializer<IChannel>
         {
             internal readonly ReadPendingReadHandler ReadPendingHandler = new ReadPendingReadHandler();
-            readonly TaskCompletionSource completionSource = new TaskCompletionSource();
+            readonly DefaultPromise completionSource = new();
             internal volatile IChannel Channel;
 
             public Task Initialize => this.completionSource.Task;

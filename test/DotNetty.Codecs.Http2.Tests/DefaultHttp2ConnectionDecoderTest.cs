@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http2.Tests
             this.encoder = new Mock<IHttp2ConnectionEncoder>();
             this.lifecycleManager = new Mock<IHttp2LifecycleManager>();
 
-            this.promise = new TaskCompletionSource();
+            this.promise = new DefaultPromise();
             var headersReceivedState = new AtomicInteger();
 
             this.channel.Setup(x => x.IsActive).Returns(true);

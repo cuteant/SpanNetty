@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http2.Tests
             this.ctx.Setup(x => x.Allocator).Returns(this.alloc.Object);
             this.ctx.Setup(x => x.Executor).Returns(this.executor.Object);
             this.ctx.Setup(x => x.Channel).Returns(this.channel.Object);
-            this.ctx.Setup(x => x.NewPromise()).Returns(() => new TaskCompletionSource());
+            this.ctx.Setup(x => x.NewPromise()).Returns(() => new DefaultPromise());
 
             this.writer = new DefaultHttp2FrameWriter(new DefaultHttp2HeadersEncoder(NeverSensitiveDetector.Instance, Http2TestUtil.NewTestEncoder()));
             this.reader = new DefaultHttp2FrameReader(new DefaultHttp2HeadersDecoder(false, Http2TestUtil.NewTestDecoder()));

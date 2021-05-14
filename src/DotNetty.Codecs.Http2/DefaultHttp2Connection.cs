@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http2
 
             // Add the connection stream to the map.
             _streamMap.Add(_connectionStream.Id, _connectionStream);
-            _closeFuture = new TaskCompletionSource();
+            _closeFuture = new DefaultPromise();
         }
 
         /// <summary>

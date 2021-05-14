@@ -33,7 +33,7 @@ namespace DotNetty.Common.Tests.Concurrency
                 //Clear SynchronizationContext set by xunit
                 SynchronizationContext.SetSynchronizationContext(null);
 
-                var completion = new TaskCompletionSource();
+                var completion = new DefaultPromise();
                 executor.Execute(async () =>
                 {
                     try
@@ -99,7 +99,7 @@ namespace DotNetty.Common.Tests.Concurrency
         public async Task ScheduledTaskFiresOnTime(bool scheduleFromExecutor)
         {
             var scheduler = new DefaultEventExecutor(); // SingleThreadEventExecutor(null, TimeSpan.FromMinutes(1))
-            var promise = new TaskCompletionSource();
+            var promise = new DefaultPromise();
             Func<Task> scheduleFunc = () => scheduler.ScheduleAsync(() => promise.Complete(), TimeSpan.FromMilliseconds(100));
             Task task = scheduleFromExecutor ? await scheduler.SubmitAsync(scheduleFunc) : scheduleFunc();
             await Task.WhenAny(task, Task.Delay(TimeSpan.FromMilliseconds(300)));
@@ -110,7 +110,7 @@ namespace DotNetty.Common.Tests.Concurrency
         public async Task ScheduledTaskFiresOnTimeWhileBusy()
         {
             var scheduler = new DefaultEventExecutor();
-            var promise = new TaskCompletionSource();
+            var promise = new DefaultPromise();
             Action selfQueueAction = null;
             selfQueueAction = () =>
             {

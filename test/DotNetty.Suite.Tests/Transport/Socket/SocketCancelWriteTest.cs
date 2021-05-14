@@ -80,12 +80,12 @@
             IChannel sc = await sb.BindAsync();
             IChannel cc = await cb.ConnectAsync(sc.LocalAddress);
 
-            var promise = new TaskCompletionSource();
+            var promise = new DefaultPromise();
             Assert.True(promise.TrySetCanceled());
             var f = cc.WriteAsync(a, promise);
             await cc.WriteAndFlushAsync(b);
             cc.WriteAsync(c).Ignore();
-            promise = new TaskCompletionSource();
+            promise = new DefaultPromise();
             Assert.True(promise.TrySetCanceled());
             var f2 = cc.WriteAsync(d, promise);
             await cc.WriteAndFlushAsync(e);

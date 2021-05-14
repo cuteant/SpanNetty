@@ -58,7 +58,7 @@ namespace DotNetty.Handlers.Tls
 
         private readonly SslStream _sslStream;
         private readonly MediationStream _mediationStream;
-        private readonly TaskCompletionSource _closeFuture;
+        private readonly DefaultPromise _closeFuture;
 
         private BatchingPendingWriteQueue _pendingUnencryptedWrites;
 
@@ -131,7 +131,7 @@ namespace DotNetty.Handlers.Tls
                 _userCertSelector = _clientSettings.UserCertSelector;
             }
 #endif
-            _closeFuture = new TaskCompletionSource();
+            _closeFuture = new DefaultPromise();
             _mediationStream = new MediationStream(this);
             _sslStream = sslStreamFactory(_mediationStream);
         }
@@ -417,7 +417,7 @@ namespace DotNetty.Handlers.Tls
         //private static readonly Action<object> ScheduledForceCloseConnection0Action = ScheduledForceCloseConnection0;
         //private static void ScheduledForceCloseConnection0(object s)
         //{
-        //    var wrapped = (Tuple<IChannelHandlerContext, TaskCompletionSource, IPromise, TlsHandler>)s;
+        //    var wrapped = (Tuple<IChannelHandlerContext, DefaultPromise, IPromise, TlsHandler>)s;
         //    // May be done in the meantime as cancel(...) is only best effort.
         //    if (!wrapped.Item2.IsCompleted)
         //    {

@@ -119,7 +119,7 @@ namespace DotNetty.Transport.Channels
 
         public IPromise Unvoid()
         {
-            var promise = new TaskCompletionSource();
+            var promise = new DefaultPromise();
             if (_fireException)
             {
                 _ = promise.Task.ContinueWith(FireExceptionOnFailureAction, _channel, TaskContinuationOptions.ExecuteSynchronously);

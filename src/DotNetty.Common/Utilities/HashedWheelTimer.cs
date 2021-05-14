@@ -282,12 +282,12 @@ namespace DotNetty.Common.Utilities
             readonly HashedWheelTimer _owner;
 
             long _tick;
-            readonly TaskCompletionSource _closedPromise;
+            readonly DefaultPromise _closedPromise;
 
             public Worker(HashedWheelTimer owner)
             {
                 _owner = owner;
-                _closedPromise = new TaskCompletionSource();
+                _closedPromise = new DefaultPromise();
             }
 
             public Task ClosedFuture => _closedPromise.Task;

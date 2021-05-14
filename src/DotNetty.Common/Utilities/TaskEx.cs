@@ -87,7 +87,7 @@ namespace DotNetty.Common.Utilities
         public static Task FromException(Exception exception)
         {
 #if NET451
-            var tcs = new TaskCompletionSource();
+            var tcs = new TaskCompletionSource<int>();
             tcs.TrySetException(exception);
             return tcs.Task;
 #else

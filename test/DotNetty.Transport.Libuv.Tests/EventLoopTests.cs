@@ -26,13 +26,13 @@ namespace DotNetty.Transport.Libuv.Tests
         sealed class RunCounter : IRunnable
         {
             readonly int expected;
-            readonly TaskCompletionSource completionSource;
+            readonly DefaultPromise completionSource;
             int count;
 
             public RunCounter(int expected)
             {
                 this.expected = expected;
-                this.completionSource = new TaskCompletionSource();
+                this.completionSource = new DefaultPromise();
             }
 
             public Task Completion => this.completionSource.Task;

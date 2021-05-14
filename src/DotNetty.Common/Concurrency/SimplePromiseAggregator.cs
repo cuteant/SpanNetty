@@ -31,7 +31,7 @@ namespace DotNetty.Common.Concurrency
     /// Provides the ability to associate the outcome of multiple <see cref="IPromise"/>
     /// objects into a single <see cref="IPromise"/> object.
     /// </summary>
-    public sealed class SimplePromiseAggregator : TaskCompletionSource
+    public sealed class SimplePromiseAggregator : DefaultPromise
     {
         readonly IPromise promise;
         int expectedCount;

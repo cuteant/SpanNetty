@@ -31,8 +31,8 @@
             AtomicReference<Exception> globalException = new AtomicReference<Exception>();
             AtomicInteger serverRemaining = new AtomicInteger(numChannels);
             AtomicInteger clientRemaining = new AtomicInteger(numChannels);
-            IPromise serverDonePromise = new TaskCompletionSource();
-            IPromise clientDonePromise = new TaskCompletionSource();
+            IPromise serverDonePromise = new DefaultPromise();
+            IPromise clientDonePromise = new DefaultPromise();
 
             sb.ChildHandler(new ActionChannelInitializer<IChannel>(sch =>
             {

@@ -92,12 +92,12 @@ namespace DotNetty.Transport.Libuv.Tests
 
         sealed class ExceptionHandler : ChannelHandlerAdapter
         {
-            readonly TaskCompletionSource completionSource;
+            readonly DefaultPromise completionSource;
             int count;
 
             public ExceptionHandler()
             {
-                this.completionSource = new TaskCompletionSource();
+                this.completionSource = new DefaultPromise();
             }
 
             public Task Inactive => this.completionSource.Task;

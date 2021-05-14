@@ -72,7 +72,7 @@ namespace DotNetty.Transport.Channels.Local
         private LocalChannel v_peer;
         private LocalAddress v_localAddress;
         private LocalAddress v_remoteAddress;
-        private TaskCompletionSource v_connectPromise;
+        private DefaultPromise v_connectPromise;
         private int v_readInProgress;
         private int v_writeInProgress;
         private Task v_finishReadFuture;
@@ -210,7 +210,7 @@ namespace DotNetty.Transport.Channels.Local
                     // Preserve order of event and force a read operation now before the close operation is processed.
                     if (SharedConstants.False < (uint)Volatile.Read(ref v_writeInProgress) && peer is object) { FinishPeerRead(peer); }
 
-                    TaskCompletionSource promise = Volatile.Read(ref v_connectPromise);
+                    var promise = Volatile.Read(ref v_connectPromise);
                     if (promise is object)
                     {
                         // Use tryFailure() instead of setFailure() to avoid the race against cancel().
@@ -480,7 +480,7 @@ namespace DotNetty.Transport.Channels.Local
         {
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
-                var promise = new TaskCompletionSource();
+                var promise = new DefaultPromise();
 
                 if (Volatile.Read(ref _channel.v_state) == State.Connected)
                 {

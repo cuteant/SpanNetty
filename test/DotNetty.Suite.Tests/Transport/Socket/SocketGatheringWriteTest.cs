@@ -337,7 +337,7 @@
             sb.ChildOption(ChannelOption.AutoRead, autoRead);
             cb.Option(ChannelOption.AutoRead, autoRead);
 
-            IPromise serverDonePromise = new TaskCompletionSource();
+            IPromise serverDonePromise = new DefaultPromise();
             TestServerHandler sh = new TestServerHandler(autoRead, serverDonePromise, data.Length);
             TestHandler ch = new TestHandler(autoRead);
 

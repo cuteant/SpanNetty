@@ -2,7 +2,7 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>$(StandardTfms);netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;$(StandardTfms)</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Http</RootNamespace>
     <AssemblyName>SpanNetty.Codecs.Http</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

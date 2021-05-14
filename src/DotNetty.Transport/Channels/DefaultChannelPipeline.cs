@@ -948,9 +948,9 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAndFlushAsync(object msg, IPromise promise) => _tail.WriteAndFlushAsync(msg, promise);
 
-        public IPromise NewPromise() => new TaskCompletionSource();
+        public IPromise NewPromise() => new DefaultPromise();
 
-        public IPromise NewPromise(object state) => new TaskCompletionSource(state);
+        public IPromise NewPromise(object state) => new DefaultPromise(state);
 
         public IPromise VoidPromise() => _voidPromise;
 

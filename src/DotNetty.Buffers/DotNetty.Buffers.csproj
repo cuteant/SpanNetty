@@ -2,7 +2,7 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>$(StandardTfms);netstandard2.1;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;netstandard2.1;$(StandardTfms)</TargetFrameworks>
     <RootNamespace>DotNetty.Buffers</RootNamespace>
     <AssemblyName>SpanNetty.Buffers</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

@@ -2,23 +2,23 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- Test related packages -->
-    <MicrosoftNetTestSdkPackageVersion>16.8.3</MicrosoftNetTestSdkPackageVersion>
-    <MicrosoftNetTestSdkDevPackageVersion>16.8.3</MicrosoftNetTestSdkDevPackageVersion>
-    <MicrosoftTestPlatformObjectModelPackageVersion>16.8.3</MicrosoftTestPlatformObjectModelPackageVersion>
+    <MicrosoftNetTestSdkPackageVersion>16.9.4</MicrosoftNetTestSdkPackageVersion>
+    <MicrosoftNetTestSdkDevPackageVersion>16.9.4</MicrosoftNetTestSdkDevPackageVersion>
+    <MicrosoftTestPlatformObjectModelPackageVersion>16.9.4</MicrosoftTestPlatformObjectModelPackageVersion>
 
     <BenchmarkDotNetPackageVersion>0.12.1</BenchmarkDotNetPackageVersion>
     <BenchmarkDotNetDiagnosticsWindowsPackageVersion>0.12.1</BenchmarkDotNetDiagnosticsWindowsPackageVersion>
     <NBenchPackageVersion>2.0.1</NBenchPackageVersion>
 
-    <AlbaPackageVersion>3.0.0</AlbaPackageVersion>
-    <BogusPackageVersion>28.3.1</BogusPackageVersion>
+    <AlbaPackageVersion>4.0.0</AlbaPackageVersion>
+    <BogusPackageVersion>33.0.2</BogusPackageVersion>
     <FluentAssertions4PackageVersion>4.19.4</FluentAssertions4PackageVersion>
     <FluentAssertions5PackageVersion>5.10.3</FluentAssertions5PackageVersion>
     <FluentAssertionsPackageVersion>5.10.3</FluentAssertionsPackageVersion>
-    <MoqPackageVersion>4.15.2</MoqPackageVersion>
-    <NSubstitutePackageVersion>4.2.1</NSubstitutePackageVersion>
-    <ReportGeneratorPackageVersion>4.2.10</ReportGeneratorPackageVersion>
-    <ShouldlyPackageVersion>4.0.0-beta0002</ShouldlyPackageVersion>
+    <MoqPackageVersion>4.16.1</MoqPackageVersion>
+    <NSubstitutePackageVersion>4.2.2</NSubstitutePackageVersion>
+    <ReportGeneratorPackageVersion>4.8.8</ReportGeneratorPackageVersion>
+    <ShouldlyPackageVersion>4.0.3</ShouldlyPackageVersion>
 
     <xUnitPackageVersion>2.4.1</xUnitPackageVersion>
     <xUnitAnalyzersPackageVersion>0.10.0</xUnitAnalyzersPackageVersion>
@@ -36,13 +36,13 @@
 
     <NUnit2PackageVersion>2.6.4</NUnit2PackageVersion>
     <NUnit2TestAdapterPackageVersion>2.2.0</NUnit2TestAdapterPackageVersion>
-    <NUnitPackageVersion>3.12.0</NUnitPackageVersion>
+    <NUnitPackageVersion>3.13.2</NUnitPackageVersion>
     <NUnitLitePackageVersion>3.12.0</NUnitLitePackageVersion>
     <NUnit3TestAdapterPackageVersion>3.17.0</NUnit3TestAdapterPackageVersion>
-    <MonoCecilPackageVersion>0.11.2</MonoCecilPackageVersion>
+    <MonoCecilPackageVersion>0.11.3</MonoCecilPackageVersion>
 
-    <NUnitDevPackageVersion>3.11.0-dev-05430</NUnitDevPackageVersion>
-    <NUnit3TestAdapterDevPackageVersion>3.11.0-dev-00847</NUnit3TestAdapterDevPackageVersion>
+    <NUnitDevPackageVersion>3.13.2</NUnitDevPackageVersion>
+    <NUnit3TestAdapterDevPackageVersion>4.0.0-beta.2</NUnit3TestAdapterDevPackageVersion>
 
     <SimpleFixtureNSubstitutePackageVersion>3.0.6</SimpleFixtureNSubstitutePackageVersion>
     <SimpleFixturexUnitPackageVersion>3.0.6</SimpleFixturexUnitPackageVersion>
