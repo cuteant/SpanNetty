@@ -55,7 +55,7 @@ jobs:
       displayName: '.NET Framework Unit Tests (Windows)'
       vmImage: 'windows-2019'
       scriptFileName: build.cmd
-      scriptArgs: runTests incremental
+      scriptArgs: RunTestsNetFx471 incremental
       outputDirectory: 'TestResults'
       artifactName: 'netfx_tests_windows-$(Build.BuildId)'
 
@@ -65,6 +65,6 @@ jobs:
       displayName: '.NET Framework 451 Unit Tests (Windows)'
       vmImage: 'vs2017-win2016'
       scriptFileName: build.cmd
-      scriptArgs: runTests451 incremental
+      scriptArgs: RunTestsNetFx451 incremental
       outputDirectory: 'TestResults'
       artifactName: 'netfx_451_tests_windows-$(Build.BuildId)'

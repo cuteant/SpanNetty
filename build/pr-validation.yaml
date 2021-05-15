@@ -55,7 +55,7 @@ jobs:
       displayName: '.NET Core Unit Tests (Windows)'
       vmImage: 'windows-2019'
       scriptFileName: build.cmd
-      scriptArgs: RunTestsNet incremental
+      scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_windows-$(Build.BuildId)'
 
@@ -65,7 +65,7 @@ jobs:
       displayName: '.NET Core Unit Tests (Ubuntu-16)'
       vmImage: 'ubuntu-16.04'
       scriptFileName: './build.sh'
-      scriptArgs: RunTestsNet incremental
+      scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_ubuntu_16-$(Build.BuildId)'
 
@@ -75,7 +75,7 @@ jobs:
       displayName: '.NET Core Unit Tests (Ubuntu-18)'
       vmImage: 'ubuntu-18.04'
       scriptFileName: './build.sh'
-      scriptArgs: RunTestsNet incremental
+      scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_ubuntu_18-$(Build.BuildId)'
 
@@ -85,7 +85,7 @@ jobs:
       displayName: '.NET Core Unit Tests (MacOS-10.14)'
       vmImage: 'macOS-10.14'
       scriptFileName: './build.sh'
-      scriptArgs: RunTestsNet incremental
+      scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_mac_1014-$(Build.BuildId)'
 
@@ -95,6 +95,6 @@ jobs:
       displayName: '.NET Core Unit Tests (MacOS-10.15)'
       vmImage: 'macOS-10.15'
       scriptFileName: './build.sh'
-      scriptArgs: RunTestsNet incremental
+      scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_mac_1015-$(Build.BuildId)'
