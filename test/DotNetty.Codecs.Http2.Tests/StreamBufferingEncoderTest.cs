@@ -551,7 +551,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
         private static IPromise NewPromise()
         {
-            return new TaskCompletionSource();
+            return new DefaultPromise();
         }
 
         private static IByteBuffer Data()

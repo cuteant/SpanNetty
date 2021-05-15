@@ -70,12 +70,12 @@ namespace DotNetty.Transport.Libuv.Tests
 
         sealed class ServerInitializer : ChannelInitializer<IChannel>
         {
-            readonly TaskCompletionSource completion;
+            readonly DefaultPromise completion;
             IChannel serverChannel;
 
             public ServerInitializer()
             {
-                this.completion = new TaskCompletionSource();
+                this.completion = new DefaultPromise();
             }
 
             public Task Initialized => this.completion.Task;
@@ -109,12 +109,12 @@ namespace DotNetty.Transport.Libuv.Tests
 
         sealed class ClientHandler : ChannelHandlerAdapter
         {
-            readonly TaskCompletionSource completion;
+            readonly DefaultPromise completion;
             internal Exception Error;
 
             public ClientHandler()
             {
-                this.completion = new TaskCompletionSource();
+                this.completion = new DefaultPromise();
             }
 
             public Task Inactive => this.completion.Task;

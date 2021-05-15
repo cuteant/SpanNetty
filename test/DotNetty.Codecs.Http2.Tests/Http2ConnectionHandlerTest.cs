@@ -64,8 +64,8 @@ namespace DotNetty.Codecs.Http2.Tests
             var config = new DefaultChannelConfiguration(_channel.Object);
             _channel.Setup(x => x.Configuration).Returns(config);
 
-            _promise = new TaskCompletionSource();
-            _voidPromise = new TaskCompletionSource();
+            _promise = new DefaultPromise();
+            _voidPromise = new DefaultPromise();
             var fakeException = new Http2RuntimeException("Fake exception");
             _future = TaskUtil.FromException(fakeException);
 
@@ -748,7 +748,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(v => v == STREAM_ID + 2),
                     It.Is<Http2Error>(v => v == errorCode),
                     It.Is<IByteBuffer>(v => v.Equals(data))));
-            _promise = new TaskCompletionSource();
+            _promise = new DefaultPromise();
             _handler.GoAwayAsync(_ctx.Object, STREAM_ID, errorCode, data, _promise);
             _frameWriter.Verify(
                 x => x.WriteGoAwayAsync(
@@ -997,8 +997,8 @@ namespace DotNetty.Codecs.Http2.Tests
                     return p.Task;
                 });
 
-            var promise = new TaskCompletionSource();
-            var promise2 = new TaskCompletionSource();
+            var promise = new DefaultPromise();
+            var promise2 = new DefaultPromise();
             promise.Task.ContinueWith(t =>
             {
                 _handler.ResetStreamAsync(_ctx.Object, STREAM_ID, Http2Error.StreamClosed, promise2);

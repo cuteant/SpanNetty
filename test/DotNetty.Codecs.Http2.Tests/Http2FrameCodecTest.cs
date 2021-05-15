@@ -617,7 +617,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.NotNull(stream);
             Assert.False(Http2CodecUtil.IsStreamIdValid(stream.Id));
 
-            var listenerExecuted = new TaskCompletionSource();
+            var listenerExecuted = new DefaultPromise();
 
             await _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers(), false) { Stream = stream });
             Assert.True(Http2CodecUtil.IsStreamIdValid(stream.Id));

@@ -1,17 +1,17 @@
 <Project>
   <!-- Shared Package Versions -->
   <PropertyGroup>
-    <MicrosoftBuildPackageVersion>16.6.0</MicrosoftBuildPackageVersion>
-    <MicrosoftBuildRuntimePackageVersion>16.6.0</MicrosoftBuildRuntimePackageVersion>
-    <MicrosoftBuildTasksCorePackageVersion>16.6.0</MicrosoftBuildTasksCorePackageVersion>
-    <MicrosoftBuildUtilitiesCorePackageVersion>16.6.0</MicrosoftBuildUtilitiesCorePackageVersion>
+    <MicrosoftBuildPackageVersion>16.9.0</MicrosoftBuildPackageVersion>
+    <MicrosoftBuildRuntimePackageVersion>16.9.0</MicrosoftBuildRuntimePackageVersion>
+    <MicrosoftBuildTasksCorePackageVersion>16.9.0</MicrosoftBuildTasksCorePackageVersion>
+    <MicrosoftBuildUtilitiesCorePackageVersion>16.9.0</MicrosoftBuildUtilitiesCorePackageVersion>
 
     <MicrosoftBclPackageVersion>1.1.10</MicrosoftBclPackageVersion>
     <MicrosoftBclAsyncPackageVersion>1.0.168</MicrosoftBclAsyncPackageVersion>
     <MicrosoftBclBuildPackageVersion>1.0.21</MicrosoftBclBuildPackageVersion>
 
-    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.14.0</MicrosoftApplicationInsightsAspNetCorePackageVersion>
-    <MicrosoftApplicationInsightsPackageVersion>2.14.0</MicrosoftApplicationInsightsPackageVersion>
+    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.17.0</MicrosoftApplicationInsightsAspNetCorePackageVersion>
+    <MicrosoftApplicationInsightsPackageVersion>2.17.0</MicrosoftApplicationInsightsPackageVersion>
 
     <MicrosoftSourceLinkGitHubPackageVersion>1.0.0</MicrosoftSourceLinkGitHubPackageVersion>
   </PropertyGroup>

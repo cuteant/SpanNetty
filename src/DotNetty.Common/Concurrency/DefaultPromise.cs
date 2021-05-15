@@ -35,19 +35,32 @@ using DotNetty.Common.Utilities;
 
 namespace DotNetty.Common.Concurrency
 {
-    public class TaskCompletionSource : IPromise
+    public class DefaultPromise : IPromise
     {
+#if NET
+        private readonly TaskCompletionSource _tcs;
+#else
         private readonly TaskCompletionSource<int> _tcs;
+#endif
+
         private int v_uncancellable = SharedConstants.False;
 
-        public TaskCompletionSource()
+        public DefaultPromise()
         {
+#if NET
+            _tcs = new TaskCompletionSource();
+#else
             _tcs = new TaskCompletionSource<int>();
+#endif
         }
 
-        public TaskCompletionSource(object state)
+        public DefaultPromise(object state)
         {
+#if NET
+            _tcs = new TaskCompletionSource(state);
+#else
             _tcs = new TaskCompletionSource<int>(state);
+#endif
         }
 
         public Task Task
@@ -68,12 +81,20 @@ namespace DotNetty.Common.Concurrency
 
         public virtual bool TryComplete()
         {
+#if NET
+            return _tcs.TrySetResult();
+#else
             return _tcs.TrySetResult(0);
+#endif
         }
 
         public virtual void Complete()
         {
+#if NET
+            _tcs.SetResult();
+#else
             _tcs.SetResult(0);
+#endif
         }
         public virtual void SetCanceled()
         {

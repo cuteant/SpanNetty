@@ -166,8 +166,8 @@
             sb.ChildOption(ChannelOption.AutoRead, autoRead);
             cb.Option(ChannelOption.AutoRead, autoRead);
 
-            IPromise serverDonePromise = new TaskCompletionSource();
-            IPromise clientDonePromise = new TaskCompletionSource();
+            IPromise serverDonePromise = new DefaultPromise();
+            IPromise clientDonePromise = new DefaultPromise();
             StringEchoHandler sh = new StringEchoHandler(autoRead, serverDonePromise, output);
             StringEchoHandler ch = new StringEchoHandler(autoRead, clientDonePromise, output);
 

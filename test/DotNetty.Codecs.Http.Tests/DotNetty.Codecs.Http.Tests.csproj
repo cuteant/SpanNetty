@@ -39,10 +39,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj" />
-		<ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
-		<ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
-		<ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
-		<ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
 		<ProjectReference Include="..\DotNetty.Tests.Common\DotNetty.Tests.Common.csproj" />
 	</ItemGroup>
 

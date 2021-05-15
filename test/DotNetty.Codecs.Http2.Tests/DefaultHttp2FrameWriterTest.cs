@@ -41,7 +41,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             _expectedOutbound = Unpooled.Empty;
 
-            _promise = new TaskCompletionSource();
+            _promise = new DefaultPromise();
 
             _channel = new Mock<IChannel>();
 

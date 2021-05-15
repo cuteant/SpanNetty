@@ -65,7 +65,7 @@
             channel.Pipeline.AddLast(handler.Object);
 
             RegisterChannel(eventLoop.Object, channel);
-            channel.Unsafe.Deregister(new TaskCompletionSource());
+            channel.Unsafe.Deregister(new DefaultPromise());
 
             RegisterChannel(eventLoop.Object, channel);
 

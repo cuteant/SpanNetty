@@ -121,7 +121,7 @@ namespace DotNetty.Transport.Libuv.Tests
             readonly bool autoRead;
             readonly byte[] expected;
             readonly ITestOutputHelper output;
-            readonly TaskCompletionSource completion;
+            readonly DefaultPromise completion;
 
             IChannel channel;
             int counter;
@@ -131,7 +131,7 @@ namespace DotNetty.Transport.Libuv.Tests
                 this.autoRead = autoRead;
                 this.expected = expected;
                 this.output = output;
-                this.completion = new TaskCompletionSource();
+                this.completion = new DefaultPromise();
             }
 
             public override void ChannelActive(IChannelHandlerContext ctx)

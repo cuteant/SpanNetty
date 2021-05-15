@@ -84,6 +84,11 @@
         <FileVersion>1.0.0.6600</FileVersion>
       </PropertyGroup>
     </When>
+    <When Condition=" '$(TargetFramework)' == 'net5.0' ">
+      <PropertyGroup>
+        <FileVersion>1.0.0.7000</FileVersion>
+      </PropertyGroup>
+    </When>
     <Otherwise>
       <PropertyGroup>
         <FileVersion>1.0.0.9000</FileVersion>

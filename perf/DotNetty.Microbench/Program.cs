@@ -14,7 +14,9 @@ namespace DotNetty.Microbench
             {   // if no args, we're probably using Ctrl+F5 in the IDE; enlargen thyself!
                 try
                 {
+#pragma warning disable CA1416 // 验证平台兼容性
                     Console.WindowWidth = Console.LargestWindowWidth - 20;
+#pragma warning restore CA1416 // 验证平台兼容性
                 }
                 catch { }
             }

@@ -158,12 +158,12 @@ namespace DotNetty.Transport.Libuv.Tests
         sealed class WriteHandler : ChannelHandlerAdapter
         {
             readonly int expectedBytesRead;
-            readonly TaskCompletionSource completion;
+            readonly DefaultPromise completion;
 
             public WriteHandler(int expectedBytesRead)
             {
                 this.expectedBytesRead = expectedBytesRead;
-                this.completion = new TaskCompletionSource();
+                this.completion = new DefaultPromise();
             }
 
             public Task Inactive => this.completion.Task;

@@ -76,7 +76,7 @@ namespace DotNetty.Transport.Libuv.Tests
         sealed class BufWriterHandler : SimpleChannelInboundHandler<object>
         {
             readonly Random random;
-            readonly TaskCompletionSource completion;
+            readonly DefaultPromise completion;
 
             IByteBuffer buf;
             Task writeTask;
@@ -84,7 +84,7 @@ namespace DotNetty.Transport.Libuv.Tests
             public BufWriterHandler()
             {
                 this.random = new Random();
-                this.completion = new TaskCompletionSource();
+                this.completion = new DefaultPromise();
             }
 
             public Task Added => this.completion.Task;

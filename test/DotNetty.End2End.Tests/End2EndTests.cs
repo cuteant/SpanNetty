@@ -49,7 +49,7 @@ namespace DotNetty.End2End.Tests
         [Fact]
         public async Task EchoServerAndClient()
         {
-            var testPromise = new TaskCompletionSource();
+            var testPromise = new DefaultPromise();
             var tlsCertificate = TestResourceHelper.GetTestCertificate();
             Func<Task> closeServerFunc = await this.StartServerAsync(true, ch =>
             {
@@ -115,7 +115,7 @@ namespace DotNetty.End2End.Tests
         [Fact]
         public async Task MqttServerAndClient()
         {
-            var testPromise = new TaskCompletionSource();
+            var testPromise = new DefaultPromise();
 
             var tlsCertificate = TestResourceHelper.GetTestCertificate();
             var serverReadListener = new ReadListeningHandler();
@@ -289,7 +289,7 @@ namespace DotNetty.End2End.Tests
         ///     Starts Echo server.
         /// </summary>
         /// <returns>function to trigger closure of the server.</returns>
-        async Task<Func<Task>> StartServerAsync(bool tcpNoDelay, Action<IChannel> childHandlerSetupAction, TaskCompletionSource testPromise)
+        async Task<Func<Task>> StartServerAsync(bool tcpNoDelay, Action<IChannel> childHandlerSetupAction, DefaultPromise testPromise)
         {
             var bossGroup = new MultithreadEventLoopGroup(1);
             var workerGroup = new MultithreadEventLoopGroup();

@@ -31,7 +31,7 @@
             this.mouseSuccess = false;
             this.channel = new EmbeddedChannel();
             this.writeQueue = new CoalescingBufferQueue(channel, 16, true);
-            this.catPromise = new TaskCompletionSource();
+            this.catPromise = new DefaultPromise();
             //    mouseListener = new ChannelFutureListener() {
             //    @Override
             //    public void operationComplete(ChannelFuture future) throws Exception {

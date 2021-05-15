@@ -30,7 +30,7 @@
             AbstractCoalescingBufferQueue queue = new TestCoalescingBufferQueue(channel, 128);
 
             byte[] bytes = new byte[128];
-            var promise = new TaskCompletionSource();
+            var promise = new DefaultPromise();
             promise.Task.ContinueWith(t =>
             {
                 queue.Add(Unpooled.WrappedBuffer(bytes));

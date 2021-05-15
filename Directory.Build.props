@@ -8,12 +8,15 @@
   <Import Project="$(SourceRoot)/build/Dependencies.3rdParty.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.AspNetCore.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.AspNetCore2.props" />
+  <Import Project="$(SourceRoot)/build/Dependencies.AspNetCore3.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.CuteAnt.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.Extensions.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.Extensions2.props" />
+  <Import Project="$(SourceRoot)/build/Dependencies.Extensions3.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.Roslyn.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.System.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.System2.props" />
+  <Import Project="$(SourceRoot)/build/Dependencies.System3.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.Testing.props" />
 
   <!-- Ensure changes to this file cause project rebuilds. -->
@@ -29,7 +32,7 @@
 
   <!-- Common compile parameters -->
   <PropertyGroup>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
     <!--<LangVersion>latest</LangVersion>-->
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
@@ -44,6 +47,9 @@
     <ImportLibs>netcore</ImportLibs>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net5.0-windows' or '$(TargetFramework)' == 'net5.0-windows7.0' ">
+    <DefineConstants>$(DefineConstants);NET50;NETCOREAPP;NETCOREAPP_2_0_GREATER;NETCOREAPP_2_1_GREATER;NETCOREAPP_2_X_GREATER;NETCOREAPP_3_0_GREATER;NETCOREAPP_3_1_GREATER;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <DefineConstants>$(DefineConstants);NETCOREAPP;NETCOREAPP_2_0_GREATER;NETCOREAPP_2_1_GREATER;NETCOREAPP_2_X_GREATER;NETCOREAPP_3_0_GREATER;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
   </PropertyGroup>
@@ -333,6 +339,19 @@
     <Optimize>true</Optimize>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net5.0|AnyCPU'">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>5</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net5.0|AnyCPU'">
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>5</WarningLevel>
   </PropertyGroup>
 
   <!-- Set output folder for created NuGet packages -->

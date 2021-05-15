@@ -247,7 +247,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
         private IPromise NewPromise()
         {
-            return new TaskCompletionSource();
+            return new DefaultPromise();
         }
     }
 }

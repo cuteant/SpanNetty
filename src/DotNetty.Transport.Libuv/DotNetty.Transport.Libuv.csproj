@@ -2,7 +2,7 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>$(StandardTfms);netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>$(StandardTfms)</TargetFrameworks>
     <RootNamespace>DotNetty.Transport.Libuv</RootNamespace>
     <AssemblyName>SpanNetty.Transport.Libuv</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

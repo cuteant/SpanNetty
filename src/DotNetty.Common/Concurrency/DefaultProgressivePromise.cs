@@ -24,7 +24,7 @@ namespace DotNetty.Common.Concurrency
 {
     using System;
 
-    public class DefaultProgressivePromise : TaskCompletionSource, IProgressivePromise
+    public class DefaultProgressivePromise : DefaultPromise, IProgressivePromise
     {
         public DefaultProgressivePromise() : base() { }
 

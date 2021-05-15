@@ -64,7 +64,7 @@ namespace DotNetty.Transport.Channels.Pool
             New,
 
             /// <summary>
-            /// Fails the <see cref="TaskCompletionSource"/> of the acquire call with a <see cref="System.TimeoutException"/>.
+            /// Fails the <see cref="DefaultPromise"/> of the acquire call with a <see cref="System.TimeoutException"/>.
             /// </summary>
             Fail
         }

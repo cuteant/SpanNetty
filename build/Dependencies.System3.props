@@ -1,0 +1,103 @@
+<Project>
+  <!-- Shared Package Versions -->
+  <PropertyGroup>
+    <!-- Core packages -->
+    <MicrosoftBclAsyncInterfaces3PackageVersion>1.1.1</MicrosoftBclAsyncInterfaces3PackageVersion>
+    <MicrosoftExperimentalCollections3PackageVersion>1.0.6-e190117-3</MicrosoftExperimentalCollections3PackageVersion>
+    <MicrosoftCSharp3PackageVersion>4.7.0</MicrosoftCSharp3PackageVersion>
+    <MicrosoftDataSqlClient3PackageVersion>2.0.1</MicrosoftDataSqlClient3PackageVersion>
+    <FSharpCore3PackageVersion>5.0.0</FSharpCore3PackageVersion>
+    <FSharpCoreNet453PackageVersion>4.7.2</FSharpCoreNet453PackageVersion>
+    <MonoPosix3PackageVersion>5.4.0.201</MonoPosix3PackageVersion>
+    <MonoPosixNETStandard3PackageVersion>1.0.0</MonoPosixNETStandard3PackageVersion>
+
+    <!-- Azure packages -->
+    <MicrosoftAzureKeyVault3PackageVersion>3.0.5</MicrosoftAzureKeyVault3PackageVersion>
+    <WindowsAzureStorage3PackageVersion>9.3.3</WindowsAzureStorage3PackageVersion>
+
+    <!-- IdentityModel packages -->
+    <MicrosoftIdentityModelKeyVaultExtensions3PackageVersion>6.8.0</MicrosoftIdentityModelKeyVaultExtensions3PackageVersion>
+    <MicrosoftIdentityModelLogging3PackageVersion>6.8.0</MicrosoftIdentityModelLogging3PackageVersion>
+    <MicrosoftIdentityModelManagedKeyVaultSecurityKey3PackageVersion>6.8.0</MicrosoftIdentityModelManagedKeyVaultSecurityKey3PackageVersion>
+    <MicrosoftIdentityModelJsonWebTokens3PackageVersion>6.8.0</MicrosoftIdentityModelJsonWebTokens3PackageVersion>
+    <MicrosoftIdentityModelProtocols3PackageVersion>6.8.0</MicrosoftIdentityModelProtocols3PackageVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnect3PackageVersion>6.8.0</MicrosoftIdentityModelProtocolsOpenIdConnect3PackageVersion>
+    <MicrosoftIdentityModelProtocolsWsFederation3PackageVersion>6.8.0</MicrosoftIdentityModelProtocolsWsFederation3PackageVersion>
+    <MicrosoftIdentityModelTokens3PackageVersion>6.8.0</MicrosoftIdentityModelTokens3PackageVersion>
+    <MicrosoftIdentityModelTokensSaml3PackageVersion>6.8.0</MicrosoftIdentityModelTokensSaml3PackageVersion>
+    <MicrosoftIdentityModelXml3PackageVersion>6.8.0</MicrosoftIdentityModelXml3PackageVersion>
+    <SystemIdentityModelTokensJwt3PackageVersion>6.8.0</SystemIdentityModelTokensJwt3PackageVersion>
+
+    <!-- Compatibility packages -->
+    <MicrosoftWin32Registry3PackageVersion>4.7.0</MicrosoftWin32Registry3PackageVersion>
+    <MicrosoftWin32RegistryAccessControl3PackageVersion>4.7.0</MicrosoftWin32RegistryAccessControl3PackageVersion>
+    <MicrosoftWindowsCompatibility3PackageVersion>3.1.0</MicrosoftWindowsCompatibility3PackageVersion>
+    <MicrosoftWindowsCompatibilityShims3PackageVersion>2.0.1</MicrosoftWindowsCompatibilityShims3PackageVersion>
+    <SystemCodeDom3PackageVersion>4.7.0</SystemCodeDom3PackageVersion>
+    <SystemComponentModelAnnotations3PackageVersion>4.7.0</SystemComponentModelAnnotations3PackageVersion>
+    <SystemComponentModelComposition3PackageVersion>4.7.0</SystemComponentModelComposition3PackageVersion>
+    <SystemConfigurationConfigurationManager3PackageVersion>4.7.0</SystemConfigurationConfigurationManager3PackageVersion>
+    <SystemDataDataSetExtensions3PackageVersion>4.7.0</SystemDataDataSetExtensions3PackageVersion>
+    <SystemDataOdbc3PackageVersion>4.7.0</SystemDataOdbc3PackageVersion>
+    <SystemDataSqlClient3PackageVersion>4.8.2</SystemDataSqlClient3PackageVersion>
+    <SystemDiagnosticsEventLog3PackageVersion>4.7.0</SystemDiagnosticsEventLog3PackageVersion>
+    <SystemDiagnosticsPerformanceCounter3PackageVersion>4.7.0</SystemDiagnosticsPerformanceCounter3PackageVersion>
+    <SystemDirectoryServices3PackageVersion>4.7.0</SystemDirectoryServices3PackageVersion>
+    <SystemDirectoryServicesAccountManagement3PackageVersion>4.7.0</SystemDirectoryServicesAccountManagement3PackageVersion>
+    <SystemDirectoryServicesProtocols3PackageVersion>4.7.0</SystemDirectoryServicesProtocols3PackageVersion>
+    <SystemDrawingCommon3PackageVersion>4.7.1</SystemDrawingCommon3PackageVersion>
+    <SystemIOFileSystemAccessControl3PackageVersion>4.7.0</SystemIOFileSystemAccessControl3PackageVersion>
+    <SystemIOPackaging3PackageVersion>4.7.0</SystemIOPackaging3PackageVersion>
+    <SystemIOPipesAccessControl3PackageVersion>4.5.1</SystemIOPipesAccessControl3PackageVersion>
+    <SystemIOPorts3PackageVersion>4.7.0</SystemIOPorts3PackageVersion>
+    <SystemManagement3PackageVersion>4.7.0</SystemManagement3PackageVersion>
+    <SystemRuntimeCaching3PackageVersion>4.7.0</SystemRuntimeCaching3PackageVersion>
+    <SystemSecurityAccessControl3PackageVersion>4.7.0</SystemSecurityAccessControl3PackageVersion>
+    <SystemSecurityPermissions3PackageVersion>4.7.0</SystemSecurityPermissions3PackageVersion>
+    <SystemSecurityPrincipalWindows3PackageVersion>4.7.0</SystemSecurityPrincipalWindows3PackageVersion>
+    <SystemServiceProcessServiceController3PackageVersion>4.7.0</SystemServiceProcessServiceController3PackageVersion>
+    <SystemThreadingAccessControl3PackageVersion>4.7.0</SystemThreadingAccessControl3PackageVersion>
+
+    <!-- System packages -->
+    <SystemCollectionsImmutable3PackageVersion>1.7.1</SystemCollectionsImmutable3PackageVersion>
+    <SystemReflectionMetadata3PackageVersion>1.8.1</SystemReflectionMetadata3PackageVersion>
+
+    <SystemBuffers3PackageVersion>4.5.1</SystemBuffers3PackageVersion>
+    <SystemDiagnosticsDiagnosticSource3PackageVersion>4.7.1</SystemDiagnosticsDiagnosticSource3PackageVersion>
+    <SystemIOPipelines3PackageVersion>4.7.3</SystemIOPipelines3PackageVersion>
+    <SystemMemory3PackageVersion>4.5.4</SystemMemory3PackageVersion>
+    <SystemNetHttp3PackageVersion>4.3.4</SystemNetHttp3PackageVersion>
+    <SystemNumericsVectors3PackageVersion>4.5.0</SystemNumericsVectors3PackageVersion>
+
+    <SystemReflectionDispatchProxy3PackageVersion>4.7.1</SystemReflectionDispatchProxy3PackageVersion>
+    <SystemReflectionEmit3PackageVersion>4.7.0</SystemReflectionEmit3PackageVersion>
+    <SystemReflectionEmitILGeneration3PackageVersion>4.7.0</SystemReflectionEmitILGeneration3PackageVersion>
+    <SystemReflectionEmitLightweight3PackageVersion>4.7.0</SystemReflectionEmitLightweight3PackageVersion>
+    <SystemReflectionExtensions3PackageVersion>4.3.0</SystemReflectionExtensions3PackageVersion>
+    <SystemReflectionTypeExtensions3PackageVersion>4.7.0</SystemReflectionTypeExtensions3PackageVersion>
+
+    <SystemRuntimeCompilerServicesUnsafe3PackageVersion>4.7.1</SystemRuntimeCompilerServicesUnsafe3PackageVersion>
+
+    <SystemPrivateServiceModel3PackageVersion>4.7.0</SystemPrivateServiceModel3PackageVersion>
+    <SystemServiceModelDuplex3PackageVersion>4.7.0</SystemServiceModelDuplex3PackageVersion>
+    <SystemServiceModelHttp3PackageVersion>4.7.0</SystemServiceModelHttp3PackageVersion>
+    <SystemServiceModelNetTcp3PackageVersion>4.7.0</SystemServiceModelNetTcp3PackageVersion>
+    <SystemServiceModelPrimitives3PackageVersion>4.7.0</SystemServiceModelPrimitives3PackageVersion>
+    <SystemServiceModelSecurity3PackageVersion>4.7.0</SystemServiceModelSecurity3PackageVersion>
+    <SystemServiceModelSyndication3PackageVersion>4.7.0</SystemServiceModelSyndication3PackageVersion>
+
+    <SystemSecurityCryptographyCng3PackageVersion>4.7.0</SystemSecurityCryptographyCng3PackageVersion>
+    <SystemSecurityCryptographyOpenSsl3PackageVersion>4.7.0</SystemSecurityCryptographyOpenSsl3PackageVersion>
+    <SystemSecurityCryptographyPkcs3PackageVersion>4.7.0</SystemSecurityCryptographyPkcs3PackageVersion>
+    <SystemSecurityCryptographyProtectedData3PackageVersion>4.7.0</SystemSecurityCryptographyProtectedData3PackageVersion>
+    <SystemSecurityCryptographyXml3PackageVersion>4.7.0</SystemSecurityCryptographyXml3PackageVersion>
+
+    <SystemTextEncodingCodePages3PackageVersion>4.7.1</SystemTextEncodingCodePages3PackageVersion>
+    <SystemTextJson3PackageVersion>4.7.2</SystemTextJson3PackageVersion>
+    <SystemTextEncodingsWeb3PackageVersion>4.7.1</SystemTextEncodingsWeb3PackageVersion>
+    <SystemThreadingChannels3PackageVersion>4.7.1</SystemThreadingChannels3PackageVersion>
+    <SystemThreadingTasksDataflow3PackageVersion>4.11.1</SystemThreadingTasksDataflow3PackageVersion>
+    <SystemThreadingTasksExtensions3PackageVersion>4.5.4</SystemThreadingTasksExtensions3PackageVersion>
+    <SystemValueTuple3PackageVersion>4.5.0</SystemValueTuple3PackageVersion>
+  </PropertyGroup>
+</Project>

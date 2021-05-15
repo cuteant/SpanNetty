@@ -48,6 +48,7 @@ let incrementalistReport = output @@ "incrementalist.txt"
 let testNetFrameworkVersion = "net471"
 let testNetCoreVersion = "netcoreapp3.1"
 let testNetCore21Version = "netcoreapp2.1"
+let testNetVersion = "net5.0"
 
 Target "Clean" (fun _ ->
     ActivateFinalTarget "KillCreatedProcesses"
@@ -63,10 +64,10 @@ Target "Clean" (fun _ ->
 
 
 //--------------------------------------------------------------------------------
-// Incrementalist targets 
+// Incrementalist targets
 //--------------------------------------------------------------------------------
 // Pulls the set of all affected projects detected by Incrementalist from the cached file
-let getAffectedProjectsTopology = 
+let getAffectedProjectsTopology =
     lazy(
         log (sprintf "Checking inside %s for changes" incrementalistReport)
 
@@ -81,7 +82,7 @@ let getAffectedProjectsTopology =
             Some(d)
     )
 
-let getAffectedProjects = 
+let getAffectedProjects =
     lazy(
         let finalProjects = getAffectedProjectsTopology.Value
         match finalProjects with
@@ -101,8 +102,8 @@ Target "ComputeIncrementalChanges" (fun _ ->
                 match globalTool with
                     | Some t -> t
                     | None -> if isWindows then findToolInSubPath "incrementalist.exe" incrementalistDir
-                              elif isMacOS then incrementalistDir @@ "incrementalist" 
-                              else incrementalistDir @@ "incrementalist" 
+                              elif isMacOS then incrementalistDir @@ "incrementalist"
+                              else incrementalistDir @@ "incrementalist"
     
    
         let args = StringBuilder()
@@ -114,12 +115,12 @@ Target "ComputeIncrementalChanges" (fun _ ->
                 |> append incrementalistReport
                 |> toText
 
-        let result = ExecProcess(fun info -> 
+        let result = ExecProcess(fun info ->
             info.FileName <- incrementalistPath
             info.WorkingDirectory <- __SOURCE_DIRECTORY__
             info.Arguments <- args) (System.TimeSpan.FromMinutes 5.0) (* Reasonably long-running task. *)
         
-        if result <> 0 then failwithf "Incrementalist failed. %s" args  
+        if result <> 0 then failwithf "Incrementalist failed. %s" args
     else
         log "Skipping Incrementalist - not enabled for this build"
 )
@@ -144,9 +145,9 @@ let filterProjects selectedProject =
         Some selectedProject
 
 //--------------------------------------------------------------------------------
-// Build targets 
+// Build targets
 //--------------------------------------------------------------------------------
-let skipBuild = 
+let skipBuild =
     lazy(
         match getAffectedProjects.Value with
         | None when runIncrementally -> true
@@ -161,12 +162,12 @@ let headProjects =
         | Some p -> p.Keys |> Seq.toArray
     )
 
-Target "Build" (fun _ ->   
+Target "Build" (fun _ ->
     if not skipBuild.Value then
-        let additionalArgs = if versionSuffix.Length > 0 then [sprintf "/p:VersionSuffix=%s" versionSuffix] else []  
+        let additionalArgs = if versionSuffix.Length > 0 then [sprintf "/p:VersionSuffix=%s" versionSuffix] else []
         let buildProject proj =
             DotNetCli.Build
-                (fun p -> 
+                (fun p ->
                     { p with
                         Project = proj
                         Configuration = configuration
@@ -178,16 +179,18 @@ Target "Build" (fun _ ->
 )
 
 //--------------------------------------------------------------------------------
-// Tests targets 
+// Tests targets
 //--------------------------------------------------------------------------------
 type Runtime =
     | NetCore
+    | Net
     | NetFramework
 
 let getTestAssembly runtime project =
     let assemblyPath = match runtime with
                         | NetCore -> !! ("test" @@ "**" @@ "bin" @@ "Debug" @@ testNetCoreVersion @@ fileNameWithoutExt project + ".dll")
                         | NetFramework -> !! ("test" @@ "**" @@ "bin" @@ "Debug" @@ "win-x64" @@ testNetFrameworkVersion @@ fileNameWithoutExt project + ".dll")
+                        | Net -> !! ("src" @@ "**" @@ "bin" @@ "Release" @@ testNetVersion @@ fileNameWithoutExt project + ".dll")
 
     if Seq.isEmpty assemblyPath then
         None
@@ -246,9 +249,7 @@ Target "RunTests21" (fun _ ->
         let projects = 
             let rawProjects = match (isWindows) with 
                                 | true -> !! "./test/*.Tests.Netstandard/*.Tests.csproj"
-                                          -- "./test/*.Tests.Netstandard/DotNetty.Suite.Tests.csproj"
                                 | _ -> !! "./test/*.Tests.Netstandard/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
-                                       -- "./test/*.Tests.Netstandard/DotNetty.Suite.Tests.csproj"
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
@@ -270,7 +271,7 @@ Target "RunTests21" (fun _ ->
 
 FinalTarget "KillCreatedProcesses" (fun _ ->
     log "Shutting down dotnet build-server"
-    let result = ExecProcess(fun info -> 
+    let result = ExecProcess(fun info ->
             info.FileName <- "dotnet"
             info.WorkingDirectory <- __SOURCE_DIRECTORY__
             info.Arguments <- "build-server shutdown") (System.TimeSpan.FromMinutes 2.0)
@@ -278,7 +279,7 @@ FinalTarget "KillCreatedProcesses" (fun _ ->
 )
 
 //--------------------------------------------------------------------------------
-// Help 
+// Help
 //--------------------------------------------------------------------------------
 
 Target "Help" <| fun _ ->
@@ -292,7 +293,7 @@ Target "Help" <| fun _ ->
       " * All        Builds, run tests, creates and optionally publish nuget packages"
       ""
       " Other Targets"
-      " * Help       Display this help" 
+      " * Help       Display this help"
       ""]
 
 //--------------------------------------------------------------------------------

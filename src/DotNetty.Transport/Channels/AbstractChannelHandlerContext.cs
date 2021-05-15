@@ -952,9 +952,9 @@ namespace DotNetty.Transport.Channels
             PromiseNotificationUtil.TryFailure(promise, cause, promise.IsVoid ? null : DefaultChannelPipeline.Logger);
         }
 
-        public IPromise NewPromise() => new TaskCompletionSource();
+        public IPromise NewPromise() => new DefaultPromise();
 
-        public IPromise NewPromise(object state) => new TaskCompletionSource(state);
+        public IPromise NewPromise(object state) => new DefaultPromise(state);
 
         public IPromise VoidPromise() => Channel.VoidPromise();
 

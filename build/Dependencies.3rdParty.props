@@ -2,8 +2,8 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- Common packages -->
-    <BenDemystifierPackageVersion>0.1.6</BenDemystifierPackageVersion>
-    <CommandLineParserPackageVersion>2.3.0</CommandLineParserPackageVersion>
+    <BenDemystifierPackageVersion>0.4.1</BenDemystifierPackageVersion>
+    <CommandLineParserPackageVersion>2.8.0</CommandLineParserPackageVersion>
     <CronExpressionDescriptorPackageVersion>2.16.0</CronExpressionDescriptorPackageVersion>
     <FastMemberSigned13PackageVersion>1.3.0</FastMemberSigned13PackageVersion>
     <FastMemberSignedPackageVersion>1.5.0</FastMemberSignedPackageVersion>
@@ -11,20 +11,20 @@
     <MoreLinqPackageVersion>3.3.2</MoreLinqPackageVersion>
     <NCrontabSignedPackageVersion>3.3.2</NCrontabSignedPackageVersion>
     <OptionalPackageVersion>4.0.0</OptionalPackageVersion>
-    <SystemLinqDynamicCorePackageVersion>1.2.6</SystemLinqDynamicCorePackageVersion>
+    <SystemLinqDynamicCorePackageVersion>1.2.9</SystemLinqDynamicCorePackageVersion>
     <SuperpowerPackageVersion>2.3.0</SuperpowerPackageVersion>
 
     <AutoMapperPackageVersion>10.1.1</AutoMapperPackageVersion>
-    <AutoMapperCollectionPackageVersion>5.0.0</AutoMapperCollectionPackageVersion>
+    <AutoMapperCollectionPackageVersion>7.0.1</AutoMapperCollectionPackageVersion>
 
     <ToolGoodWordsPackageVersion>3.0.2.4</ToolGoodWordsPackageVersion>
 
-    <PollyPackageVersion>7.2.1</PollyPackageVersion>
+    <PollyPackageVersion>7.2.2</PollyPackageVersion>
     <PollyCachingDistributedPackageVersion>3.0.1</PollyCachingDistributedPackageVersion>
     <PollyCachingMemoryPackageVersion>3.0.2</PollyCachingMemoryPackageVersion>
     <PollyExtensionsHttpPackageVersion>3.0.0</PollyExtensionsHttpPackageVersion>
 
-    <ReactivePropertyPackageVersion>5.3.0</ReactivePropertyPackageVersion>
+    <ReactivePropertyPackageVersion>7.10.0</ReactivePropertyPackageVersion>
     <ReactiveStreamsPackageVersion>1.0.2</ReactiveStreamsPackageVersion>
 
     <JetBrainsAnnotationsPackageVersion>2019.1.3</JetBrainsAnnotationsPackageVersion>
@@ -33,7 +33,7 @@
     <CastleCorePackageVersion>4.4.1</CastleCorePackageVersion>
 
     <!-- Ioc related packages -->
-    <AutofacPackageVersion>6.1.0</AutofacPackageVersion>
+    <AutofacPackageVersion>6.2.0</AutofacPackageVersion>
     <AutofacConfigurationPackageVersion>6.0.0</AutofacConfigurationPackageVersion>
     <AutofacExtensionsDependencyInjectionPackageVersion>7.1.0</AutofacExtensionsDependencyInjectionPackageVersion>
     <AutofacExtrasDynamicProxyPackageVersion>6.0.0</AutofacExtrasDynamicProxyPackageVersion>
@@ -47,12 +47,12 @@
     <Lz4netNETCoreSignedPackageVersion>1.0.15.93</Lz4netNETCoreSignedPackageVersion>
 
     <!-- Database related packages -->
-    <CsvHelperPackageVersion>18.0.0</CsvHelperPackageVersion>
+    <CsvHelperPackageVersion>27.0.2</CsvHelperPackageVersion>
     <DocumentFormatOpenXmlPackageVersion>2.10.1</DocumentFormatOpenXmlPackageVersion>
     <ExcelNumberFormatPackageVersion>1.0.10</ExcelNumberFormatPackageVersion>
     <RemotionLinqPackageVersion>2.2.0</RemotionLinqPackageVersion>
     <ConsulPackageVersion>0.7.2.6</ConsulPackageVersion>
-    <DapperStrongNamePackageVersion>2.0.35</DapperStrongNamePackageVersion>
+    <DapperStrongNamePackageVersion>2.0.90</DapperStrongNamePackageVersion>
     <MicrosoftSqlServerTypesPackageVersion>14.0.1016.290</MicrosoftSqlServerTypesPackageVersion>
     <MongoDBBsonPackageVersion>2.11.0</MongoDBBsonPackageVersion>
     <MongoDBDriverCorePackageVersion>2.11.0</MongoDBDriverCorePackageVersion>
@@ -77,10 +77,10 @@
     <SystemDataSQLiteCorePackageVersion>1.0.112.1</SystemDataSQLiteCorePackageVersion>
 
     <!-- Hosting related packages -->
-    <TopshelfPackageVersion>4.2.1</TopshelfPackageVersion>
-    <TopshelfExtensionsConfigurationPackageVersion>4.2.1</TopshelfExtensionsConfigurationPackageVersion>
-    <TopshelfNLogPackageVersion>4.2.1</TopshelfNLogPackageVersion>
-    <TopshelfSerilogPackageVersion>4.2.1</TopshelfSerilogPackageVersion>
+    <TopshelfPackageVersion>4.3.0</TopshelfPackageVersion>
+    <TopshelfExtensionsConfigurationPackageVersion>4.3.0</TopshelfExtensionsConfigurationPackageVersion>
+    <TopshelfNLogPackageVersion>4.3.0</TopshelfNLogPackageVersion>
+    <TopshelfSerilogPackageVersion>4.3.0</TopshelfSerilogPackageVersion>
 
     <!-- Logging related packages -->
     <NLogPackageVersion>4.7.6</NLogPackageVersion>
@@ -143,22 +143,22 @@
     <RabbitMQClientPackageVersion>5.1.0</RabbitMQClientPackageVersion>
 
     <LibuvPackageVersion>1.10.0</LibuvPackageVersion>
-    <LibuvSharedPackageVersion>1.34.0.266</LibuvSharedPackageVersion>
+    <LibuvSharedPackageVersion>1.40.0.394</LibuvSharedPackageVersion>
 
-    <MimeKitPackageVersion>2.10.1</MimeKitPackageVersion>
-    <MailKitPackageVersion>2.10.1</MailKitPackageVersion>
+    <MimeKitPackageVersion>2.11.0</MimeKitPackageVersion>
+    <MailKitPackageVersion>2.11.0</MailKitPackageVersion>
 
     <!-- Serialization related packages -->
-    <GoogleApiCommonProtosPackageVersion>1.6.0</GoogleApiCommonProtosPackageVersion>
-    <GoogleProtobufPackageVersion>3.12.3</GoogleProtobufPackageVersion>
-    <GoogleProtobufToolsPackageVersion>3.12.3</GoogleProtobufToolsPackageVersion>
-    <HyperionPackageVersion>0.9.16</HyperionPackageVersion>
-    <MessagePackAnalyzerPackageVersion>1.7.3.7</MessagePackAnalyzerPackageVersion>
+    <GoogleApiCommonProtosPackageVersion>2.3.0</GoogleApiCommonProtosPackageVersion>
+    <GoogleProtobufPackageVersion>3.16.0</GoogleProtobufPackageVersion>
+    <GoogleProtobufToolsPackageVersion>3.16.0</GoogleProtobufToolsPackageVersion>
+    <HyperionPackageVersion>0.10.1</HyperionPackageVersion>
+    <MessagePackAnalyzerPackageVersion>2.2.85</MessagePackAnalyzerPackageVersion>
     <NewtonsoftJsonBsonPackageVersion>1.0.2</NewtonsoftJsonBsonPackageVersion>
-    <NewtonsoftJsonPackageVersion>12.0.3</NewtonsoftJsonPackageVersion>
-    <ProtobufNetPackageVersion>2.4.6</ProtobufNetPackageVersion>
-    <ProtobufNetDevPackageVersion>3.0.0-alpha.155</ProtobufNetDevPackageVersion>
+    <NewtonsoftJsonPackageVersion>13.0.1</NewtonsoftJsonPackageVersion>
+    <ProtobufNet2PackageVersion>2.4.6</ProtobufNet2PackageVersion>
+    <ProtobufNetPackageVersion>3.0.101</ProtobufNetPackageVersion>
     <ProtobufNetDataPackageVersion>3.0.1</ProtobufNetDataPackageVersion>
-    <YamlDotNetPackageVersion>9.1.0</YamlDotNetPackageVersion>
+    <YamlDotNetPackageVersion>11.1.1</YamlDotNetPackageVersion>
   </PropertyGroup>
 </Project>

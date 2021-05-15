@@ -73,13 +73,13 @@ namespace DotNetty.Transport.Libuv.Tests
 
         sealed class ClientHandler : ChannelHandlerAdapter
         {
-            readonly TaskCompletionSource completion;
+            readonly DefaultPromise completion;
 
             IByteBuffer aggregator;
 
             public ClientHandler()
             {
-                this.completion = new TaskCompletionSource();
+                this.completion = new DefaultPromise();
             }
 
             public override void HandlerAdded(IChannelHandlerContext ctx)

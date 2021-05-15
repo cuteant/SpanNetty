@@ -114,7 +114,7 @@ namespace DotNetty.Codecs.Http.Tests
             var serverGroup = new MultithreadEventLoopGroup(1);
             try
             {
-                var serverCompletion = new TaskCompletionSource();
+                var serverCompletion = new DefaultPromise();
 
                 var serverHandler = new ServerHandler();
                 ServerBootstrap sb = new ServerBootstrap()
@@ -177,7 +177,7 @@ namespace DotNetty.Codecs.Http.Tests
 
         class ClientHandler : SimpleChannelInboundHandler<IFullHttpResponse>
         {
-            readonly TaskCompletionSource completion = new TaskCompletionSource();
+            readonly DefaultPromise completion = new();
 
             public bool WaitForCompletion()
             {
@@ -194,7 +194,7 @@ namespace DotNetty.Codecs.Http.Tests
 
         class ServerHandler : SimpleChannelInboundHandler<IFullHttpRequest>
         {
-            readonly TaskCompletionSource completion = new TaskCompletionSource();
+            readonly DefaultPromise completion = new();
 
             public bool WaitForCompletion()
             {
