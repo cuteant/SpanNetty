@@ -197,7 +197,7 @@
                 Assert.Single(h2._removalThreadNames);
                 Assert.Single(h3._removalThreadNames);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 //System.out.println("H1I: " + h1.inboundThreadNames);
                 //System.out.println("H2I: " + h2.inboundThreadNames);
@@ -208,7 +208,7 @@
                 //System.out.println("H1R: " + h1.removalThreadNames);
                 //System.out.println("H2R: " + h2.removalThreadNames);
                 //System.out.println("H3R: " + h3.removalThreadNames);
-                throw e;
+                throw;
             }
             finally
             {

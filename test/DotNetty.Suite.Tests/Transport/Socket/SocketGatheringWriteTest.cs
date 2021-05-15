@@ -372,9 +372,9 @@
                 Assert.True(cf.Wait(60000));
                 await cf;
             }
-            catch (Exception t)
+            catch (Exception)
             {
-                throw t;
+                throw;
             }
 
             await serverDonePromise.Task;

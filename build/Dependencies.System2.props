@@ -104,56 +104,5 @@
     <SystemSecurityClaimsNet40PackageVersion>2.1.0</SystemSecurityClaimsNet40PackageVersion>
     <SystemTextEncodingsWebNet40PackageVersion>2.1.0</SystemTextEncodingsWebNet40PackageVersion>
     <SystemTextRegularExpressionsNet40PackageVersion>2.1.0</SystemTextRegularExpressionsNet40PackageVersion>
-
-    <!-- Ix packages -->
-    <Ix2PackageVersion>3.2.0</Ix2PackageVersion>
-    <IxUnofficialPackageVersion>3.1.1</IxUnofficialPackageVersion>
-    <SystemInteractive2PackageVersion>3.2.0</SystemInteractive2PackageVersion>
-    <SystemInteractiveAsync2PackageVersion>3.2.0</SystemInteractiveAsync2PackageVersion>
-    <SystemInteractiveAsyncProviders2PackageVersion>3.2.0</SystemInteractiveAsyncProviders2PackageVersion>
-
-    <!-- Rx packages -->
-    <Rx2PackageVersion>4.1.5</Rx2PackageVersion>
-    <RxUnofficialPackageVersion>3.1.1</RxUnofficialPackageVersion>
-    <SystemReactiveLinq2PackageVersion>4.1.5</SystemReactiveLinq2PackageVersion>
-
-    <!-- Obsolete packages -->
-    <SystemCollections2PackageVersion>4.3.0</SystemCollections2PackageVersion>
-    <SystemCollectionsNonGeneric2PackageVersion>4.3.0</SystemCollectionsNonGeneric2PackageVersion>
-    <SystemCollectionsSpecialized2PackageVersion>4.3.0</SystemCollectionsSpecialized2PackageVersion>
-    <SystemComponentModelTypeConverter2PackageVersion>4.3.0</SystemComponentModelTypeConverter2PackageVersion>
-    <SystemDiagnosticsContracts2PackageVersion>4.3.0</SystemDiagnosticsContracts2PackageVersion>
-    <SystemDiagnosticsDebug2PackageVersion>4.3.0</SystemDiagnosticsDebug2PackageVersion>
-    <SystemDiagnosticsStackTrace2PackageVersion>4.3.0</SystemDiagnosticsStackTrace2PackageVersion>
-    <SystemDiagnosticsTraceSource2PackageVersion>4.3.0</SystemDiagnosticsTraceSource2PackageVersion>
-    <SystemDrawingPrimitives2PackageVersion>4.3.0</SystemDrawingPrimitives2PackageVersion>
-    <SystemDynamicRuntime2PackageVersion>4.3.0</SystemDynamicRuntime2PackageVersion>
-    <SystemGlobalization2PackageVersion>4.3.0</SystemGlobalization2PackageVersion>
-    <SystemGlobalizationExtensions2PackageVersion>4.3.0</SystemGlobalizationExtensions2PackageVersion>
-    <SystemIO2PackageVersion>4.3.0</SystemIO2PackageVersion>
-    <SystemIOFileSystemPrimitives2PackageVersion>4.3.0</SystemIOFileSystemPrimitives2PackageVersion>
-    <SystemIOMemoryMappedFiles2PackageVersion>4.3.0</SystemIOMemoryMappedFiles2PackageVersion>
-    <SystemNetNameResolution2PackageVersion>4.3.0</SystemNetNameResolution2PackageVersion>
-    <SystemNetNetworkInformation2PackageVersion>4.3.0</SystemNetNetworkInformation2PackageVersion>
-    <SystemNetPrimitives2PackageVersion>4.3.1</SystemNetPrimitives2PackageVersion>
-    <SystemNetSecurity2PackageVersion>4.3.2</SystemNetSecurity2PackageVersion>
-    <SystemNetSockets2PackageVersion>4.3.0</SystemNetSockets2PackageVersion>
-    <SystemObjectModel2PackageVersion>4.3.0</SystemObjectModel2PackageVersion>
-    <SystemResourcesResourceManager2PackageVersion>4.3.0</SystemResourcesResourceManager2PackageVersion>
-    <SystemRuntimeHandles2PackageVersion>4.3.0</SystemRuntimeHandles2PackageVersion>
-    <SystemRuntimeInteropServices2PackageVersion>4.3.0</SystemRuntimeInteropServices2PackageVersion>
-    <SystemRuntimeInteropServicesRuntimeInformation2PackageVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformation2PackageVersion>
-    <SystemRuntime2PackageVersion>4.3.0</SystemRuntime2PackageVersion>
-    <SystemRuntimeLoader2PackageVersion>4.3.0</SystemRuntimeLoader2PackageVersion>
-    <SystemRuntimeSerializationFormatters2PackageVersion>4.3.0</SystemRuntimeSerializationFormatters2PackageVersion>
-    <SystemRuntimeSerializationJson2PackageVersion>4.3.0</SystemRuntimeSerializationJson2PackageVersion>
-    <SystemRuntimeSerializationPrimitives2PackageVersion>4.3.0</SystemRuntimeSerializationPrimitives2PackageVersion>
-    <SystemRuntimeSerializationXml2PackageVersion>4.3.0</SystemRuntimeSerializationXml2PackageVersion>
-    <SystemSecurityCryptographyAlgorithms2PackageVersion>4.3.1</SystemSecurityCryptographyAlgorithms2PackageVersion>
-    <SystemSecurityCryptographyCsp2PackageVersion>4.3.0</SystemSecurityCryptographyCsp2PackageVersion>
-    <SystemSecurityCryptographyEncoding2PackageVersion>4.3.0</SystemSecurityCryptographyEncoding2PackageVersion>
-    <SystemSecurityCryptographyPrimitives2PackageVersion>4.3.0</SystemSecurityCryptographyPrimitives2PackageVersion>
-    <SystemSecurityCryptographyX509Certificates2PackageVersion>4.3.2</SystemSecurityCryptographyX509Certificates2PackageVersion>
-    <SystemXmlXmlSerializer2PackageVersion>4.3.0</SystemXmlXmlSerializer2PackageVersion>
   </PropertyGroup>
 </Project>

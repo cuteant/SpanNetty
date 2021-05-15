@@ -16,6 +16,7 @@
   <Import Project="$(SourceRoot)/build/Dependencies.Roslyn.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.System.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.System2.props" />
+  <Import Project="$(SourceRoot)/build/Dependencies.System3.props" />
   <Import Project="$(SourceRoot)/build/Dependencies.Testing.props" />
 
   <!-- Ensure changes to this file cause project rebuilds. -->

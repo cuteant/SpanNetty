@@ -84,10 +84,10 @@
                 if (!result || !futureB1.IsSuccess()) { throw new TimeoutException(); }
                 Assert.Same(poolB1, futureB1.Result);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Shutdown(threadA1, threadA2, threadB1, threadB2);
-                throw e;
+                throw;
             }
 
             // Now release the other two threads which at this point lost the race and will try to clean up the acquired

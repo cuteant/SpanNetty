@@ -39,7 +39,9 @@ namespace DotNetty.Common.Tests.Utilities
                 Encoding.ASCII,
                 Encoding.BigEndianUnicode,
                 Encoding.UTF32,
+#pragma warning disable SYSLIB0001 // 类型或成员已过时
                 Encoding.UTF7,
+#pragma warning restore SYSLIB0001 // 类型或成员已过时
                 Encoding.UTF8,
                 Encoding.Unicode
             };
