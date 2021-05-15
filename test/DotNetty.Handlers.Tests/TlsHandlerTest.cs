@@ -59,10 +59,6 @@ namespace DotNetty.Handlers.Tests
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
                 protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) // azure pipelines
-            {
-                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
-            }
             else
             {
                 protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
