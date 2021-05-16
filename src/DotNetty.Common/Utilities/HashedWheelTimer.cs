@@ -423,15 +423,13 @@ namespace DotNetty.Common.Utilities
                             : currentTime;
                     }
 
-                    Task delay = null;
                     try
                     {
                         long sleepTimeMs = sleepTime.Ticks / TimeSpan.TicksPerMillisecond; // we've already rounded so no worries about the remainder > 0 here
                         Debug.Assert(sleepTimeMs <= int.MaxValue);
-                        delay = Task.Delay((int)sleepTimeMs, _owner.CancellationToken);
-                        delay.Wait();
+                        XThread.Sleep((int)sleepTimeMs, _owner.CancellationToken);
                     }
-                    catch (AggregateException) when (delay is object && delay.IsCanceled)
+                    catch (OperationCanceledException)
                     {
                         if (Volatile.Read(ref _owner.v_workerState) == WorkerStateShutdown)
                         {

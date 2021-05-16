@@ -121,7 +121,16 @@ namespace DotNetty.Common.Concurrency
 
         public static void Sleep(int millisecondsTimeout)
         {
-            Task.Delay(millisecondsTimeout).Wait();
+            Thread.Sleep(millisecondsTimeout);
+        }
+
+        /// <exception cref="T:System.OperationCanceledException"><paramref name="cancellationToken" /> was canceled.</exception>
+        public static void Sleep(int millisecondsTimeout, CancellationToken cancellationToken)
+        {
+            using (var ev = new ManualResetEventSlim())
+            {
+                ev.Wait(millisecondsTimeout, cancellationToken);
+            }
         }
 
         public int Id => _threadId;
