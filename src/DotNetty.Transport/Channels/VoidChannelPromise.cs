@@ -27,6 +27,7 @@ namespace DotNetty.Transport.Channels
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
     using DotNetty.Common.Concurrency;
+    using System.Threading;
 
     public sealed class VoidChannelPromise : IPromise
     {
@@ -35,6 +36,7 @@ namespace DotNetty.Transport.Channels
         private readonly IChannel _channel;
         // Will be null if we should not propagate exceptions through the pipeline on failure case.
         private readonly bool _fireException;
+        private readonly Lazy<Task> _task;
 
         static VoidChannelPromise()
         {
@@ -51,10 +53,10 @@ namespace DotNetty.Transport.Channels
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             _channel = channel;
             _fireException = fireException;
-            Task = TaskUtil.FromException(Error);
+            _task = new Lazy<Task>(() => TaskUtil.FromException(Error), LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
-        public Task Task { get; }
+        public Task Task => _task.Value;
 
         public bool IsVoid => true;
 
