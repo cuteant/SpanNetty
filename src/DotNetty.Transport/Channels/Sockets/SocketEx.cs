@@ -27,6 +27,8 @@ namespace DotNetty.Transport.Channels.Sockets
 {
     public static class SocketEx
     {
+        private static readonly byte[] FastpathEnabled = BitConverter.GetBytes(1);
+
         public static Socket CreateSocket()
         {
             // .Net45+，默认为AddressFamily.InterNetworkV6，并设置 DualMode 为 true，双线绑定
@@ -89,16 +91,20 @@ namespace DotNetty.Transport.Channels.Sockets
         /// See https://blogs.technet.microsoft.com/wincat/2012/12/05/fast-tcp-loopback-performance-and-low-latency-with-windows-server-2012-tcp-loopback-fast-path/
         /// for more information.</summary>
         /// <param name="socket">The socket for which FastPath should be enabled.</param>
-        /// <remarks>Code take from Orleans(See https://github.com/dotnet/orleans/blob/master/src/Orleans.Core/Messaging/SocketExtensions.cs). </remarks>
+        /// <remarks>Code take from Orleans(See https://github.com/dotnet/orleans/blob/main/src/Orleans.Core/Networking/Shared/SocketExtensions.cs). </remarks>
         internal static void EnableFastpath(this Socket socket)
         {
             if (!PlatformApis.IsWindows) { return; }
 
             const int SIO_LOOPBACK_FAST_PATH = -1744830448;
-            var optionInValue = BitConverter.GetBytes(1);
             try
             {
-                socket.IOControl(SIO_LOOPBACK_FAST_PATH, optionInValue, null);
+                // Win8/Server2012+ only
+                var osVersion = Environment.OSVersion.Version;
+                if (osVersion.Major > 6 || osVersion.Major == 6 && osVersion.Minor >= 2)
+                {
+                    socket.IOControl(SIO_LOOPBACK_FAST_PATH, FastpathEnabled, null);
+                }
             }
             catch
             {
