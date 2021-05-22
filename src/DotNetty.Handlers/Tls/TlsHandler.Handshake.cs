@@ -41,7 +41,7 @@ namespace DotNetty.Handlers.Tls
 
     partial class TlsHandler
     {
-        private static readonly Action<Task, object> s_handshakeCompletionCallback = (t, s) => HandleHandshakeCompleted(t, s);
+        private static readonly Action<object, object> s_handshakeCompletionCallback = (t, s) => HandleHandshakeCompleted((Task)t, (TlsHandler)s);
         public static readonly AttributeKey<SslStream> SslStreamAttrKey = AttributeKey<SslStream>.ValueOf("SSLSTREAM");
 
         private bool EnsureAuthenticated(IChannelHandlerContext ctx)
@@ -132,9 +132,14 @@ namespace DotNetty.Handlers.Tls
             return oldState.Has(TlsHandlerState.Authenticated);
         }
 
-        private static void HandleHandshakeCompleted(Task task, object state)
+        private static void HandleHandshakeCompleted(Task task, TlsHandler self)
         {
-            var self = (TlsHandler)state;
+            var capturedContext = self.CapturedContext;
+            if (!capturedContext.Executor.InEventLoop)
+            {
+                capturedContext.Executor.Execute(s_handshakeCompletionCallback, task, self);
+                return;
+            }
             var oldState = self.State;
 
             if (task.IsSuccess())
@@ -142,7 +147,6 @@ namespace DotNetty.Handlers.Tls
                 Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
                 self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
 
-                var capturedContext = self.CapturedContext;
                 _ = capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
 
                 if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.IsAutoRead)
