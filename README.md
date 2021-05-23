@@ -1,4 +1,4 @@
-# dotnetty-span-fork
+# SpanNetty
 
 This is a fork of [DotNetty](https://github.com/azure/dotnetty).
 
@@ -6,23 +6,23 @@ This is a fork of [DotNetty](https://github.com/azure/dotnetty).
 
 | Stage                                         | Status                                                                                                                                                                                                                                                            	|
 |-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
-| Build                                         | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netfx-validation?branchName=future&jobName=Windows%20Build)](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=6&branchName=future) |
-| .NET Framework 451 Unit Tests                 | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netfx-validation?branchName=future&jobName=.NET%20Framework%20451%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=6&branchName=future) |
-| .NET Framework 471 Unit Tests                 | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netfx-validation?branchName=future&jobName=.NET%20Framework%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=6&branchName=future) |
-| .NET Core (Windows) Unit Tests                | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=future) |
-| .NET Core (Ubuntu 16.04) Unit Tests           | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(Ubuntu-16))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=future) |
-| .NET Core (Ubuntu 18.04) Unit Tests           | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(Ubuntu-18))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=future) |
-| .NET Core (macOS X Mojave 10.14) Unit Tests   | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(MacOS-10.14))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=future) |
-| .NET Core (macOS X Catalina 10.15) Unit Tests | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=future&jobName=.NET%20Core%20Unit%20Tests%20(MacOS-10.15))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=future) |
-| .NET Netstandard (Windows) Unit Tests         | [![Build status](https://ci.appveyor.com/api/projects/status/rvx3h1bmahad2giw/branch/future?svg=true)](https://ci.appveyor.com/project/cuteant/SpanNetty/branch/future) |
+| Build                                         | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netfx-validation?branchName=main&jobName=Windows%20Build)](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=6&branchName=main) |
+| .NET Framework 451 Unit Tests                 | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netfx-validation?branchName=main&jobName=.NET%20Framework%20451%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=6&branchName=main) |
+| .NET Framework 471 Unit Tests                 | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netfx-validation?branchName=main&jobName=.NET%20Framework%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=6&branchName=main) |
+| .NET Core (Windows) Unit Tests                | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=main&jobName=.NET%20Core%20Unit%20Tests%20(Windows))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=main) |
+| .NET Core (Ubuntu 16.04) Unit Tests           | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=main&jobName=.NET%20Core%20Unit%20Tests%20(Ubuntu-16))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=main) |
+| .NET Core (Ubuntu 18.04) Unit Tests           | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=main&jobName=.NET%20Core%20Unit%20Tests%20(Ubuntu-18))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=main) |
+| .NET Core (macOS X Mojave 10.14) Unit Tests   | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=main&jobName=.NET%20Core%20Unit%20Tests%20(MacOS-10.14))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=main) |
+| .NET Core (macOS X Catalina 10.15) Unit Tests | [![Build Status](https://dev.azure.com/SpanNetty/SpanNetty/_apis/build/status/SpanNetty/pr-netcore-validation?branchName=main&jobName=.NET%20Core%20Unit%20Tests%20(MacOS-10.15))](https://dev.azure.com/SpanNetty/SpanNetty/_build/latest?definitionId=7&branchName=main) |
+| .NET Netstandard (Windows) Unit Tests         | [![Build status](https://ci.appveyor.com/api/projects/status/rvx3h1bmahad2giw/branch/main?svg=true)](https://ci.appveyor.com/project/cuteant/SpanNetty/branch/main) |
 
 ## Features
   - Align with [Netty-4.1.51.Final](https://github.com/netty/netty/tree/netty-4.1.51.Final)
   - ArrayPooledByteBuffer
   - Support **Span&#60;byte&#62;** and **Memory&#60;byte&#62;** in Buffer/Common APIs
   - Add support for IBufferWriter&#60;byte&#62; to the **IByteBuffer**
-  - [ByteBufferReader](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Buffers/Reader) and [ByteBufferWriter](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Buffers/Writer)
-  - [HTTP 2 codec](https://github.com/cuteant/dotnetty-span-fork/tree/future/src/DotNetty.Codecs.Http2)
+  - [ByteBufferReader](https://github.com/cuteant/spannetty/tree/main/src/DotNetty.Buffers/Reader) and [ByteBufferWriter](https://github.com/cuteant/dotnetty-span-fork/tree/main/src/DotNetty.Buffers/Writer)
+  - [HTTP 2 codec](https://github.com/cuteant/spannetty/tree/main/src/DotNetty.Codecs.Http2)
 
 ## Use
 
