@@ -48,6 +48,49 @@ namespace DotNetty.Handlers.Tests
                     Enumerable.Repeat(0, 30).Select(_ => random.Next(0, 17000)).ToArray()
                 };
             var boolToggle = new[] { false, true };
+            var protocols = new (SslProtocols serverProtocol, SslProtocols clientProtocol)[] { (SslProtocols.None, SslProtocols.None) };
+
+            var writeStrategyFactories = new Func<IWriteStrategy>[]
+            {
+                () => new AsIsWriteStrategy(),
+                () => new BatchingWriteStrategy(1, TimeSpan.FromMilliseconds(20), true),
+                () => new BatchingWriteStrategy(4096, TimeSpan.FromMilliseconds(20), true),
+                () => new BatchingWriteStrategy(32 * 1024, TimeSpan.FromMilliseconds(20), false)
+            };
+
+            return
+                from frameLengths in lengthVariations
+                from isClient in boolToggle
+                from writeStrategyFactory in writeStrategyFactories
+                from protocol in protocols
+                select new object[] { frameLengths, isClient, writeStrategyFactory(), protocol.serverProtocol, protocol.clientProtocol };
+        }
+
+        public static IEnumerable<object[]> GetTlsReadTestProtocol()
+        {
+            var lengthVariations =
+                new[]
+                {
+                    new[] { 1 },
+                };
+            var boolToggle = new[] { false, true };
+            var protocols = GetTlsTestProtocol();
+
+            var writeStrategyFactories = new Func<IWriteStrategy>[]
+            {
+                () => new AsIsWriteStrategy()
+            };
+
+            return
+                from frameLengths in lengthVariations
+                from isClient in boolToggle
+                from writeStrategyFactory in writeStrategyFactories
+                from protocol in protocols
+                select new object[] { frameLengths, isClient, writeStrategyFactory(), protocol.serverProtocol, protocol.clientProtocol };
+        }
+
+        static List<(SslProtocols serverProtocol, SslProtocols clientProtocol)> GetTlsTestProtocol()
+        {
             var protocols = new List<(SslProtocols serverProtocol, SslProtocols clientProtocol)>();
             protocols.Add((SslProtocols.Tls, SslProtocols.Tls));
             protocols.Add((SslProtocols.Tls11, SslProtocols.Tls11));
@@ -71,26 +114,12 @@ namespace DotNetty.Handlers.Tests
             }
 
             protocols = FilterPlatformAvailableProtocols(protocols);
-
-            var writeStrategyFactories = new Func<IWriteStrategy>[]
-            {
-                () => new AsIsWriteStrategy(),
-                () => new BatchingWriteStrategy(1, TimeSpan.FromMilliseconds(20), true),
-                () => new BatchingWriteStrategy(4096, TimeSpan.FromMilliseconds(20), true),
-                () => new BatchingWriteStrategy(32 * 1024, TimeSpan.FromMilliseconds(20), false)
-            };
-
-            return
-                from frameLengths in lengthVariations
-                from isClient in boolToggle
-                from writeStrategyFactory in writeStrategyFactories
-                from protocol in protocols
-                select new object[] { frameLengths, isClient, writeStrategyFactory(), protocol.serverProtocol, protocol.clientProtocol };
+            return protocols;
         }
-
 
         [Theory]
         [MemberData(nameof(GetTlsReadTestData))]
+        [MemberData(nameof(GetTlsReadTestProtocol))]
         public async Task TlsRead(int[] frameLengths, bool isClient, IWriteStrategy writeStrategy, SslProtocols serverProtocol, SslProtocols clientProtocol)
         {
             this.Output.WriteLine($"frameLengths: {string.Join(", ", frameLengths)}");
@@ -153,29 +182,24 @@ namespace DotNetty.Handlers.Tests
                     Enumerable.Repeat(0, 30).Select(_ => random.Next(0, 10) < 2 ? -1 : random.Next(0, 17000)).ToArray()
                 };
             var boolToggle = new[] { false, true };
-            var protocols = new List<(SslProtocols serverProtocol, SslProtocols clientProtocol)>();
-            protocols.Add((SslProtocols.Tls, SslProtocols.Tls));
-            protocols.Add((SslProtocols.Tls11, SslProtocols.Tls11));
-            protocols.Add((SslProtocols.Tls12, SslProtocols.Tls12));
-#if NETCOREAPP_3_0_GREATER
-            var tls13 = SslProtocols.Tls13;
-            protocols.Add((tls13, tls13));
-#else
-            var tls13 = SslProtocols.None;
-#endif
-            if ((Platform.SupportedSslProtocols & tls13) != SslProtocols.None)
-            {
-                //Tls and Tls11 maybe unavailable in new platforms
-                protocols.Add((SslProtocols.Tls12 | tls13, SslProtocols.Tls11 | SslProtocols.Tls12));
-                protocols.Add((SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls12 | tls13));
-            }
-            else
-            {
-                protocols.Add((SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add((SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
-            }
+            var protocols = new (SslProtocols serverProtocol, SslProtocols clientProtocol)[] { (SslProtocols.None, SslProtocols.None) };
 
-            protocols = FilterPlatformAvailableProtocols(protocols);
+            return
+                from frameLengths in lengthVariations
+                from isClient in boolToggle
+                from protocol in protocols
+                select new object[] { frameLengths, isClient, protocol.serverProtocol, protocol.clientProtocol };
+        }
+
+        public static IEnumerable<object[]> GetTlsWriteTestProtocol()
+        {
+            var lengthVariations =
+                new[]
+                {
+                    new[] { 1 }
+                };
+            var boolToggle = new[] { false, true };
+            var protocols = GetTlsTestProtocol();
 
             return
                 from frameLengths in lengthVariations
@@ -186,6 +210,7 @@ namespace DotNetty.Handlers.Tests
 
         [Theory]
         [MemberData(nameof(GetTlsWriteTestData))]
+        [MemberData(nameof(GetTlsWriteTestProtocol))]
         public async Task TlsWrite(int[] frameLengths, bool isClient, SslProtocols serverProtocol, SslProtocols clientProtocol)
         {
             this.Output.WriteLine($"frameLengths: {string.Join(", ", frameLengths)}");
