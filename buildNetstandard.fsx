@@ -35,7 +35,7 @@ let versionFromReleaseNotes =
 
 let versionSuffix = 
     match (getBuildParam "nugetprerelease") with
-    | "future" -> preReleaseVersionSuffix
+    | "main" -> preReleaseVersionSuffix
     | "" -> versionFromReleaseNotes
     | str -> str
     
@@ -93,8 +93,8 @@ let getAffectedProjects =
 Target "ComputeIncrementalChanges" (fun _ ->
     if runIncrementally then
         let targetBranch = match getBuildParam "targetBranch" with
-                            | "" -> "future"
-                            | null -> "future"
+                            | "" -> "main"
+                            | null -> "main"
                             | b -> b
         let incrementalistPath =
                 let incrementalistDir = toolsDir @@ "incrementalist"
