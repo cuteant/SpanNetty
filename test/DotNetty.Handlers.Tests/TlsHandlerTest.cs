@@ -92,25 +92,21 @@ namespace DotNetty.Handlers.Tests
         static List<(SslProtocols serverProtocol, SslProtocols clientProtocol)> GetTlsTestProtocol()
         {
             var protocols = new List<(SslProtocols serverProtocol, SslProtocols clientProtocol)>();
-            protocols.Add((SslProtocols.Tls, SslProtocols.Tls));
-            protocols.Add((SslProtocols.Tls11, SslProtocols.Tls11));
-            protocols.Add((SslProtocols.Tls12, SslProtocols.Tls12));
-#if NETCOREAPP_3_0_GREATER
-            var tls13 = SslProtocols.Tls13;
-            protocols.Add((tls13, tls13));
-#else
-            var tls13 = SslProtocols.None;
-#endif
-            if ((Platform.SupportedSslProtocols & tls13) != SslProtocols.None)
+            var supportedProtocolList = Platform.SupportedSslProtocolList;
+            foreach (var cur in supportedProtocolList)
             {
-                //Tls and Tls11 maybe unavailable in new platforms
-                protocols.Add((SslProtocols.Tls12 | tls13, SslProtocols.Tls11 | SslProtocols.Tls12));
-                protocols.Add((SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls12 | tls13));
+                protocols.Add((cur, cur));
             }
-            else
+            int handShakeTestCnt = 0;
+            var supportedProtocols = Platform.AllSupportedSslProtocols;
+            foreach (var cur in supportedProtocolList)
             {
-                protocols.Add((SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add((SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                protocols.Add((cur, supportedProtocols));
+                protocols.Add((supportedProtocols, cur));
+
+                handShakeTestCnt++;
+                if (handShakeTestCnt >= 2)
+                    break;
             }
 
             protocols = FilterPlatformAvailableProtocols(protocols);
@@ -275,7 +271,7 @@ namespace DotNetty.Handlers.Tests
             //Ensure there is at least one test available(SslProtocols.None: Allows the operating system to choose the best protocol to use, and to block protocols that are not secure.)
             list.Add((SslProtocols.None, SslProtocols.None));
 
-            var supportedSslProtocols = Platform.SupportedSslProtocols;
+            var supportedSslProtocols = Platform.AllSupportedSslProtocols;
             if (supportedSslProtocols != SslProtocols.None)
             {
                 foreach (var cur in protocols)
@@ -444,20 +440,34 @@ namespace DotNetty.Handlers.Tests
 
         public static class Platform
         {
-            public static readonly SslProtocols SupportedSslProtocols;
+            public static readonly SslProtocols AllSupportedSslProtocols;
+            public static readonly IReadOnlyList<SslProtocols> SupportedSslProtocolList;
             static Platform()
             {
-                SslProtocols protocol = 0;
-                protocol |= CheckSslProtocol(SslProtocols.Tls);
-                protocol |= CheckSslProtocol(SslProtocols.Tls11);
-                protocol |= CheckSslProtocol(SslProtocols.Tls12);
+                var allProtocol = new[]
+                {
+                    SslProtocols.Tls,
+                    SslProtocols.Tls11,
+                    SslProtocols.Tls12,
 #if NETCOREAPP_3_0_GREATER
-                protocol |= CheckSslProtocol(SslProtocols.Tls13);
+                    SslProtocols.Tls13,
 #endif
-                SupportedSslProtocols = protocol;
+                };
+                var protocols = SslProtocols.None;
+                var list = new List<SslProtocols>();
+                foreach (var cur in allProtocol)
+                {
+                    if (CheckSslProtocol(cur))
+                    {
+                        protocols |= cur;
+                        list.Add(cur);
+                    }
+                }
+                AllSupportedSslProtocols = protocols;
+                SupportedSslProtocolList = list.AsReadOnly();
             }
 
-            private static SslProtocols CheckSslProtocol(SslProtocols protocol)
+            private static bool CheckSslProtocol(SslProtocols protocol)
             {
                 X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
                 string targetHost = tlsCertificate.GetNameInfo(X509NameType.SimpleName, false);
@@ -469,35 +479,38 @@ namespace DotNetty.Handlers.Tests
                         server.Listen(1);
                         using (var client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                         {
-                            client.Connect(server.LocalEndPoint);
-                            using (var a = new SslStream(new NetworkStream(server.Accept(), ownsSocket: true)))
-                            using (var b = new SslStream(new NetworkStream(client, ownsSocket: true), false, (sender, certificate, chain, sslPolicyErrors) => true))
+                            Task.Run(async () =>
                             {
-                                Task.WhenAll(
-                                    Task.Run(async () =>
-                                    {
-                                        using (b)
+                                client.Connect(server.LocalEndPoint);
+                                using (var a = new SslStream(new NetworkStream(server.Accept(), ownsSocket: true)))
+                                using (var b = new SslStream(new NetworkStream(client, ownsSocket: true), false, (sender, certificate, chain, sslPolicyErrors) => true))
+                                {
+                                    await Task.WhenAll(
+                                        Task.Run(async () =>
                                         {
-                                            await b.AuthenticateAsClientAsync(targetHost, null, protocol, false);
-                                            Debug.Assert(b.SslProtocol == protocol);
-                                        }
-                                    }),
-                                    Task.Run(async () =>
-                                    {
-                                        using (a)
+                                            using (b)
+                                            {
+                                                await b.AuthenticateAsClientAsync(targetHost, null, protocol, false);
+                                                Debug.Assert(b.SslProtocol == protocol);
+                                            }
+                                        }),
+                                        Task.Run(async () =>
                                         {
-                                            await a.AuthenticateAsServerAsync(tlsCertificate, false, protocol, false);
-                                            Debug.Assert(a.SslProtocol == protocol);
-                                        }
-                                    })).WithTimeout(TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
-                            }
+                                            using (a)
+                                            {
+                                                await a.AuthenticateAsServerAsync(tlsCertificate, false, protocol, false);
+                                                Debug.Assert(a.SslProtocol == protocol);
+                                            }
+                                        }));
+                                }
+                            }).WithTimeout(TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
                         }
                     }
-                    return protocol;
+                    return true;
                 }
-                catch (AuthenticationException)
+                catch
                 {
-                    return SslProtocols.None;
+                    return false;
                 }
             }
         }
