@@ -343,6 +343,9 @@ namespace DotNetty.Handlers.Tests
             {
                 await Task.Run(() => driverStream.AuthenticateAsClientAsync(targetHost, null, clientProtocol, false)).WithTimeout(TimeSpan.FromSeconds(5));
             }
+            if ((clientProtocol & serverProtocol) != SslProtocols.None)
+                Assert.True((clientProtocol & serverProtocol & driverStream.SslProtocol) != SslProtocols.None, "Unexpected ssl handshake protocol: " + driverStream.SslProtocol);
+
             writeTasks.Clear();
 
             return Tuple.Create(ch, driverStream);
