@@ -32,11 +32,7 @@ namespace DotNetty.Handlers.Tests
             X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
             X509Certificate2 tlsCertificate2 = TestResourceHelper.GetTestCertificate2();
 
-            //#if NETCOREAPP_3_0_GREATER
-            //            SslProtocols serverProtocol = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12;
-            //#else
-            SslProtocols serverProtocol = SslProtocols.Tls12;
-            //#endif
+            SslProtocols serverProtocol = SslProtocols.None;
             SettingMap[tlsCertificate.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate, false, false, serverProtocol);
             SettingMap[tlsCertificate2.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate2, false, false, serverProtocol);
         }
@@ -53,11 +49,7 @@ namespace DotNetty.Handlers.Tests
                 new[] { 1 }
             };
             var boolToggle = new[] { false, true };
-            //#if NETCOREAPP_3_0_GREATER
-            //            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
-            //#else
-            var protocols = new[] { SslProtocols.Tls12 };
-            //#endif
+            var protocols = new[] { SslProtocols.None };
             var writeStrategyFactories = new Func<IWriteStrategy>[]
             {
         () => new AsIsWriteStrategy()
@@ -106,7 +98,8 @@ namespace DotNetty.Handlers.Tests
 #pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
                 await ReadOutboundAsync(async () => ch.ReadInbound<IByteBuffer>(), expectedBuffer.ReadableBytes, finalReadBuffer, TestTimeout);
 #pragma warning restore CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
-                Assert.True(ByteBufferUtil.Equals(expectedBuffer, finalReadBuffer), $"---Expected:\n{ByteBufferUtil.PrettyHexDump(expectedBuffer)}\n---Actual:\n{ByteBufferUtil.PrettyHexDump(finalReadBuffer)}");
+                if (!ByteBufferUtil.Equals(expectedBuffer, finalReadBuffer))
+                    Assert.True(false, $"---Expected:\n{ByteBufferUtil.PrettyHexDump(expectedBuffer)}\n---Actual:\n{ByteBufferUtil.PrettyHexDump(finalReadBuffer)}");
 
                 if (!isClient)
                 {
@@ -131,11 +124,7 @@ namespace DotNetty.Handlers.Tests
                 new[] { 1 }
             };
             var boolToggle = new[] { false, true };
-            //#if NETCOREAPP_3_0_GREATER
-            //            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
-            //#else
-            var protocols = new[] { SslProtocols.Tls12 };
-            //#endif
+            var protocols = new[] { SslProtocols.None };
 
             return
                 from frameLengths in lengthVariations
@@ -186,7 +175,8 @@ namespace DotNetty.Handlers.Tests
                         return Unpooled.WrappedBuffer(readBuffer, 0, read);
                     },
                     expectedBuffer.ReadableBytes, finalReadBuffer, TestTimeout);
-                Assert.True(ByteBufferUtil.Equals(expectedBuffer, finalReadBuffer), $"---Expected:\n{ByteBufferUtil.PrettyHexDump(expectedBuffer)}\n---Actual:\n{ByteBufferUtil.PrettyHexDump(finalReadBuffer)}");
+                if (!ByteBufferUtil.Equals(expectedBuffer, finalReadBuffer))
+                    Assert.True(false, $"---Expected:\n{ByteBufferUtil.PrettyHexDump(expectedBuffer)}\n---Actual:\n{ByteBufferUtil.PrettyHexDump(finalReadBuffer)}");
 
                 if (!isClient)
                 {

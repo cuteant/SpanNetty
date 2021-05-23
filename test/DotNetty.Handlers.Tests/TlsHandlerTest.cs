@@ -7,8 +7,9 @@ namespace DotNetty.Handlers.Tests
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using System.Net;
     using System.Net.Security;
-    using System.Runtime.InteropServices;
+    using System.Net.Sockets;
     using System.Security.Authentication;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
@@ -47,25 +48,30 @@ namespace DotNetty.Handlers.Tests
                     Enumerable.Repeat(0, 30).Select(_ => random.Next(0, 17000)).ToArray()
                 };
             var boolToggle = new[] { false, true };
-            var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
+            var protocols = new List<(SslProtocols serverProtocol, SslProtocols clientProtocol)>();
+            protocols.Add((SslProtocols.Tls, SslProtocols.Tls));
+            protocols.Add((SslProtocols.Tls11, SslProtocols.Tls11));
+            protocols.Add((SslProtocols.Tls12, SslProtocols.Tls12));
 #if NETCOREAPP_3_0_GREATER
-                //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
+            var tls13 = SslProtocols.Tls13;
+            protocols.Add((tls13, tls13));
+#else
+            var tls13 = SslProtocols.None;
 #endif
-                protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+            if ((Platform.SupportedSslProtocols & tls13) != SslProtocols.None)
+            {
+                //Tls and Tls11 maybe unavailable in new platforms
+                protocols.Add((SslProtocols.Tls12 | tls13, SslProtocols.Tls11 | SslProtocols.Tls12));
+                protocols.Add((SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls12 | tls13));
             }
             else
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
-                protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                protocols.Add((SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
+                protocols.Add((SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
+
+            protocols = FilterPlatformAvailableProtocols(protocols);
+
             var writeStrategyFactories = new Func<IWriteStrategy>[]
             {
                 () => new AsIsWriteStrategy(),
@@ -79,7 +85,7 @@ namespace DotNetty.Handlers.Tests
                 from isClient in boolToggle
                 from writeStrategyFactory in writeStrategyFactories
                 from protocol in protocols
-                select new object[] { frameLengths, isClient, writeStrategyFactory(), protocol.Item1, protocol.Item2 };
+                select new object[] { frameLengths, isClient, writeStrategyFactory(), protocol.serverProtocol, protocol.clientProtocol };
         }
 
 
@@ -147,31 +153,35 @@ namespace DotNetty.Handlers.Tests
                     Enumerable.Repeat(0, 30).Select(_ => random.Next(0, 10) < 2 ? -1 : random.Next(0, 17000)).ToArray()
                 };
             var boolToggle = new[] { false, true };
-            var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
+            var protocols = new List<(SslProtocols serverProtocol, SslProtocols clientProtocol)>();
+            protocols.Add((SslProtocols.Tls, SslProtocols.Tls));
+            protocols.Add((SslProtocols.Tls11, SslProtocols.Tls11));
+            protocols.Add((SslProtocols.Tls12, SslProtocols.Tls12));
 #if NETCOREAPP_3_0_GREATER
-                //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
+            var tls13 = SslProtocols.Tls13;
+            protocols.Add((tls13, tls13));
+#else
+            var tls13 = SslProtocols.None;
 #endif
-                protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+            if ((Platform.SupportedSslProtocols & tls13) != SslProtocols.None)
+            {
+                //Tls and Tls11 maybe unavailable in new platforms
+                protocols.Add((SslProtocols.Tls12 | tls13, SslProtocols.Tls11 | SslProtocols.Tls12));
+                protocols.Add((SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls12 | tls13));
             }
             else
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
-                protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                protocols.Add((SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
+                protocols.Add((SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
+
+            protocols = FilterPlatformAvailableProtocols(protocols);
 
             return
                 from frameLengths in lengthVariations
                 from isClient in boolToggle
                 from protocol in protocols
-                select new object[] { frameLengths, isClient, protocol.Item1, protocol.Item2 };
+                select new object[] { frameLengths, isClient, protocol.serverProtocol, protocol.clientProtocol };
         }
 
         [Theory]
@@ -230,6 +240,31 @@ namespace DotNetty.Handlers.Tests
             {
                 await executor.ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero);
             }
+        }
+
+        static List<(SslProtocols serverProtocol, SslProtocols clientProtocol)> FilterPlatformAvailableProtocols(List<(SslProtocols serverProtocol, SslProtocols clientProtocol)> protocols)
+        {
+            var set = new HashSet<(SslProtocols serverProtocol, SslProtocols clientProtocol)>();
+            var list = new List<(SslProtocols serverProtocol, SslProtocols clientProtocol)>(protocols.Count + 1);
+
+            //Ensure there is at least one test available(SslProtocols.None: Allows the operating system to choose the best protocol to use, and to block protocols that are not secure.)
+            list.Add((SslProtocols.None, SslProtocols.None));
+
+            var supportedSslProtocols = Platform.SupportedSslProtocols;
+            if (supportedSslProtocols != SslProtocols.None)
+            {
+                foreach (var cur in protocols)
+                {
+                    var (serverProtocol, clientProtocol) = cur;
+                    serverProtocol &= supportedSslProtocols;
+                    clientProtocol &= supportedSslProtocols;
+                    if ((serverProtocol & clientProtocol) == SslProtocols.None)
+                        continue;
+                    if (set.Add((serverProtocol, clientProtocol)))
+                        list.Add((serverProtocol, clientProtocol));
+                }
+            }
+            return list;
         }
 
         static async Task<Tuple<EmbeddedChannel, SslStream>> SetupStreamAndChannelAsync(bool isClient, IEventExecutor executor, IWriteStrategy writeStrategy, SslProtocols serverProtocol, SslProtocols clientProtocol, List<Task> writeTasks)
@@ -375,6 +410,66 @@ namespace DotNetty.Handlers.Tests
                 if (!dropChannelActive)
                 {
                     context.FireChannelActive();
+                }
+            }
+        }
+
+        public static class Platform
+        {
+            public static readonly SslProtocols SupportedSslProtocols;
+            static Platform()
+            {
+                SslProtocols protocol = 0;
+                protocol |= CheckSslProtocol(SslProtocols.Tls);
+                protocol |= CheckSslProtocol(SslProtocols.Tls11);
+                protocol |= CheckSslProtocol(SslProtocols.Tls12);
+#if NETCOREAPP_3_0_GREATER
+                protocol |= CheckSslProtocol(SslProtocols.Tls13);
+#endif
+                SupportedSslProtocols = protocol;
+            }
+
+            private static SslProtocols CheckSslProtocol(SslProtocols protocol)
+            {
+                X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
+                string targetHost = tlsCertificate.GetNameInfo(X509NameType.SimpleName, false);
+                try
+                {
+                    using (var server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                    {
+                        server.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+                        server.Listen(1);
+                        using (var client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                        {
+                            client.Connect(server.LocalEndPoint);
+                            using (var a = new SslStream(new NetworkStream(server.Accept(), ownsSocket: true)))
+                            using (var b = new SslStream(new NetworkStream(client, ownsSocket: true), false, (sender, certificate, chain, sslPolicyErrors) => true))
+                            {
+                                Task.WhenAll(
+                                    Task.Run(async () =>
+                                    {
+                                        using (b)
+                                        {
+                                            await b.AuthenticateAsClientAsync(targetHost, null, protocol, false);
+                                            Debug.Assert(b.SslProtocol == protocol);
+                                        }
+                                    }),
+                                    Task.Run(async () =>
+                                    {
+                                        using (a)
+                                        {
+                                            await a.AuthenticateAsServerAsync(tlsCertificate, false, protocol, false);
+                                            Debug.Assert(a.SslProtocol == protocol);
+                                        }
+                                    })).WithTimeout(TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
+                            }
+                        }
+                    }
+                    return protocol;
+                }
+                catch (AuthenticationException)
+                {
+                    return SslProtocols.None;
                 }
             }
         }
