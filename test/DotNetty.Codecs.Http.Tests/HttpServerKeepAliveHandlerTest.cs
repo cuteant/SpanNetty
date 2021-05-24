@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http.Tests
         };
 
         [Theory]
-        [MemberData(nameof(GetKeepAliveCases))]
+        [MemberData(nameof(GetKeepAliveCases), DisableDiscoveryEnumeration = true)]
         public void KeepAlive(bool isKeepAliveResponseExpected, HttpVersion httpVersion, HttpResponseStatus responseStatus, string sendKeepAlive, int setSelfDefinedMessageLength, ICharSequence setResponseConnection)
         {
             var channel = new EmbeddedChannel(new HttpServerKeepAliveHandler());
@@ -66,7 +66,7 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Theory]
-        [MemberData(nameof(GetKeepAliveCases))]
+        [MemberData(nameof(GetKeepAliveCases), DisableDiscoveryEnumeration = true)]
 #pragma warning disable xUnit1026 // Theory methods should use all of their parameters
         public void ConnectionCloseHeaderHandledCorrectly(bool isKeepAliveResponseExpected, HttpVersion httpVersion, HttpResponseStatus responseStatus, string sendKeepAlive, int setSelfDefinedMessageLength, ICharSequence setResponseConnection)
 #pragma warning restore xUnit1026 // Theory methods should use all of their parameters
@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Theory]
-        [MemberData(nameof(GetKeepAliveCases))]
+        [MemberData(nameof(GetKeepAliveCases), DisableDiscoveryEnumeration = true)]
         public void PipelineKeepAlive(bool isKeepAliveResponseExpected, HttpVersion httpVersion, HttpResponseStatus responseStatus, string sendKeepAlive, int setSelfDefinedMessageLength, ICharSequence setResponseConnection)
         {
             var channel = new EmbeddedChannel(new HttpServerKeepAliveHandler());

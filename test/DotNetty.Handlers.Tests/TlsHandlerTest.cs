@@ -114,8 +114,8 @@ namespace DotNetty.Handlers.Tests
         }
 
         [Theory]
-        [MemberData(nameof(GetTlsReadTestData))]
-        [MemberData(nameof(GetTlsReadTestProtocol))]
+        [MemberData(nameof(GetTlsReadTestData), DisableDiscoveryEnumeration = true)]
+        [MemberData(nameof(GetTlsReadTestProtocol), DisableDiscoveryEnumeration = true)]
         public async Task TlsRead(int[] frameLengths, bool isClient, IWriteStrategy writeStrategy, SslProtocols serverProtocol, SslProtocols clientProtocol)
         {
             this.Output.WriteLine($"frameLengths: {string.Join(", ", frameLengths)}");
