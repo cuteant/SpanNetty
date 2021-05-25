@@ -242,7 +242,6 @@ namespace DotNetty.Transport.Channels
         /// The <see cref="IChannelHandlerContext"/> for which the disconnect operation is made.
         /// </param>
         /// <param name="promise"></param>
-        /// <returns>An await-able task.</returns>
         void Disconnect(IChannelHandlerContext context, IPromise promise);
 
         void Close(IChannelHandlerContext context, IPromise promise);
