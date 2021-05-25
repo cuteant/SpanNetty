@@ -173,6 +173,14 @@ namespace DotNetty.Transport.Channels
         /// from the <see cref="IChannelPipeline"/>. Note that this method is only meant to be called from with in the
         /// <see cref="IEventLoop"/>.
         /// </summary>
+        [Obsolete("Please use IsRemoved instead.")]
+        bool Removed { get; }
+
+        /// <summary>
+        /// Return <c>true</c> if the <see cref="IChannelHandler"/> which belongs to this context was removed
+        /// from the <see cref="IChannelPipeline"/>. Note that this method is only meant to be called from with in the
+        /// <see cref="IEventLoop"/>.
+        /// </summary>
         bool IsRemoved { get; }
 
         /// <summary>

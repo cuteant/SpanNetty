@@ -241,6 +241,13 @@ namespace DotNetty.Transport.Channels
             }
         }
 
+        [Obsolete("Please use IsAutoRead instead.")]
+        public bool AutoRead
+        {
+            get => IsAutoRead;
+            set => IsAutoRead = value;
+        }
+
         public bool IsAutoRead
         {
             get { return SharedConstants.False < (uint)Volatile.Read(ref _autoRead); }
@@ -262,6 +269,13 @@ namespace DotNetty.Transport.Channels
 
         protected virtual void AutoReadCleared()
         {
+        }
+
+        [Obsolete("Please use IsAutoClose instead.")]
+        public bool AutoClose
+        {
+            get => IsAutoClose;
+            set => IsAutoClose = value;
         }
 
         public bool IsAutoClose
