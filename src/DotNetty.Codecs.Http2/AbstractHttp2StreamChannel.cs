@@ -128,11 +128,17 @@ namespace DotNetty.Codecs.Http2
 
         public IChannelConfiguration Configuration => _config;
 
+        [Obsolete("Please use IsOpen instead.")]
+        public bool Open => IsOpen;
+
         public bool IsOpen
         {
             [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => !_closePromise.IsCompleted;
         }
+
+        [Obsolete("Please use IsActive instead.")]
+        public bool Active => IsActive;
 
         public bool IsActive => IsOpen;
 
@@ -143,6 +149,9 @@ namespace DotNetty.Codecs.Http2
         public IEventLoop EventLoop => Parent.EventLoop;
 
         public IChannel Parent => ParentContext.Channel;
+
+        [Obsolete("Please use IsRegistered instead.")]
+        public bool Registered => IsRegistered;
 
         public bool IsRegistered => InternalRegistered;
 
