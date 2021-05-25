@@ -29,16 +29,17 @@
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
+    using DotNetty.Transport.Libuv.Handles;
 
     sealed class RemoteConnection
     {
-        public RemoteConnection(NativeHandle client, Exception error)
+        public RemoteConnection(Tcp client, Exception error)
         {
             Client = client;
             Error = error;
         }
 
-        internal NativeHandle Client { get; }
+        internal Tcp Client { get; }
 
         internal Exception Error { get; }
     }

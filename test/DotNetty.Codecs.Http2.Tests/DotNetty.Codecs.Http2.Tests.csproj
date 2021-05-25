@@ -23,7 +23,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj" />
-		<ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
 		<ProjectReference Include="..\DotNetty.Tests.Common\DotNetty.Tests.Common.csproj" />
 	</ItemGroup>
 

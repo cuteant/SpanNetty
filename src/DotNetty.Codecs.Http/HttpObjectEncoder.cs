@@ -100,9 +100,9 @@ namespace DotNetty.Codecs.Http
 
             switch (message)
             {
-                case IHttpContent _:
-                case IByteBuffer _:
-                case IFileRegion _:
+                case IHttpContent:
+                case IByteBuffer:
+                case IFileRegion:
                     switch (this.state)
                     {
                         case StInit:
@@ -239,9 +239,9 @@ namespace DotNetty.Codecs.Http
         {
             switch (msg)
             {
-                case IHttpObject _:
-                case IByteBuffer _:
-                case IFileRegion _:
+                case IHttpObject:
+                case IByteBuffer:
+                case IFileRegion:
                     return true;
                 default:
                     return false;

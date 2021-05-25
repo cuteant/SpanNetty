@@ -33,7 +33,6 @@ namespace DotNetty.Transport.Libuv
     using System.Net;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
-    using TcpListener = Native.TcpListener;
 
     public sealed class TcpServerChannel : TcpServerChannel<TcpServerChannel, TcpChannelFactory>
     {
@@ -79,9 +78,9 @@ namespace DotNetty.Transport.Libuv
             if (!IsInState(StateFlags.Active))
             {
                 var address = (IPEndPoint)localAddress;
-                var loopExecutor = (LoopExecutor)EventLoop;
+                var loopExecutor = (AbstractUVEventLoop)EventLoop;
 
-                uint flags = PlatformApi.GetAddressFamily(address.AddressFamily);
+                uint flags = PlatformApis.GetAddressFamily(address.AddressFamily);
                 _tcpListener = new TcpListener(loopExecutor.UnsafeLoop, flags);
 
                 // Apply the configuration right after the tcp handle is created

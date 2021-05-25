@@ -28,17 +28,17 @@
 
 namespace DotNetty.Transport.Libuv
 {
-    using System.Runtime.CompilerServices;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
-    using DotNetty.Transport.Libuv.Native;
+    using DotNetty.Transport.Libuv.Handles;
+    using DotNetty.Transport.Libuv.Requests;
 
     public abstract partial class NativeChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, INativeChannel
         where TChannel : NativeChannel<TChannel, TUnsafe>
         where TUnsafe : NativeChannel<TChannel, TUnsafe>.NativeChannelUnsafe, new()
     {
-
         internal bool ReadPending;
 
         private volatile int v_state;
@@ -55,7 +55,7 @@ namespace DotNetty.Transport.Libuv
 
         public override bool IsActive => IsInState(StateFlags.Active);
 
-        protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is LoopExecutor;
+        protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is AbstractUVEventLoop;
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected bool IsInState(int stateToCheck) => (v_state & stateToCheck) == stateToCheck;
@@ -84,9 +84,9 @@ namespace DotNetty.Transport.Libuv
             return false;
         }
 
-        void DoConnect(EndPoint remoteAddress, EndPoint localAddress)
+        protected virtual void DoConnect(EndPoint remoteAddress, EndPoint localAddress)
         {
-            ConnectRequest request = null;
+            TcpConnect request = null;
             try
             {
                 if (localAddress is object)
@@ -123,8 +123,8 @@ namespace DotNetty.Transport.Libuv
 
         protected abstract void DoStopRead();
 
-        NativeHandle INativeChannel.GetHandle() => GetHandle();
-        internal abstract NativeHandle GetHandle();
+        IInternalScheduleHandle INativeChannel.GetHandle() => GetHandle();
+        internal abstract IInternalScheduleHandle GetHandle();
         bool INativeChannel.IsBound => IsBound;
         internal abstract bool IsBound { get; }
 

@@ -23,6 +23,7 @@
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using DotNetty.Transport.Libuv.Native;
+using DotNetty.Transport.Libuv.Handles;
 
 namespace DotNetty.Transport.Libuv
 {

@@ -60,8 +60,8 @@ namespace DotNetty.Codecs.Http
         {
             switch (msg)
             {
-                case IHttpContent _:
-                case IHttpResponse _:
+                case IHttpContent:
+                case IHttpResponse:
                     return true;
 
                 default:

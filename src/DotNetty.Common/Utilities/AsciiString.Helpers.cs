@@ -116,7 +116,7 @@ namespace DotNetty.Common.Utilities
                 case null:
                     return 0;
 
-                case AsciiString _:
+                case AsciiString:
                     return value.GetHashCode();
 
                 default:
@@ -315,7 +315,7 @@ namespace DotNetty.Common.Utilities
 
             switch (cs)
             {
-                case StringCharSequence _ when !ignoreCase && seq is StringCharSequence:
+                case StringCharSequence when !ignoreCase && seq is StringCharSequence:
                     //we don't call regionMatches from String for ignoreCase==true. It's a general purpose method,
                     //which make complex comparison in case of ignoreCase==true, which is useless for ASCII-only strings.
                     //To avoid applying this complex ignore-case comparison, we will use regionMatchesCharSequences

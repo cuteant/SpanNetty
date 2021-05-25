@@ -51,7 +51,7 @@ namespace DotNetty.Buffers
                     _adjustment = byteBuffer._adjustment + index;
                     break;
 
-                case UnpooledDuplicatedByteBuffer _:
+                case UnpooledDuplicatedByteBuffer:
                     _buffer = (AbstractByteBuffer)buffer.Unwrap();
                     _adjustment = index;
                     break;
