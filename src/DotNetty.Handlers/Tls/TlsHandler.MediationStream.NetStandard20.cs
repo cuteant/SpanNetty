@@ -27,6 +27,7 @@ namespace DotNetty.Handlers.Tls
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
 
     partial class TlsHandler
     {
@@ -37,7 +38,7 @@ namespace DotNetty.Handlers.Tls
             private int _inputStartOffset;
             private int _readByteCount;
 
-            public void SetSource(byte[] source, int offset)
+            public void SetSource(byte[] source, int offset, IByteBufferAllocator allocator)
             {
                 _input = source;
                 _inputStartOffset = offset;
@@ -45,7 +46,7 @@ namespace DotNetty.Handlers.Tls
                 _inputLength = 0;
             }
 
-            public void ResetSource()
+            public void ResetSource(IByteBufferAllocator allocator)
             {
                 _input = null;
                 _inputLength = 0;

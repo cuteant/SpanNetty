@@ -117,7 +117,7 @@ namespace DotNetty.Handlers.Tls
                         _framing = DetectFraming(input.UnreadSpan);
                     }
                 }
-                packetLength = GetFrameSize(input.UnreadSpan);
+                packetLength = GetFrameSize(_framing, input.UnreadSpan);
                 if ((uint)packetLength > SharedConstants.TooBigOrNegative) // < 0
                 {
                     HandleInvalidTlsFrameSize(input);
@@ -137,12 +137,10 @@ namespace DotNetty.Handlers.Tls
             try
             {
                 Unwrap(context, input, input.ReaderIndex, packetLength);
-                int bytesConsumed = _mediationStream.BytesConsumed;
-                Debug.Assert(bytesConsumed == packetLength);
+                input.SkipBytes(packetLength);
                 //Debug.Assert(bytesConsumed == packetLength || engine.isInboundDone() :
                 //    "we feed the SSLEngine a packets worth of data: " + packetLength + " but it only consumed: " +
                 //            bytesConsumed);
-                input.SkipBytes(bytesConsumed);
             }
             catch (Exception cause)
             {
@@ -160,10 +158,10 @@ namespace DotNetty.Handlers.Tls
             {
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 ReadOnlyMemory<byte> inputIoBuffer = packet.GetReadableMemory(offset, length);
-                _mediationStream.SetSource(inputIoBuffer);
+                _mediationStream.SetSource(inputIoBuffer, ctx.Allocator);
 #else
                 ArraySegment<byte> inputIoBuffer = packet.GetIoBuffer(offset, length);
-                _mediationStream.SetSource(inputIoBuffer.Array, inputIoBuffer.Offset);
+                _mediationStream.SetSource(inputIoBuffer.Array, inputIoBuffer.Offset, ctx.Allocator);
 #endif
                 if (!EnsureAuthenticated(ctx))
                 {
@@ -196,40 +194,41 @@ namespace DotNetty.Handlers.Tls
                 if (currentReadFuture is object)
                 {
                     // there was a read pending already, so we make sure we completed that first
-
-                    int read = currentReadFuture.GetAwaiter().GetResult();
-
-                    if (0u >= (uint)read)
+                    if (currentReadFuture.IsCompleted)
                     {
-                        // Stream closed
-                        return;
-                    }
-
-                    // Now output the result of previous read and decide whether to do an extra read on the same source or move forward
-                    outputBuffer.Advance(read);
-                    _firedChannelRead = true;
-                    ctx.FireChannelRead(outputBuffer);
-
-                    currentReadFuture = null;
-                    outputBuffer = null;
-
-                    if (0u >= (uint)_mediationStream.SourceReadableBytes)
-                    {
-                        // we just made a frame available for reading but there was already pending read so SslStream read it out to make further progress there
-
-                        if (read < outputBufferLength)
+                        int read = currentReadFuture.Result;
+                        if (0u >= (uint)read)
                         {
-                            // SslStream returned non-full buffer and there's no more input to go through ->
-                            // typically it means SslStream is done reading current frame so we skip
+                            // Stream closed
                             return;
                         }
 
-                        // we've read out `read` bytes out of current packet to fulfil previously outstanding read
-                        outputBufferLength = length - read;
-                        if ((uint)(outputBufferLength - 1) > SharedConstants.TooBigOrNegative) // <= 0
+                        // Now output the result of previous read and decide whether to do an extra read on the same source or move forward
+                        outputBuffer.Advance(read);
+                        _firedChannelRead = true;
+                        ctx.FireChannelRead(outputBuffer);
+
+                        currentReadFuture = null;
+                        outputBuffer = null;
+
+                        if (0u >= (uint)_mediationStream.SourceReadableBytes)
                         {
-                            // after feeding to SslStream current frame it read out more bytes than current packet size
-                            outputBufferLength = c_fallbackReadBufferSize;
+                            // we just made a frame available for reading but there was already pending read so SslStream read it out to make further progress there
+
+                            if (read < outputBufferLength)
+                            {
+                                // SslStream returned non-full buffer and there's no more input to go through ->
+                                // typically it means SslStream is done reading current frame so we skip
+                                return;
+                            }
+
+                            // we've read out `read` bytes out of current packet to fulfil previously outstanding read
+                            outputBufferLength = length - read;
+                            if ((uint)(outputBufferLength - 1) > SharedConstants.TooBigOrNegative) // <= 0
+                            {
+                                // after feeding to SslStream current frame it read out more bytes than current packet size
+                                outputBufferLength = c_fallbackReadBufferSize;
+                            }
                         }
                     }
                 }
@@ -249,10 +248,14 @@ namespace DotNetty.Handlers.Tls
                     if (currentReadFuture is object)
                     {
                         if (!currentReadFuture.IsCompleted) { break; }
-
                         int read = currentReadFuture.Result;
 
-                        //AddBufferToOutput(outputBuffer, read, output);
+                        if (0u >= (uint)read)
+                        {
+                            // Stream closed
+                            return;
+                        }
+
                         outputBuffer.Advance(read);
                         _firedChannelRead = true;
                         ctx.FireChannelRead(outputBuffer);
@@ -274,7 +277,7 @@ namespace DotNetty.Handlers.Tls
             }
             finally
             {
-                _mediationStream.ResetSource();
+                _mediationStream.ResetSource(ctx.Allocator);
                 if (!pending && outputBuffer is object)
                 {
                     if (outputBuffer.IsReadable())
@@ -375,14 +378,7 @@ namespace DotNetty.Handlers.Tls
                 int encryptedPacketLength = TlsUtils.GetEncryptedPacketLength(input, offset);
                 if (encryptedPacketLength == TlsUtils.NOT_ENCRYPTED)
                 {
-                    // Not an SSL/TLS packet
-                    var ex = GetNotSslRecordException(input);
-                    _ = input.SkipBytes(input.ReadableBytes);
-
-                    // First fail the handshake promise as we may need to have access to the SSLEngine which may
-                    // be released because the user will remove the SslHandler in an exceptionCaught(...) implementation.
-                    HandleFailure(ex);
-                    throw ex;
+                    HandleInvalidTlsFrameSize(input);
                 }
 
                 Debug.Assert(encryptedPacketLength > 0);
@@ -438,26 +434,7 @@ namespace DotNetty.Handlers.Tls
                 }
                 catch (Exception cause)
                 {
-                    try
-                    {
-                        // We need to flush one time as there may be an alert that we should send to the remote peer because
-                        // of the SSLException reported here.
-                        WrapAndFlush(context);
-                    }
-                    // TODO revisit
-                    //catch (IOException)
-                    //{
-                    //    if (s_logger.DebugEnabled)
-                    //    {
-                    //        s_logger.Debug("SSLException during trying to call SSLEngine.wrap(...)" +
-                    //                " because of an previous SSLException, ignoring...", ex);
-                    //    }
-                    //}
-                    finally
-                    {
-                        HandleFailure(cause);
-                    }
-                    ExceptionDispatchInfo.Capture(cause).Throw();
+                    HandleUnwrapThrowable(context, cause);
                 }
             }
         }
@@ -476,10 +453,10 @@ namespace DotNetty.Handlers.Tls
             {
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 ReadOnlyMemory<byte> inputIoBuffer = packet.GetReadableMemory(offset, length);
-                _mediationStream.SetSource(inputIoBuffer);
+                _mediationStream.SetSource(inputIoBuffer, ctx.Allocator);
 #else
                 ArraySegment<byte> inputIoBuffer = packet.GetIoBuffer(offset, length);
-                _mediationStream.SetSource(inputIoBuffer.Array, inputIoBuffer.Offset);
+                _mediationStream.SetSource(inputIoBuffer.Array, inputIoBuffer.Offset, ctx.Allocator);
 #endif
 
                 int packetIndex = 0;
@@ -602,7 +579,7 @@ namespace DotNetty.Handlers.Tls
             }
             finally
             {
-                _mediationStream.ResetSource();
+                _mediationStream.ResetSource(ctx.Allocator);
                 if (!pending && decodeOut is object)
                 {
                     if (decodeOut.IsReadable())
@@ -620,11 +597,13 @@ namespace DotNetty.Handlers.Tls
         private static void AddBufferToOutput(IByteBuffer outputBuffer, int length, List<object> output)
         {
             Debug.Assert(length > 0);
-            output.Add(outputBuffer.SetWriterIndex(outputBuffer.WriterIndex + length));
+            outputBuffer.Advance(length);
+            output.Add(outputBuffer);
         }
 
         // We need at least 5 bytes to determine what we have.
-        private Framing DetectFraming(ReadOnlySpan<byte> bytes)
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private Framing DetectFraming(in ReadOnlySpan<byte> bytes)
         {
             /* PCTv1.0 Hello starts with
              * RECORD_LENGTH_MSB  (ignore)
@@ -781,10 +760,10 @@ namespace DotNetty.Handlers.Tls
         }
 
         // Returns TLS Frame size.
-        private int GetFrameSize(ReadOnlySpan<byte> buffer)
+        private static int GetFrameSize(Framing framing, in ReadOnlySpan<byte> buffer)
         {
             int payloadSize = -1;
-            switch (_framing)
+            switch (framing)
             {
                 case Framing.Unified:
                 case Framing.BeforeSSL3:
@@ -805,8 +784,6 @@ namespace DotNetty.Handlers.Tls
                 case Framing.SinceSSL3:
                     payloadSize = ((buffer[3] << 8) | buffer[4]) + 5;
                     break;
-                default:
-                    break;
             }
 
             return payloadSize;
@@ -815,12 +792,14 @@ namespace DotNetty.Handlers.Tls
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
         private Task<int> ReadFromSslStreamAsync(IByteBuffer outputBuffer, int outputBufferLength)
         {
+            if (_sslStream is null) { return Task.FromResult(0); }
             Memory<byte> outlet = outputBuffer.GetMemory(outputBuffer.WriterIndex, outputBufferLength);
             return _sslStream.ReadAsync(outlet).AsTask();
         }
 #else
         private Task<int> ReadFromSslStreamAsync(IByteBuffer outputBuffer, int outputBufferLength)
         {
+            if (_sslStream is null) { return Task.FromResult(0); }
             ArraySegment<byte> outlet = outputBuffer.GetIoBuffer(outputBuffer.WriterIndex, outputBufferLength);
             return _sslStream.ReadAsync(outlet.Array, outlet.Offset, outlet.Count);
         }

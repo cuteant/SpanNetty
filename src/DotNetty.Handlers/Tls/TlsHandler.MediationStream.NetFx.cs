@@ -28,6 +28,7 @@ namespace DotNetty.Handlers.Tls
     using System.Runtime.ExceptionServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
@@ -43,7 +44,7 @@ namespace DotNetty.Handlers.Tls
             private IPromise _writeCompletion;
             private AsyncCallback _writeCallback;
 
-            public void SetSource(byte[] source, int offset)
+            public void SetSource(byte[] source, int offset, IByteBufferAllocator allocator)
             {
                 _input = source;
                 _inputStartOffset = offset;
@@ -51,7 +52,7 @@ namespace DotNetty.Handlers.Tls
                 _inputLength = 0;
             }
 
-            public void ResetSource()
+            public void ResetSource(IByteBufferAllocator allocator)
             {
                 _input = null;
                 _inputLength = 0;

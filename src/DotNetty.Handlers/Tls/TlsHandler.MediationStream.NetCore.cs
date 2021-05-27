@@ -28,6 +28,8 @@ namespace DotNetty.Handlers.Tls
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
+    using DotNetty.Common.Utilities;
 
     partial class TlsHandler
     {
@@ -35,52 +37,83 @@ namespace DotNetty.Handlers.Tls
         {
             private ReadOnlyMemory<byte> _input;
             private Memory<byte> _sslOwnedBuffer;
-            private int _readByteCount;
 
-            public void SetSource(in ReadOnlyMemory<byte> source)
+            public void SetSource(in ReadOnlyMemory<byte> source, IByteBufferAllocator allocator)
             {
-                _input = source;
-                _inputOffset = 0;
-                _inputLength = 0;
+                lock (this)
+                {
+                    ResetSource(allocator);
+
+                    _input = source;
+                    _inputOffset = 0;
+                    _inputLength = 0;
+                }
             }
 
-            public void ResetSource()
+            public void ResetSource(IByteBufferAllocator allocator)
             {
-                _input = null;
-                _inputLength = 0;
+                lock (this)
+                {
+                    int leftLen = SourceReadableBytes;
+                    var buf = _ownedInputBuffer;
+                    if (leftLen > 0)
+                    {
+                        if (buf is object)
+                        {
+                            buf.DiscardSomeReadBytes();
+                        }
+                        else
+                        {
+                            buf = allocator.CompositeBuffer();
+                            _ownedInputBuffer = buf;
+                        }
+                        buf.WriteBytes(_input.Slice(_inputOffset, leftLen));
+                    }
+                    else
+                    {
+                        buf?.DiscardSomeReadBytes();
+                    }
+                    _input = null;
+                    _inputOffset = 0;
+                    _inputLength = 0;
+                }
             }
 
             public void ExpandSource(int count)
             {
-                Debug.Assert(!_input.IsEmpty);
-
-                _inputLength += count;
-
-                var sslBuffer = _sslOwnedBuffer;
-                if (sslBuffer.IsEmpty)
+                int readByteCount;
+                lock (this)
                 {
-                    // there is no pending read operation - keep for future
-                    return;
-                }
-                _sslOwnedBuffer = default;
+                    Debug.Assert(!_input.IsEmpty);
 
-                _readByteCount = this.ReadFromInput(sslBuffer);
+                    _inputLength += count;
+
+                    var sslBuffer = _sslOwnedBuffer;
+                    if (_readCompletionSource is null)
+                    {
+                        // there is no pending read operation - keep for future
+                        return;
+                    }
+                    _sslOwnedBuffer = default;
+
+                    readByteCount = ReadFromInput(sslBuffer);
+                }
                 // hack: this tricks SslStream's continuation to run synchronously instead of dispatching to TP. Remove once Begin/EndRead are available. 
-                new Task(ReadCompletionAction, this).RunSynchronously(TaskScheduler.Default);
+                // The continuation can only run synchronously when the TaskScheduler is not ExecutorTaskScheduler
+                new Task(ReadCompletionAction, (this, _readCompletionSource, readByteCount)).RunSynchronously(TaskScheduler.Default);
             }
 
-            static readonly Action<object> ReadCompletionAction = m => ReadCompletion(m);
-            static void ReadCompletion(object ms)
+            static readonly Action<object> ReadCompletionAction = s => ReadCompletion(s);
+            static void ReadCompletion(object state)
             {
-                var self = (MediationStream)ms;
-                TaskCompletionSource<int> p = self._readCompletionSource;
+                var (self, readCompletionSource, readByteCount) = ((MediationStream, TaskCompletionSource<int>, int))state;
                 self._readCompletionSource = null;
-                _ = p.TrySetResult(self._readByteCount);
+                _ = readCompletionSource.TrySetResult(readByteCount);
             }
 
             public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
             {
-                if (this.SourceReadableBytes > 0)
+                if (TotalReadableBytes > 0)
                 {
                     // we have the bytes available upfront - write out synchronously
                     int read = ReadFromInput(buffer);
@@ -90,19 +123,54 @@ namespace DotNetty.Handlers.Tls
                 Debug.Assert(_sslOwnedBuffer.IsEmpty);
                 // take note of buffer - we will pass bytes there once available
                 _sslOwnedBuffer = buffer;
-                _readCompletionSource = new TaskCompletionSource<int>();
-                return new ValueTask<int>(_readCompletionSource.Task);
+                var readCompletionSource = new TaskCompletionSource<int>();
+                _readCompletionSource = readCompletionSource;
+                return new ValueTask<int>(readCompletionSource.Task);
             }
 
             private int ReadFromInput(Memory<byte> destination) // byte[] destination, int destinationOffset, int destinationCapacity
             {
-                Debug.Assert(!destination.IsEmpty);
+                if (destination.IsEmpty) { return 0; }
 
-                int readableBytes = this.SourceReadableBytes;
-                int length = Math.Min(readableBytes, destination.Length);
-                _input.Slice(_inputOffset, length).CopyTo(destination);
-                _inputOffset += length;
-                return length;
+                lock (this)
+                {
+                    int length = 0;
+                    var destLen = destination.Length;
+                    int readableBytes;
+                    do
+                    {
+                        var buf = _ownedInputBuffer;
+                        if (buf is object)
+                        {
+                            readableBytes = buf.ReadableBytes;
+                            if (readableBytes > 0)
+                            {
+                                readableBytes = Math.Min(readableBytes, destLen);
+                                buf.ReadBytes(destination.Slice(0, readableBytes));
+                                length += readableBytes;
+                                destLen -= readableBytes;
+                                if (!buf.IsReadable())
+                                {
+                                    buf.SafeRelease();
+                                    _ownedInputBuffer = null;
+                                }
+                                if (0u > (uint)destLen) { break; }
+                            }
+                        }
+
+                        readableBytes = SourceReadableBytes;
+                        if (readableBytes > 0)
+                        {
+                            readableBytes = Math.Min(readableBytes, destLen);
+                            _input.Slice(_inputOffset, readableBytes).CopyTo(destination);
+                            length += readableBytes;
+                            destLen -= readableBytes;
+                            _inputOffset += readableBytes;
+                        }
+                    } while (false);
+
+                    return length;
+                }
             }
 
             public override void Write(ReadOnlySpan<byte> buffer)
