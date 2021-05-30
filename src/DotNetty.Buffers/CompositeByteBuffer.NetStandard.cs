@@ -187,6 +187,44 @@ namespace DotNetty.Buffers
             }
         }
 
+        protected internal override void _GetBytes(int index, Span<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            var srcIndex = 0;
+            int i = ToComponentIndex0(index);
+            while (length > 0)
+            {
+                ComponentEntry c = _components[i];
+                int localLength = Math.Min(length, c.EndOffset - index);
+                _ = c.Buffer.GetBytes(c.Idx(index), destination.Slice(srcIndex, localLength));
+                index += localLength;
+                srcIndex += localLength;
+                length -= localLength;
+                i++;
+            }
+        }
+
+        protected internal override void _GetBytes(int index, Memory<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            var srcIndex = 0;
+            int i = ToComponentIndex0(index);
+            while (length > 0)
+            {
+                ComponentEntry c = _components[i];
+                int localLength = Math.Min(length, c.EndOffset - index);
+                _ = c.Buffer.GetBytes(c.Idx(index), destination.Slice(srcIndex, localLength));
+                index += localLength;
+                srcIndex += localLength;
+                length -= localLength;
+                i++;
+            }
+        }
+
         public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
             var length = src.Length;

@@ -169,40 +169,58 @@ namespace DotNetty.Buffers
         protected internal abstract Span<byte> _GetSpan(int index, int count);
 
 
+        protected internal virtual void _GetBytes(int index, Span<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            var selfSpan = _GetReadableSpan(index, length);
+            selfSpan.CopyTo(destination);
+        }
+
         public virtual int GetBytes(int index, Span<byte> destination)
         {
-            CheckIndex(index);
-
-            var count = Math.Min(Capacity - index, destination.Length);
-            if (0u >= (uint)count) { return 0; }
-
-            var selfSpan = _GetReadableSpan(index, count);
-            selfSpan.CopyTo(destination);
-            return count;
+            var length = Math.Min(Capacity - index, destination.Length);
+            _GetBytes(index, destination, length);
+            return length;
         }
+        protected internal virtual void _GetBytes(int index, Memory<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            var selfMemory = _GetReadableMemory(index, length);
+            selfMemory.CopyTo(destination);
+        }
+
         public virtual int GetBytes(int index, Memory<byte> destination)
         {
-            CheckIndex(index);
-
-            var count = Math.Min(Capacity - index, destination.Length);
-            if (0u >= (uint)count) { return 0; }
-
-            var selfMemory = _GetReadableMemory(index, count);
-            selfMemory.CopyTo(destination);
-            return count;
+            var length = Math.Min(Capacity - index, destination.Length);
+            _GetBytes(index, destination, length);
+            return length;
         }
 
         public virtual int ReadBytes(Span<byte> destination)
         {
-            var count = GetBytes(_readerIndex, destination);
-            if (count > 0) { _readerIndex += count; }
-            return count;
+            var readerIndex = _readerIndex;
+            var readableBytes = Math.Min(_writerIndex - readerIndex, destination.Length);
+            if (readableBytes > 0)
+            {
+                _GetBytes(readerIndex, destination, readableBytes); 
+                _readerIndex = readerIndex + readableBytes;
+            }
+            return readableBytes;
         }
         public virtual int ReadBytes(Memory<byte> destination)
         {
-            var count = GetBytes(_readerIndex, destination);
-            if (count > 0) { _readerIndex += count; }
-            return count;
+            var readerIndex = _readerIndex;
+            var readableBytes = Math.Min(_writerIndex - readerIndex, destination.Length);
+            if (readableBytes > 0)
+            {
+                _GetBytes(readerIndex, destination, readableBytes);
+                _readerIndex = readerIndex + readableBytes;
+            }
+            return readableBytes;
         }
 
 
@@ -212,7 +230,6 @@ namespace DotNetty.Buffers
             if (src.IsEmpty) { return this; }
 
             var length = src.Length;
-            EnsureWritable0(index, length);
             var selfSpan = _GetSpan(index, length);
             src.CopyTo(selfSpan);
             return this;
@@ -223,7 +240,6 @@ namespace DotNetty.Buffers
             if (src.IsEmpty) { return this; }
 
             var length = src.Length;
-            EnsureWritable0(index, length);
             var selfMemory = _GetMemory(index, length);
             src.CopyTo(selfMemory);
             return this;
@@ -232,6 +248,7 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
             var writerIdx = _writerIndex;
+            EnsureWritable0(writerIdx, src.Length);
             _ = SetBytes(writerIdx, src);
             _writerIndex = writerIdx + src.Length;
             return this;
@@ -239,6 +256,7 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
             var writerIdx = _writerIndex;
+            EnsureWritable0(writerIdx, src.Length);
             _ = SetBytes(writerIdx, src);
             _writerIndex = writerIdx + src.Length;
             return this;

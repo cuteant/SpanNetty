@@ -81,16 +81,16 @@ namespace DotNetty.Buffers
             return UnwrapCore()._GetSpan(Idx(index), count);
         }
 
-        public sealed override int GetBytes(int index, Memory<byte> destination)
+        protected internal sealed override void _GetBytes(int index, Memory<byte> destination, int length)
         {
-            CheckIndex0(index, destination.Length);
-            return Unwrap().GetBytes(Idx(index), destination);
+            CheckIndex0(index, length);
+            UnwrapCore()._GetBytes(Idx(index), destination, length);
         }
 
-        public sealed override int GetBytes(int index, Span<byte> destination)
+        protected internal sealed override void _GetBytes(int index, Span<byte> destination, int length)
         {
-            CheckIndex0(index, destination.Length);
-            return Unwrap().GetBytes(Idx(index), destination);
+            CheckIndex0(index, length);
+            UnwrapCore()._GetBytes(Idx(index), destination, length);
         }
 
         public sealed override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
