@@ -2,7 +2,7 @@
   <Import Project="..\xunitSettings.props" />
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>net5.0;netcoreapp2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Http2.Tests</RootNamespace>
     <AssemblyName>DotNetty.Codecs.Http2.Tests</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
