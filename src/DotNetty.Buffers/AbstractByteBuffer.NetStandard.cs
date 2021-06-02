@@ -226,7 +226,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
-            CheckIndex(index);
+            CheckIndex(index, src.Length);
             if (src.IsEmpty) { return this; }
 
             var length = src.Length;
@@ -236,7 +236,7 @@ namespace DotNetty.Buffers
         }
         public virtual IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
-            CheckIndex(index);
+            CheckIndex(index, src.Length);
             if (src.IsEmpty) { return this; }
 
             var length = src.Length;
@@ -279,12 +279,21 @@ namespace DotNetty.Buffers
 
         protected sealed class ReadOnlyBufferSegment : ReadOnlySequenceSegment<byte>
         {
-            public static ReadOnlySequence<byte> Create(IEnumerable<ReadOnlyMemory<byte>> buffers)
+            public static ReadOnlySequence<byte> Create(List<ReadOnlyMemory<byte>> buffers)
             {
+                switch (buffers.Count)
+                {
+                    case 0:
+                        return ReadOnlySequence<byte>.Empty;
+                    case 1:
+                        return new ReadOnlySequence<byte>(buffers[0]);
+                }
                 ReadOnlyBufferSegment segment = null;
                 ReadOnlyBufferSegment first = null;
                 foreach (var buffer in buffers)
                 {
+                    if (buffer.Length == 0)
+                        continue;
                     var newSegment = new ReadOnlyBufferSegment()
                     {
                         Memory = buffer,
@@ -305,7 +314,11 @@ namespace DotNetty.Buffers
 
                 if (first is null)
                 {
-                    first = segment = new ReadOnlyBufferSegment();
+                    return ReadOnlySequence<byte>.Empty;
+                }
+                if (first == segment)
+                {
+                    return new ReadOnlySequence<byte>(first.Memory);
                 }
 
                 return new ReadOnlySequence<byte>(first, 0, segment, segment.Memory.Length);
