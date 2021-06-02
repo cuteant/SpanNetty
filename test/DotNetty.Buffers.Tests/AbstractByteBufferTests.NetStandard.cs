@@ -16,6 +16,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void GetByteBufferState_Span()
         {
+            Assert.ThrowsAny<Exception>(() => this.buffer.SetBytes(this.buffer.Capacity - 3, new byte[4].AsSpan()));
             var value = new Span<byte>(new byte[4]);
             value[0] = 1;
             value[1] = 2;
@@ -34,6 +35,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void GetByteBufferState_Memory()
         {
+            Assert.ThrowsAny<Exception>(() => this.buffer.SetBytes(this.buffer.Capacity - 3, new byte[4].AsMemory()));
             var value = new byte[4];
             value[0] = 1;
             value[1] = 2;
@@ -80,8 +82,10 @@ namespace DotNetty.Buffers.Tests
 
             Assert.True(buf.ReadBytes(output.AsMemory(0, 4)) == 4);
             Assert.True(buf.ReaderIndex == 4);
-            Assert.True(buf.Slice(4, 4).ReadBytes(output.AsMemory(4)) == 4);
-            Assert.True(buf.Slice(8, 8).ReadBytes(output.AsMemory(8, 4)) == 4);
+            Assert.True(buf.Slice(4, 2).ReadBytes(output.AsMemory(4)) == 2);
+            Assert.True(buf.Slice(6, 8).ReadBytes(output.AsMemory(6, 2)) == 2);
+            Assert.True(buf.Slice(6, 4).GetBytes(2, output.AsMemory(8)) == 2);
+            Assert.True(buf.Slice(6, 10).GetBytes(4, output.AsMemory(10, 2)) == 2);
             buf.SkipBytes(8);
             Assert.True(buf.ReadBytes(output.AsMemory(12)) == 4);
             Assert.True(buf.ReaderIndex == dataLen);
@@ -114,8 +118,10 @@ namespace DotNetty.Buffers.Tests
 
             Assert.True(buf.ReadBytes(output.AsSpan(0, 4)) == 4);
             Assert.True(buf.ReaderIndex == 4);
-            Assert.True(buf.Slice(4, 4).ReadBytes(output.AsSpan(4)) == 4);
-            Assert.True(buf.Slice(8, 8).ReadBytes(output.AsSpan(8, 4)) == 4);
+            Assert.True(buf.Slice(4, 2).ReadBytes(output.AsSpan(4)) == 2);
+            Assert.True(buf.Slice(6, 8).ReadBytes(output.AsSpan(6, 2)) == 2);
+            Assert.True(buf.Slice(6, 4).GetBytes(2, output.AsSpan(8)) == 2);
+            Assert.True(buf.Slice(6, 10).GetBytes(4, output.AsSpan(10, 2)) == 2);
             buf.SkipBytes(8);
             Assert.True(buf.ReadBytes(output.AsSpan(12)) == 4);
             Assert.True(buf.ReaderIndex == dataLen);
