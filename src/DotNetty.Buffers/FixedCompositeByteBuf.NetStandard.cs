@@ -36,26 +36,11 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return ReadOnlyMemory<byte>.Empty; }
 
-            if (_buffers.Length == 1)
-            {
-                var buf = Buffer(0);
-                if (buf.IsSingleIoBuffer)
-                {
-                    return buf.GetReadableMemory(index, count);
-                }
-            }
+            var bufs = GetSequence(index, count);
+            if (bufs.IsSingleSegment) { return bufs.First; }
 
             var merged = new Memory<byte>(new byte[count]);
-            var bufs = GetSequence(index, count);
-
-            int offset = 0;
-            foreach (var buf in bufs)
-            {
-                Debug.Assert(merged.Length - offset >= buf.Length);
-
-                buf.CopyTo(merged.Slice(offset));
-                offset += buf.Length;
-            }
+            bufs.CopyTo(merged.Span);
 
             return merged;
         }
@@ -64,38 +49,27 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return ReadOnlySpan<byte>.Empty; }
 
-            if (_buffers.Length == 1)
-            {
-                var buf = Buffer(0);
-                if (buf.IsSingleIoBuffer)
-                {
-                    return buf.GetReadableSpan(index, count);
-                }
-            }
-
-            var merged = new Memory<byte>(new byte[count]);
             var bufs = GetSequence(index, count);
+            if (bufs.IsSingleSegment) { return bufs.First.Span; }
 
-            int offset = 0;
-            foreach (var buf in bufs)
-            {
-                Debug.Assert(merged.Length - offset >= buf.Length);
+            var merged = new Span<byte>(new byte[count]);
+            bufs.CopyTo(merged);
 
-                buf.CopyTo(merged.Slice(offset));
-                offset += buf.Length;
-            }
-
-            return merged.Span;
+            return merged;
         }
 
         protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count)
         {
             if (0u >= (uint)count) { return ReadOnlySequence<byte>.Empty; }
 
+            var c = FindComponent(index);
+            if (c == FindComponent(index + count - 1))
+            {
+                return c.GetSequence(index - c.Offset, count);
+            }
             var array = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(_nioBufferCount);
             try
             {
-                var c = FindComponent(index);
                 int i = c.Index;
                 int adjustment = c.Offset;
                 var s = c.Buf;
@@ -135,6 +109,22 @@ namespace DotNetty.Buffers
             {
                 array.Return();
             }
+        }
+
+        protected internal override void _GetBytes(int index, Span<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            _GetSequence(index, length).CopyTo(destination);
+        }
+
+        protected internal override void _GetBytes(int index, Memory<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            _GetSequence(index, length).CopyTo(destination.Span);
         }
 
         public override Memory<byte> GetMemory(int sizeHintt = 0)
