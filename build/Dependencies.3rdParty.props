@@ -9,6 +9,7 @@
     <FastMemberSignedPackageVersion>1.5.0</FastMemberSignedPackageVersion>
     <MoreLinq2PackageVersion>2.10.0</MoreLinq2PackageVersion>
     <MoreLinqPackageVersion>3.3.2</MoreLinqPackageVersion>
+    <NullablePackageVersion>1.3.0</NullablePackageVersion>
     <NCrontabSignedPackageVersion>3.3.2</NCrontabSignedPackageVersion>
     <OptionalPackageVersion>4.0.0</OptionalPackageVersion>
     <SystemLinqDynamicCorePackageVersion>1.2.9</SystemLinqDynamicCorePackageVersion>
@@ -72,8 +73,8 @@
     <NpgsqlPackageVersion>4.1.3.1</NpgsqlPackageVersion>
     <OracleManagedDataAccessPackageVersion>18.6.0</OracleManagedDataAccessPackageVersion>
     <OracleManagedDataAccessCorePackageVersion>2.18.6</OracleManagedDataAccessCorePackageVersion>
-    <StackExchangeRedisPackageVersion>2.1.30</StackExchangeRedisPackageVersion>
-    <StackExchangeRedisStrongNamePackageVersion>2.1.30</StackExchangeRedisStrongNamePackageVersion>
+    <StackExchangeRedisPackageVersion>2.2.4</StackExchangeRedisPackageVersion>
+    <StackExchangeRedisStrongNamePackageVersion>2.2.4</StackExchangeRedisStrongNamePackageVersion>
     <SystemDataSQLiteCorePackageVersion>1.0.112.1</SystemDataSQLiteCorePackageVersion>
 
     <!-- Hosting related packages -->
@@ -83,11 +84,11 @@
     <TopshelfSerilogPackageVersion>4.3.0</TopshelfSerilogPackageVersion>
 
     <!-- Logging related packages -->
-    <NLogPackageVersion>4.7.6</NLogPackageVersion>
-    <NLogDevPackageVersion>4.7.6</NLogDevPackageVersion>
-    <NLogExtensionsHostingPackageVersion>1.6.5</NLogExtensionsHostingPackageVersion>
-    <NLogExtensionsLoggingPackageVersion>1.6.5</NLogExtensionsLoggingPackageVersion>
-    <NLogWebAspNetCorePackageVersion>4.9.3</NLogWebAspNetCorePackageVersion>
+    <NLogPackageVersion>4.7.10</NLogPackageVersion>
+    <NLogDevPackageVersion>4.7.10</NLogDevPackageVersion>
+    <NLogExtensionsHostingPackageVersion>1.7.2</NLogExtensionsHostingPackageVersion>
+    <NLogExtensionsLoggingPackageVersion>1.7.2</NLogExtensionsLoggingPackageVersion>
+    <NLogWebAspNetCorePackageVersion>4.12.0</NLogWebAspNetCorePackageVersion>
 
     <SerilogPackageVersion>2.10.0</SerilogPackageVersion>
     <SerilogDevPackageVersion>2.10.0</SerilogDevPackageVersion>
@@ -127,8 +128,8 @@
     <NetTopologySuiteIOSpatiaLitePackageVersion>1.15.1</NetTopologySuiteIOSpatiaLitePackageVersion>
 
     <!-- Network related packages -->
-    <BouncyCastlePackageVersion>1.8.6.1</BouncyCastlePackageVersion>
-    <PortableBouncyCastlePackageVersion>1.8.9</PortableBouncyCastlePackageVersion>
+    <BouncyCastlePackageVersion>1.8.9</BouncyCastlePackageVersion>
+    <PortableBouncyCastlePackageVersion>1.8.10</PortableBouncyCastlePackageVersion>
     <DotNettyBuffersPackageVersion>0.6.0</DotNettyBuffersPackageVersion>
     <DotNettyCodecsHttpPackageVersion>0.6.0</DotNettyCodecsHttpPackageVersion>
     <DotNettyCodecsMqttPackageVersion>0.6.0</DotNettyCodecsMqttPackageVersion>
@@ -145,14 +146,15 @@
     <LibuvPackageVersion>1.10.0</LibuvPackageVersion>
     <LibuvSharedPackageVersion>1.40.0.394</LibuvSharedPackageVersion>
 
-    <MimeKitPackageVersion>2.11.0</MimeKitPackageVersion>
-    <MailKitPackageVersion>2.11.0</MailKitPackageVersion>
+    <MimeKitPackageVersion>2.12.0</MimeKitPackageVersion>
+    <MailKitPackageVersion>2.12.0</MailKitPackageVersion>
 
     <!-- Serialization related packages -->
     <GoogleApiCommonProtosPackageVersion>2.3.0</GoogleApiCommonProtosPackageVersion>
     <GoogleProtobufPackageVersion>3.16.0</GoogleProtobufPackageVersion>
     <GoogleProtobufToolsPackageVersion>3.16.0</GoogleProtobufToolsPackageVersion>
     <HyperionPackageVersion>0.10.1</HyperionPackageVersion>
+    <MessagePackPackageVersion>2.2.85</MessagePackPackageVersion>
     <MessagePackAnalyzerPackageVersion>2.2.85</MessagePackAnalyzerPackageVersion>
     <NewtonsoftJsonBsonPackageVersion>1.0.2</NewtonsoftJsonBsonPackageVersion>
     <NewtonsoftJsonPackageVersion>13.0.1</NewtonsoftJsonPackageVersion>

@@ -135,16 +135,16 @@
     <ReactiveStreamsSignedPackageVersion>1.4.2009.1814</ReactiveStreamsSignedPackageVersion>
     <ReactiveStreamsTCKSignedPackageVersion>1.4.2009.1814</ReactiveStreamsTCKSignedPackageVersion>
 
-    <SpanNettyBuffersPackageVersion>0.7.2012.2221</SpanNettyBuffersPackageVersion>
-    <SpanNettyCodecsHttpPackageVersion>0.7.2012.2221</SpanNettyCodecsHttpPackageVersion>
-    <SpanNettyCodecsHttp2PackageVersion>0.7.2012.2221</SpanNettyCodecsHttp2PackageVersion>
-    <SpanNettyCodecsMqttPackageVersion>0.7.2012.2221</SpanNettyCodecsMqttPackageVersion>
-    <SpanNettyCodecsProtobufPackageVersion>0.7.2012.2221</SpanNettyCodecsProtobufPackageVersion>
-    <SpanNettyCodecsPackageVersion>0.7.2012.2221</SpanNettyCodecsPackageVersion>
-    <SpanNettyCommonPackageVersion>0.7.2012.2221</SpanNettyCommonPackageVersion>
-    <SpanNettyHandlersPackageVersion>0.7.2012.2221</SpanNettyHandlersPackageVersion>
-    <SpanNettyTransportLibuvPackageVersion>0.7.2012.2221</SpanNettyTransportLibuvPackageVersion>
-    <SpanNettyTransportPackageVersion>0.7.2012.2221</SpanNettyTransportPackageVersion>
+    <SpanNettyBuffersPackageVersion>1.0.0-beta-210610</SpanNettyBuffersPackageVersion>
+    <SpanNettyCodecsHttpPackageVersion>1.0.0-beta-210610</SpanNettyCodecsHttpPackageVersion>
+    <SpanNettyCodecsHttp2PackageVersion>1.0.0-beta-210610</SpanNettyCodecsHttp2PackageVersion>
+    <SpanNettyCodecsMqttPackageVersion>1.0.0-beta-210610</SpanNettyCodecsMqttPackageVersion>
+    <SpanNettyCodecsProtobufPackageVersion>1.0.0-beta-210610</SpanNettyCodecsProtobufPackageVersion>
+    <SpanNettyCodecsPackageVersion>1.0.0-beta-210610</SpanNettyCodecsPackageVersion>
+    <SpanNettyCommonPackageVersion>1.0.0-beta-210610</SpanNettyCommonPackageVersion>
+    <SpanNettyHandlersPackageVersion>1.0.0-beta-210610</SpanNettyHandlersPackageVersion>
+    <SpanNettyTransportLibuvPackageVersion>1.0.0-beta-210610</SpanNettyTransportLibuvPackageVersion>
+    <SpanNettyTransportPackageVersion>1.0.0-beta-210610</SpanNettyTransportPackageVersion>
 
     <!-- Serialization related packages -->
     <HyperionUnofficialPackageVersion>0.9.16-rtm-200824-01</HyperionUnofficialPackageVersion>
