@@ -65,14 +65,7 @@ namespace DotNetty.Common.Internal
                 char* pInputBufferRemaining;
                 byte* pOutputBufferRemaining;
 
-                if (PlatformDependent.Is64BitProcess)
-                {
-                    _ = Utf8Utility64.TranscodeToUtf8(pChars, charsLength, pBytes, bytesLength, out pInputBufferRemaining, out pOutputBufferRemaining);
-                }
-                else
-                {
-                    _ = Utf8Utility32.TranscodeToUtf8(pChars, charsLength, pBytes, bytesLength, out pInputBufferRemaining, out pOutputBufferRemaining);
-                }
+                _ = Utf8Utility.TranscodeToUtf8(pChars, charsLength, pBytes, bytesLength, out pInputBufferRemaining, out pOutputBufferRemaining);
 
                 charsConsumed = (int)(pInputBufferRemaining - pChars);
                 return (int)(pOutputBufferRemaining - pBytes);

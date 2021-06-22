@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace DotNetty.Common.Internal
 {
-    internal static class Utf16Utility
+    internal static partial class Utf16Utility
     {
         /// <summary>
         /// Returns true iff the UInt32 represents two ASCII UTF-16 characters in machine endianness.

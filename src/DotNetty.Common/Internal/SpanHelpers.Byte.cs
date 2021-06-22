@@ -427,22 +427,12 @@ namespace DotNetty.Common.Internal
         // Optimized byte-based SequenceEquals. The "length" parameter for this one is declared a nuint rather than int as we also use it for types other than byte
         // where the length can exceed 2Gb once scaled by sizeof(T).
         //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public static unsafe bool SequenceEqual(ref byte first, ref byte second, long length)
+        public static unsafe bool SequenceEqual(ref byte first, ref byte second, nint length)
         {
             if (Unsafe.AreSame(ref first, ref second)) { goto Equal; }
 
             IntPtr offset = (IntPtr)0; // Use IntPtr for arithmetic to avoid unnecessary 64->32->64 truncations
-            IntPtr lengthToExamine;
-            if (PlatformDependent.Is64BitProcess)
-            {
-                ulong nlen = unchecked((ulong)length);
-                lengthToExamine = (IntPtr)(void*)nlen;
-            }
-            else
-            {
-                uint nlen = unchecked((uint)length);
-                lengthToExamine = (IntPtr)(void*)nlen;
-            }
+            IntPtr lengthToExamine = (IntPtr)(void*)((nuint)length);
 
             if (Vector.IsHardwareAccelerated && (byte*)lengthToExamine >= (byte*)Vector<byte>.Count)
             {
@@ -692,7 +682,7 @@ namespace DotNetty.Common.Internal
             {
                 return 0;  // A zero-length sequence is always treated as "found" at the start of the search space.
             }
-            if (1u >= (uValueLength))
+            if (1u >= uValueLength)
             {
                 return IndexOf(ref searchSpace, value, searchSpaceLength);
             }
@@ -809,16 +799,7 @@ namespace DotNetty.Common.Internal
             {
                 if ((int)(byte*)offset < length)
                 {
-                    bool isAlignedToVector128;
-                    if (PlatformDependent.Is64BitProcess)
-                    {
-                        isAlignedToVector128 = (((ulong)Unsafe.AsPointer(ref searchSpace) + (ulong)offset) & (ulong)(Vector256<byte>.Count - 1)) != 0;
-                    }
-                    else
-                    {
-                        isAlignedToVector128 = (((uint)Unsafe.AsPointer(ref searchSpace) + (uint)offset) & (uint)(Vector256<byte>.Count - 1)) != 0;
-                    }
-                    if (isAlignedToVector128)
+                    if ((((nuint)Unsafe.AsPointer(ref searchSpace) + (nuint)(nint)offset) & (nuint)(Vector256<byte>.Count - 1)) != 0)
                     {
                         // Not currently aligned to Vector256 (is aligned to Vector128); this can cause a problem for searches
                         // with no upper bound e.g. String.strlen.

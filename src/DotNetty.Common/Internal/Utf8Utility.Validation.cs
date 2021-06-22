@@ -10,21 +10,11 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
-using nint = System.Int32;
-using nuint = System.UInt32;
 
 namespace DotNetty.Common.Internal
 {
-    internal static unsafe partial class Utf8Utility32
+    internal static unsafe partial class Utf8Utility
     {
-#if DEBUG
-        private static void _ValidateAdditionalNIntDefinitions()
-        {
-            Debug.Assert(sizeof(nint) == IntPtr.Size && nint.MinValue < 0, "nint is defined incorrectly.");
-            Debug.Assert(sizeof(nuint) == IntPtr.Size && nuint.MinValue == 0, "nuint is defined incorrectly.");
-        }
-#endif // DEBUG
-
         // Returns &inputBuffer[inputLength] if the input buffer is valid.
         /// <summary>
         /// Given an input buffer <paramref name="pInputBuffer"/> of byte length <paramref name="inputLength"/>,
@@ -41,14 +31,14 @@ namespace DotNetty.Common.Internal
             // First, try to drain off as many ASCII bytes as we can from the beginning.
 
             {
-                nuint numAsciiBytesCounted = ASCIIUtility32.GetIndexOfFirstNonAsciiByte(pInputBuffer, (uint)inputLength);
+                nuint numAsciiBytesCounted = ASCIIUtility.GetIndexOfFirstNonAsciiByte(pInputBuffer, (uint)inputLength);
                 pInputBuffer += numAsciiBytesCounted;
 
                 // Quick check - did we just end up consuming the entire input buffer?
                 // If so, short-circuit the remainder of the method.
 
                 inputLength -= (int)numAsciiBytesCounted;
-                if (0u >= (uint)inputLength)
+                if (0u >= inputLength)
                 {
                     utf16CodeUnitCountAdjustment = 0;
                     scalarCountAdjustment = 0;

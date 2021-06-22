@@ -1,4 +1,4 @@
-﻿// borrowed from https://github.com/dotnet/corefx/blob/release/3.1/src/Common/src/CoreLib/System/Text/ASCIIUtility.cs
+﻿// borrowed from https://github.com/dotnet/corefx/blob/release/3.1/src/Common/src/CoreLib/System/Text/cs
 
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
@@ -11,27 +11,17 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using nint = System.Int32;
-using nuint = System.UInt32;
 
 namespace DotNetty.Common.Internal
 {
-    internal static class ASCIIUtility32
+    internal static partial class ASCIIUtility
     {
-#if DEBUG
-        static ASCIIUtility32()
-        {
-            Debug.Assert(sizeof(nint) == IntPtr.Size && nint.MinValue < 0, "nint is defined incorrectly.");
-            Debug.Assert(sizeof(nuint) == IntPtr.Size && nuint.MinValue == 0, "nuint is defined incorrectly.");
-        }
-#endif // DEBUG
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AllBytesInUInt64AreAscii(ulong value)
         {
             // If the high bit of any byte is set, that byte is non-ASCII.
 
-            return (0ul >= (value & ASCIIUtility.UInt64HighBitsOnlyMask));
+            return (0ul >= (value & UInt64HighBitsOnlyMask));
         }
 
         /// <summary>
@@ -150,12 +140,12 @@ namespace DotNetty.Common.Internal
                 currentUInt32 = Unsafe.ReadUnaligned<uint>(pBuffer);
                 uint nextUInt32 = Unsafe.ReadUnaligned<uint>(pBuffer + 4);
 
-                if (!ASCIIUtility.AllBytesInUInt32AreAscii(currentUInt32 | nextUInt32))
+                if (!AllBytesInUInt32AreAscii(currentUInt32 | nextUInt32))
                 {
                     // One of these two values contains non-ASCII bytes.
                     // Figure out which one it is, then put it in 'current' so that we can drain the ASCII bytes.
 
-                    if (ASCIIUtility.AllBytesInUInt32AreAscii(currentUInt32))
+                    if (AllBytesInUInt32AreAscii(currentUInt32))
                     {
                         currentUInt32 = nextUInt32;
                         pBuffer += 4;
@@ -173,7 +163,7 @@ namespace DotNetty.Common.Internal
             if ((bufferLength & 4) != 0)
             {
                 currentUInt32 = Unsafe.ReadUnaligned<uint>(pBuffer);
-                if (!ASCIIUtility.AllBytesInUInt32AreAscii(currentUInt32))
+                if (!AllBytesInUInt32AreAscii(currentUInt32))
                 {
                     goto FoundNonAsciiData;
                 }
@@ -186,7 +176,7 @@ namespace DotNetty.Common.Internal
             if ((bufferLength & 2) != 0)
             {
                 currentUInt32 = Unsafe.ReadUnaligned<ushort>(pBuffer);
-                if (!ASCIIUtility.AllBytesInUInt32AreAscii(currentUInt32))
+                if (!AllBytesInUInt32AreAscii(currentUInt32))
                 {
                     goto FoundNonAsciiData;
                 }
@@ -214,14 +204,14 @@ namespace DotNetty.Common.Internal
 
         FoundNonAsciiData:
 
-            Debug.Assert(!ASCIIUtility.AllBytesInUInt32AreAscii(currentUInt32), "Shouldn't have reached this point if we have an all-ASCII input.");
+            Debug.Assert(!AllBytesInUInt32AreAscii(currentUInt32), "Shouldn't have reached this point if we have an all-ASCII input.");
 
             // The method being called doesn't bother looking at whether the high byte is ASCII. There are only
             // two scenarios: (a) either one of the earlier bytes is not ASCII and the search terminates before
             // we get to the high byte; or (b) all of the earlier bytes are ASCII, so the high byte must be
             // non-ASCII. In both cases we only care about the low 24 bits.
 
-            pBuffer += ASCIIUtility.CountNumberOfLeadingAsciiBytesFromUInt32WithSomeNonAsciiData(currentUInt32);
+            pBuffer += CountNumberOfLeadingAsciiBytesFromUInt32WithSomeNonAsciiData(currentUInt32);
             goto Finish;
         }
 
@@ -315,7 +305,7 @@ namespace DotNetty.Common.Internal
 
             // If there is fewer than one vector length remaining, skip the next aligned read.
 
-            if (0u >= (bufferLength & SizeOfVector128))
+            if (0ul >= (bufferLength & SizeOfVector128))
             {
                 goto DoFinalUnalignedVectorRead;
             }
@@ -381,8 +371,8 @@ namespace DotNetty.Common.Internal
         FoundNonAsciiDataInCurrentDWord:
 
             uint currentDWord;
-            Debug.Assert(!ASCIIUtility.AllBytesInUInt32AreAscii(currentDWord), "Shouldn't be here unless we see non-ASCII data.");
-            pBuffer += ASCIIUtility.CountNumberOfLeadingAsciiBytesFromUInt32WithSomeNonAsciiData(currentDWord);
+            Debug.Assert(!AllBytesInUInt32AreAscii(currentDWord), "Shouldn't be here unless we see non-ASCII data.");
+            pBuffer += CountNumberOfLeadingAsciiBytesFromUInt32WithSomeNonAsciiData(currentDWord);
 
             goto Finish;
 
@@ -408,7 +398,7 @@ namespace DotNetty.Common.Internal
                         // Clear everything but the high bit of each byte, then tzcnt.
                         // Remember the / 8 at the end to convert bit count to byte count.
 
-                        candidateUInt64 &= ASCIIUtility.UInt64HighBitsOnlyMask;
+                        candidateUInt64 &= UInt64HighBitsOnlyMask;
                         pBuffer += (nuint)(Bmi1.X64.TrailingZeroCount(candidateUInt64) / 8);
                         goto Finish;
                     }
@@ -420,12 +410,12 @@ namespace DotNetty.Common.Internal
                     currentDWord = Unsafe.ReadUnaligned<uint>(pBuffer);
                     uint nextDWord = Unsafe.ReadUnaligned<uint>(pBuffer + 4);
 
-                    if (!ASCIIUtility.AllBytesInUInt32AreAscii(currentDWord | nextDWord))
+                    if (!AllBytesInUInt32AreAscii(currentDWord | nextDWord))
                     {
                         // At least one of the values wasn't all-ASCII.
                         // We need to figure out which one it was and stick it in the currentMask local.
 
-                        if (ASCIIUtility.AllBytesInUInt32AreAscii(currentDWord))
+                        if (AllBytesInUInt32AreAscii(currentDWord))
                         {
                             currentDWord = nextDWord; // this one is the culprit
                             pBuffer += 4;
@@ -444,7 +434,7 @@ namespace DotNetty.Common.Internal
             {
                 currentDWord = Unsafe.ReadUnaligned<uint>(pBuffer);
 
-                if (!ASCIIUtility.AllBytesInUInt32AreAscii(currentDWord))
+                if (!AllBytesInUInt32AreAscii(currentDWord))
                 {
                     goto FoundNonAsciiDataInCurrentDWord;
                 }
@@ -459,7 +449,7 @@ namespace DotNetty.Common.Internal
             {
                 currentDWord = Unsafe.ReadUnaligned<ushort>(pBuffer);
 
-                if (!ASCIIUtility.AllBytesInUInt32AreAscii(currentDWord))
+                if (!AllBytesInUInt32AreAscii(currentDWord))
                 {
                     // We only care about the 0x0080 bit of the value. If it's not set, then we
                     // increment currentOffset by 1. If it's set, we don't increment it at all.
@@ -512,7 +502,9 @@ namespace DotNetty.Common.Internal
 
             char* pOriginalBuffer = pBuffer;
 
+#if NET
             Debug.Assert(bufferLength <= nuint.MaxValue / sizeof(char));
+#endif
 
             // Before we drain off char-by-char, try a generic vectorized loop.
             // Only run the loop if we have at least two vectors we can pull out.
@@ -645,7 +637,7 @@ namespace DotNetty.Common.Internal
 
             // Quick check for empty inputs.
 
-            if (0u >= bufferLength)
+            if (0ul >= bufferLength)
             {
                 return 0;
             }
@@ -676,7 +668,9 @@ namespace DotNetty.Common.Internal
             Vector128<short> asciiMaskForPXOR = Vector128.Create(unchecked((short)0x8000)); // used for PXOR
             Vector128<short> asciiMaskForPCMPGTW = Vector128.Create(unchecked((short)0x807F)); // used for PCMPGTW
 
+#if NET
             Debug.Assert(bufferLength <= nuint.MaxValue / sizeof(char));
+#endif
 
             // Read the first vector unaligned.
 
@@ -777,7 +771,7 @@ namespace DotNetty.Common.Internal
             // If there is fewer than one vector length remaining, skip the next aligned read.
             // Remember, at this point bufferLength is measured in bytes, not chars.
 
-            if (0u >= (bufferLength & SizeOfVector128InBytes))
+            if (0ul >= (bufferLength & SizeOfVector128InBytes))
             {
                 goto DoFinalUnalignedVectorRead;
             }
@@ -1526,7 +1520,7 @@ namespace DotNetty.Common.Internal
                 do
                 {
                     asciiData = Unsafe.ReadUnaligned<uint>(pAsciiBuffer + currentOffset);
-                    if (!ASCIIUtility.AllBytesInUInt32AreAscii(asciiData))
+                    if (!AllBytesInUInt32AreAscii(asciiData))
                     {
                         goto FoundNonAsciiData;
                     }
@@ -1541,7 +1535,7 @@ namespace DotNetty.Common.Internal
             if (((uint)remainingElementCount & 2) != 0)
             {
                 asciiData = Unsafe.ReadUnaligned<ushort>(pAsciiBuffer + currentOffset);
-                if (!ASCIIUtility.AllBytesInUInt32AreAscii(asciiData))
+                if (!AllBytesInUInt32AreAscii(asciiData))
                 {
                     goto FoundNonAsciiData;
                 }
@@ -1580,7 +1574,7 @@ namespace DotNetty.Common.Internal
 
         FoundNonAsciiData:
 
-            Debug.Assert(!ASCIIUtility.AllBytesInUInt32AreAscii(asciiData), "Shouldn't have reached this point if we have an all-ASCII input.");
+            Debug.Assert(!AllBytesInUInt32AreAscii(asciiData), "Shouldn't have reached this point if we have an all-ASCII input.");
 
             // Drain ASCII bytes one at a time.
 
@@ -1693,7 +1687,7 @@ namespace DotNetty.Common.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WidenFourAsciiBytesToUtf16AndWriteToBuffer(ref char outputBuffer, uint value)
         {
-            Debug.Assert(ASCIIUtility.AllBytesInUInt32AreAscii(value));
+            Debug.Assert(AllBytesInUInt32AreAscii(value));
 
             if (Bmi2.X64.IsSupported)
             {

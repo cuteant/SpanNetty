@@ -41,9 +41,7 @@ namespace DotNetty.Common.Internal
         {
             fixed (byte* pUtf8Data = &MemoryMarshal.GetReference(utf8Data))
             {
-                byte* pFirstInvalidByte = PlatformDependent.Is64BitProcess
-                    ? Utf8Utility64.GetPointerToFirstInvalidByte(pUtf8Data, utf8Data.Length, out int utf16CodeUnitCountAdjustment, out _)
-                    : Utf8Utility32.GetPointerToFirstInvalidByte(pUtf8Data, utf8Data.Length, out utf16CodeUnitCountAdjustment, out _);
+                byte* pFirstInvalidByte = GetPointerToFirstInvalidByte(pUtf8Data, utf8Data.Length, out int utf16CodeUnitCountAdjustment, out _);
                 int index = (int)(void*)Unsafe.ByteOffset(ref *pUtf8Data, ref *pFirstInvalidByte);
 
                 isAscii = (0u >= (uint)utf16CodeUnitCountAdjustment); // If UTF-16 char count == UTF-8 byte count, it's ASCII.

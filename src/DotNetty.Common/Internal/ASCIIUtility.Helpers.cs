@@ -13,17 +13,17 @@ using System.Runtime.Intrinsics.X86;
 
 namespace DotNetty.Common.Internal
 {
-    internal static class ASCIIUtility
+    partial class ASCIIUtility
     {
         /// <summary>
         /// A mask which selects only the high bit of each byte of the given <see cref="uint"/>.
         /// </summary>
-        internal const uint UInt32HighBitsOnlyMask = 0x80808080u;
+        private const uint UInt32HighBitsOnlyMask = 0x80808080u;
 
         /// <summary>
         /// A mask which selects only the high bit of each byte of the given <see cref="ulong"/>.
         /// </summary>
-        internal const ulong UInt64HighBitsOnlyMask = 0x80808080_80808080ul;
+        private const ulong UInt64HighBitsOnlyMask = 0x80808080_80808080ul;
 
         /// <summary>
         /// Returns <see langword="true"/> iff all bytes in <paramref name="value"/> are ASCII.

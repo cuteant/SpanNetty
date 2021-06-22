@@ -12,23 +12,11 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
-using nint = System.Int32;
-using nuint = System.UInt32;
 
 namespace DotNetty.Common.Internal
 {
-    internal static unsafe partial class Utf8Utility32
+    internal static unsafe partial class Utf8Utility
     {
-#if DEBUG
-        static Utf8Utility32()
-        {
-            Debug.Assert(sizeof(nint) == IntPtr.Size && nint.MinValue < 0, "nint is defined incorrectly.");
-            Debug.Assert(sizeof(nuint) == IntPtr.Size && nuint.MinValue == 0, "nuint is defined incorrectly.");
-
-            _ValidateAdditionalNIntDefinitions();
-        }
-#endif // DEBUG
-
         // On method return, pInputBufferRemaining and pOutputBufferRemaining will both point to where
         // the next byte would have been consumed from / the next char would have been written to.
         // inputLength in bytes, outputCharsRemaining in chars.
@@ -43,7 +31,7 @@ namespace DotNetty.Common.Internal
             // First, try vectorized conversion.
 
             {
-                nuint numElementsConverted = ASCIIUtility32.WidenAsciiToUtf16(pInputBuffer, pOutputBuffer, (uint)Math.Min(inputLength, outputCharsRemaining));
+                nuint numElementsConverted = ASCIIUtility.WidenAsciiToUtf16(pInputBuffer, pOutputBuffer, (uint)Math.Min(inputLength, outputCharsRemaining));
 
                 pInputBuffer += numElementsConverted;
                 pOutputBuffer += numElementsConverted;
@@ -871,7 +859,7 @@ namespace DotNetty.Common.Internal
             // First, try vectorized conversion.
 
             {
-                nuint numElementsConverted = ASCIIUtility32.NarrowUtf16ToAscii(pInputBuffer, pOutputBuffer, (uint)Math.Min(inputLength, outputBytesRemaining));
+                nuint numElementsConverted = ASCIIUtility.NarrowUtf16ToAscii(pInputBuffer, pOutputBuffer, (uint)Math.Min(inputLength, outputBytesRemaining));
 
                 pInputBuffer += numElementsConverted;
                 pOutputBuffer += numElementsConverted;

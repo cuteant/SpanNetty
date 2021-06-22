@@ -27,9 +27,7 @@ namespace DotNetty.Common.Internal
                 // The number of UTF-16 code units will never exceed the number of UTF-8 code units,
                 // so the addition at the end of this method will not overflow.
 
-                byte* ptrToFirstInvalidByte = PlatformDependent.Is64BitProcess
-                    ? Utf8Utility64.GetPointerToFirstInvalidByte(pBytes, bytesLength, out int utf16CodeUnitCountAdjustment, out _)
-                    : Utf8Utility32.GetPointerToFirstInvalidByte(pBytes, bytesLength, out utf16CodeUnitCountAdjustment, out _);
+                byte* ptrToFirstInvalidByte = Utf8Utility.GetPointerToFirstInvalidByte(pBytes, bytesLength, out int utf16CodeUnitCountAdjustment, out _);
 
                 int tempBytesConsumed = (int)(ptrToFirstInvalidByte - pBytes);
                 bytesConsumed = tempBytesConsumed;
@@ -69,14 +67,7 @@ namespace DotNetty.Common.Internal
                 byte* pInputBufferRemaining;
                 char* pOutputBufferRemaining;
 
-                if (PlatformDependent.Is64BitProcess)
-                {
-                    _ = Utf8Utility64.TranscodeToUtf16(pBytes, bytesLength, pChars, charsLength, out pInputBufferRemaining, out pOutputBufferRemaining);
-                }
-                else
-                {
-                    _ = Utf8Utility32.TranscodeToUtf16(pBytes, bytesLength, pChars, charsLength, out pInputBufferRemaining, out pOutputBufferRemaining);
-                }
+                _ = Utf8Utility.TranscodeToUtf16(pBytes, bytesLength, pChars, charsLength, out pInputBufferRemaining, out pOutputBufferRemaining);
 
                 bytesConsumed = (int)(pInputBufferRemaining - pBytes);
                 return (int)(pOutputBufferRemaining - pChars);
@@ -108,9 +99,7 @@ namespace DotNetty.Common.Internal
                 // The number of UTF-8 code units may exceed the number of UTF-16 code units,
                 // so we'll need to check for overflow before casting to Int32.
 
-                char* ptrToFirstInvalidChar = PlatformDependent.Is64BitProcess
-                    ? Utf16Utility64.GetPointerToFirstInvalidChar(pChars, charsLength, out long utf8CodeUnitCountAdjustment, out _)
-                    : Utf16Utility32.GetPointerToFirstInvalidChar(pChars, charsLength, out utf8CodeUnitCountAdjustment, out _);
+                char* ptrToFirstInvalidChar = Utf16Utility.GetPointerToFirstInvalidChar(pChars, charsLength, out long utf8CodeUnitCountAdjustment, out _);
 
                 int tempCharsConsumed = (int)(ptrToFirstInvalidChar - pChars);
                 charsConsumed = tempCharsConsumed;

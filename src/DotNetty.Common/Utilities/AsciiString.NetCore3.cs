@@ -72,9 +72,7 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(MethodImplOptions.AggressiveInlining)] // called directly by GetBytesCommon
         private static unsafe int GetBytesFast(char* pChars, int charsLength, byte* pBytes, int bytesLength, out int charsConsumed)
         {
-            int bytesWritten = PlatformDependent.Is64BitProcess
-                ? (int)ASCIIUtility64.NarrowUtf16ToAscii(pChars, pBytes, (uint)Math.Min(charsLength, bytesLength))
-                : (int)ASCIIUtility32.NarrowUtf16ToAscii(pChars, pBytes, (uint)Math.Min(charsLength, bytesLength));
+            int bytesWritten = (int)ASCIIUtility.NarrowUtf16ToAscii(pChars, pBytes, (uint)Math.Min(charsLength, bytesLength));
 
             charsConsumed = bytesWritten;
             return bytesWritten;
