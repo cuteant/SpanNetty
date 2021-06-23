@@ -8,12 +8,6 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-#if FEATURE_UTF8STRING
-using System.Buffers;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-#endif
 
 namespace DotNetty.Common.Internal
 {
@@ -48,59 +42,6 @@ namespace DotNetty.Common.Internal
                 return ((uint)index < (uint)utf8Data.Length) ? index : -1;
             }
         }
-
-#if FEATURE_UTF8STRING
-        /// <summary>
-        /// Returns <paramref name="value"/> if it is null or contains only well-formed UTF-8 data;
-        /// otherwises allocates a new <see cref="Utf8String"/> instance containing the same data as
-        /// <paramref name="value"/> but where all invalid UTF-8 sequences have been replaced
-        /// with U+FFD.
-        /// </summary>
-        [return: NotNullIfNotNull("value")]
-        public static Utf8String? ValidateAndFixupUtf8String(Utf8String? value)
-        {
-            if (Utf8String.IsNullOrEmpty(value))
-            {
-                return value;
-            }
-
-            ReadOnlySpan<byte> valueAsBytes = value.AsBytes();
-
-            int idxOfFirstInvalidData = GetIndexOfFirstInvalidUtf8Sequence(valueAsBytes, out _);
-            if (idxOfFirstInvalidData < 0)
-            {
-                return value;
-            }
-
-            // TODO_UTF8STRING: Replace this with the faster implementation once it's available.
-            // (The faster implementation is in the dev/utf8string_bak branch currently.)
-
-            MemoryStream memStream = new MemoryStream();
-            memStream.Write(valueAsBytes.Slice(0, idxOfFirstInvalidData));
-
-            valueAsBytes = valueAsBytes.Slice(idxOfFirstInvalidData);
-            do
-            {
-                if (Rune.DecodeFromUtf8(valueAsBytes, out _, out int bytesConsumed) == OperationStatus.Done)
-                {
-                    //  Valid scalar value - copy data as-is to MemoryStream
-                    memStream.Write(valueAsBytes.Slice(0, bytesConsumed));
-                }
-                else
-                {
-                    // Invalid scalar value - copy U+FFFD to MemoryStream
-                    memStream.Write(ReplacementCharSequence);
-                }
-
-                valueAsBytes = valueAsBytes.Slice(bytesConsumed);
-            } while (!valueAsBytes.IsEmpty);
-
-            bool success = memStream.TryGetBuffer(out ArraySegment<byte> memStreamBuffer);
-            Debug.Assert(success, "Couldn't get underlying MemoryStream buffer.");
-
-            return Utf8String.DangerousCreateWithoutValidation(memStreamBuffer, assumeWellFormed: true);
-        }
-#endif // FEATURE_UTF8STRING
     }
 }
 #endif

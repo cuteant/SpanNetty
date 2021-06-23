@@ -7,13 +7,13 @@
     public static partial class TextEncodings
     {
         /// <summary>不提供 Unicode 字节顺序标记，检测到无效的编码时不引发异常</summary>
-        public static readonly UTF8Encoding UTF8NoBOM = new UTF8Encoding(false);
+        public static readonly UTF8Encoding UTF8NoBOM = new(false);
 
         /// <summary>不提供 Unicode 字节顺序标记，检测到无效的编码时引发异常</summary>
-        public static readonly UTF8Encoding SecureUTF8NoBOM = new UTF8Encoding(false, true);
+        public static readonly UTF8Encoding SecureUTF8NoBOM = new(false, true);
 
         /// <summary>提供 Unicode 字节顺序标记，检测到无效的编码时引发异常</summary>
-        public static readonly UTF8Encoding SecureUTF8 = new UTF8Encoding(true, true);
+        public static readonly UTF8Encoding SecureUTF8 = new(true, true);
 
         public const int ASCIICodePage = 20127;
 

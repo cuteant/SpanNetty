@@ -10,10 +10,14 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
+#if NET
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
+#endif
 
 namespace DotNetty.Common.Internal
 {
-    internal static unsafe partial class Utf8Utility
+    unsafe partial class Utf8Utility
     {
         // Returns &inputBuffer[inputLength] if the input buffer is valid.
         /// <summary>
@@ -118,6 +122,7 @@ namespace DotNetty.Common.Internal
                         // the alignment check consumes at most a single DWORD.)
 
                         byte* pInputBufferFinalPosAtWhichCanSafelyLoop = pFinalPosWhereCanReadDWordFromInputBuffer - 3 * sizeof(uint); // can safely read 4 DWORDs here
+#if NETCOREAPP3_1
                         uint mask;
 
                         do
@@ -136,6 +141,39 @@ namespace DotNetty.Common.Internal
                                     goto Sse2LoopTerminatedEarlyDueToNonAsciiData;
                                 }
                             }
+#else
+                        nuint trailingZeroCount;
+
+                        Vector128<byte> bitMask128 = BitConverter.IsLittleEndian ?
+                            Vector128.Create((ushort)0x1001).AsByte() :
+                            Vector128.Create((ushort)0x0110).AsByte();
+
+                        do
+                        {
+                            // pInputBuffer is 32-bit aligned but not necessary 128-bit aligned, so we're
+                            // going to perform an unaligned load. We don't necessarily care about aligning
+                            // this because we pessimistically assume we'll encounter non-ASCII data at some
+                            // point in the not-too-distant future (otherwise we would've stayed entirely
+                            // within the all-ASCII vectorized code at the entry to this method).
+                            if (AdvSimd.Arm64.IsSupported && BitConverter.IsLittleEndian)
+                            {
+                                ulong mask = GetNonAsciiBytes(AdvSimd.LoadVector128(pInputBuffer), bitMask128);
+                                if (mask != 0)
+                                {
+                                    trailingZeroCount = (nuint)BitOperations.TrailingZeroCount(mask) >> 2;
+                                    goto LoopTerminatedEarlyDueToNonAsciiData;
+                                }
+                            }
+                            else if (Sse2.IsSupported)
+                            {
+                                uint mask = (uint)Sse2.MoveMask(Sse2.LoadVector128(pInputBuffer));
+                                if (mask != 0)
+                                {
+                                    trailingZeroCount = (nuint)BitOperations.TrailingZeroCount(mask);
+                                    goto LoopTerminatedEarlyDueToNonAsciiData;
+                                }
+                            }
+#endif
                             else
                             {
                                 if (!ASCIIUtility.AllBytesInUInt32AreAscii(((uint*)pInputBuffer)[0] | ((uint*)pInputBuffer)[1]))
@@ -154,6 +192,7 @@ namespace DotNetty.Common.Internal
 
                         continue; // need to perform a bounds check because we might be running out of data
 
+#if NETCOREAPP3_1
                     Sse2LoopTerminatedEarlyDueToNonAsciiData:
 
                         Debug.Assert(BitConverter.IsLittleEndian);
@@ -168,6 +207,22 @@ namespace DotNetty.Common.Internal
                         Debug.Assert(mask != 0);
 
                         pInputBuffer += Bmi1.TrailingZeroCount(mask);
+#else
+                    LoopTerminatedEarlyDueToNonAsciiData:
+                        // x86 can only be little endian, while ARM can be big or little endian
+                        // so if we reached this label we need to check both combinations are supported
+                        Debug.Assert((AdvSimd.Arm64.IsSupported && BitConverter.IsLittleEndian) || Sse2.IsSupported);
+
+
+                        // The 'mask' value will have a 0 bit for each ASCII byte we saw and a 1 bit
+                        // for each non-ASCII byte we saw. trailingZeroCount will count the number of ASCII bytes,
+                        // bump our input counter by that amount, and resume processing from the
+                        // "the first byte is no longer ASCII" portion of the main loop.
+                        // We should not expect a total number of zeroes equal or larger than 16.
+                        Debug.Assert(trailingZeroCount < 16);
+
+                        pInputBuffer += trailingZeroCount;
+#endif
                         if (pInputBuffer > pFinalPosWhereCanReadDWordFromInputBuffer)
                         {
                             goto ProcessRemainingBytesSlow;
@@ -261,8 +316,8 @@ namespace DotNetty.Common.Internal
                     // the value isn't overlong using a single comparison. On big-endian platforms, we'll need
                     // to validate the mask and validate that the sequence isn't overlong as two separate comparisons.
 
-                    if ((BitConverter.IsLittleEndian && Utf8Utility.UInt32EndsWithValidUtf8TwoByteSequenceLittleEndian(thisDWord))
-                        || (!BitConverter.IsLittleEndian && (Utf8Utility.UInt32EndsWithUtf8TwoByteMask(thisDWord) && !Utf8Utility.UInt32EndsWithOverlongUtf8TwoByteSequence(thisDWord))))
+                    if ((BitConverter.IsLittleEndian && UInt32EndsWithValidUtf8TwoByteSequenceLittleEndian(thisDWord))
+                        || (!BitConverter.IsLittleEndian && (UInt32EndsWithUtf8TwoByteMask(thisDWord) && !UInt32EndsWithOverlongUtf8TwoByteSequence(thisDWord))))
                     {
                         // We have two runs of two bytes each.
                         pInputBuffer += 4;
@@ -277,7 +332,7 @@ namespace DotNetty.Common.Internal
 
                             if (BitConverter.IsLittleEndian)
                             {
-                                if (Utf8Utility.UInt32BeginsWithValidUtf8TwoByteSequenceLittleEndian(thisDWord))
+                                if (UInt32BeginsWithValidUtf8TwoByteSequenceLittleEndian(thisDWord))
                                 {
                                     // The next sequence is a valid two-byte sequence.
                                     goto ProcessTwoByteSequenceSkipOverlongFormCheck;
@@ -285,9 +340,9 @@ namespace DotNetty.Common.Internal
                             }
                             else
                             {
-                                if (Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(thisDWord))
+                                if (UInt32BeginsWithUtf8TwoByteMask(thisDWord))
                                 {
-                                    if (Utf8Utility.UInt32BeginsWithOverlongUtf8TwoByteSequence(thisDWord))
+                                    if (UInt32BeginsWithOverlongUtf8TwoByteSequence(thisDWord))
                                     {
                                         goto Error; // The next sequence purports to be a 2-byte sequence but is overlong.
                                     }
@@ -312,9 +367,9 @@ namespace DotNetty.Common.Internal
 
                     tempUtf16CodeUnitCountAdjustment--; // 2-byte sequence + (some number of ASCII bytes) -> 1 UTF-16 code units (and 1 scalar) [+ trailing]
 
-                    if (Utf8Utility.UInt32ThirdByteIsAscii(thisDWord))
+                    if (UInt32ThirdByteIsAscii(thisDWord))
                     {
-                        if (Utf8Utility.UInt32FourthByteIsAscii(thisDWord))
+                        if (UInt32FourthByteIsAscii(thisDWord))
                         {
                             pInputBuffer += 4;
                         }
@@ -449,7 +504,7 @@ namespace DotNetty.Common.Internal
                             // Is this three 3-byte sequences in a row?
                             // thisQWord = [ 10yyyyyy 1110zzzz | 10xxxxxx 10yyyyyy 1110zzzz | 10xxxxxx 10yyyyyy 1110zzzz ] [ 10xxxxxx ]
                             //               ---- CHAR 3  ----   --------- CHAR 2 ---------   --------- CHAR 1 ---------     -CHAR 3-
-                            if ((thisQWord & 0xC0F0_C0C0_F0C0_C0F0ul) == 0x80E0_8080_E080_80E0ul && Utf8Utility.IsUtf8ContinuationByte(in pInputBuffer[8]))
+                            if ((thisQWord & 0xC0F0_C0C0_F0C0_C0F0ul) == 0x80E0_8080_E080_80E0ul && IsUtf8ContinuationByte(in pInputBuffer[8]))
                             {
                                 // Saw a proper bitmask for three incoming 3-byte sequences, perform the
                                 // overlong and surrogate sequence checking now.
@@ -523,7 +578,7 @@ namespace DotNetty.Common.Internal
                                 continue;
                             }
 
-                            if (Utf8Utility.UInt32BeginsWithUtf8ThreeByteMask(thisDWord))
+                            if (UInt32BeginsWithUtf8ThreeByteMask(thisDWord))
                             {
                                 // A single three-byte sequence.
                                 goto ProcessThreeByteSequenceWithCheck;
@@ -545,7 +600,7 @@ namespace DotNetty.Common.Internal
                         // marker now and jump directly to three-byte sequence processing if we see one, skipping
                         // all of the logic at the beginning of the loop.
 
-                        if (Utf8Utility.UInt32BeginsWithUtf8ThreeByteMask(thisDWord))
+                        if (UInt32BeginsWithUtf8ThreeByteMask(thisDWord))
                         {
                             goto ProcessThreeByteSequenceWithCheck; // Found another [not yet validated] three-byte sequence; process
                         }
@@ -655,7 +710,7 @@ namespace DotNetty.Common.Internal
                     if ((byte)firstByte < 0xE0u)
                     {
                         // 2-byte case
-                        if ((byte)firstByte >= 0xC2u && Utf8Utility.IsLowByteUtf8ContinuationByte(secondByte))
+                        if ((byte)firstByte >= 0xC2u && IsLowByteUtf8ContinuationByte(secondByte))
                         {
                             pInputBuffer += 2;
                             tempUtf16CodeUnitCountAdjustment--; // 2 UTF-8 bytes -> 1 UTF-16 code unit (and 1 scalar)
@@ -683,13 +738,13 @@ namespace DotNetty.Common.Internal
                             }
                             else
                             {
-                                if (!Utf8Utility.IsLowByteUtf8ContinuationByte(secondByte))
+                                if (!IsLowByteUtf8ContinuationByte(secondByte))
                                 {
                                     goto Error; // first trailing byte doesn't have proper continuation marker
                                 }
                             }
 
-                            if (Utf8Utility.IsUtf8ContinuationByte(in pInputBuffer[2]))
+                            if (IsUtf8ContinuationByte(in pInputBuffer[2]))
                             {
                                 pInputBuffer += 3;
                                 tempUtf16CodeUnitCountAdjustment -= 2; // 3 UTF-8 bytes -> 2 UTF-16 code units (and 2 scalars)

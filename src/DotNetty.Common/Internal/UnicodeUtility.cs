@@ -120,14 +120,14 @@ namespace DotNetty.Common.Internal
         /// Per http://www.unicode.org/glossary/#ASCII, ASCII is only U+0000..U+007F.
         /// </remarks>
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsAsciiCodePoint(uint value) => (value <= 0x7Fu);
+        public static bool IsAsciiCodePoint(uint value) => value <= 0x7Fu;
 
         /// <summary>
         /// Returns <see langword="true"/> iff <paramref name="value"/> is in the
         /// Basic Multilingual Plane (BMP).
         /// </summary>
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsBmpCodePoint(uint value) => (value <= 0xFFFFu);
+        public static bool IsBmpCodePoint(uint value) => value <= 0xFFFFu;
 
         /// <summary>
         /// Returns <see langword="true"/> iff <paramref name="value"/> is a UTF-16 high surrogate code point,
@@ -142,7 +142,7 @@ namespace DotNetty.Common.Internal
         /// </summary>
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool IsInRangeInclusive(uint value, uint lowerBound, uint upperBound)
-            => ((value - lowerBound) <= (upperBound - lowerBound));
+            => (value - lowerBound) <= (upperBound - lowerBound);
 
         ///// <summary>
         ///// Returns <see langword="true"/> if <paramref name="value"/> is between
@@ -187,7 +187,7 @@ namespace DotNetty.Common.Internal
         /// point, i.e., is in [ U+0000..U+10FFFF ], inclusive.
         /// </summary>
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsValidCodePoint(uint codePoint) => (codePoint <= 0x10FFFFU);
+        public static bool IsValidCodePoint(uint codePoint) => codePoint <= 0x10FFFFU;
 
         /// <summary>
         /// Returns <see langword="true"/> iff <paramref name="value"/> is a valid Unicode scalar
@@ -197,7 +197,7 @@ namespace DotNetty.Common.Internal
         public static bool IsValidUnicodeScalar(uint value)
         {
             // This is an optimized check that on x86 is just three instructions: lea, xor, cmp.
-            // 
+            //
             // After the subtraction operation, the input value is modified as such:
             // [ 00000000..0010FFFF ] -> [ FFEF0000..FFFFFFFF ]
             //

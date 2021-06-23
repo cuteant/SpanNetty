@@ -4,7 +4,10 @@
     <TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
     <RootNamespace>DotNetty.Common.Tests</RootNamespace>
     <AssemblyName>DotNetty.Common.Tests</AssemblyName>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup  Condition=" '$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <DefineConstants>$(DefineConstants);CORELIBTEST</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(ImportLibs)' == 'netfx' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
