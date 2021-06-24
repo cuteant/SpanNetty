@@ -30,18 +30,18 @@ This is a fork of [DotNetty](https://github.com/azure/dotnetty).
 * Nightly builds are available on [MyGet](https://www.myget.org/F/cuteant/api/v2).
 
 
-|NuGet Package|Status|
-|------|-------------|
-|SpanNetty.Common|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Common)](https://www.nuget.org/packages/SpanNetty.Common/)|
-|SpanNetty.Buffers|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Buffers)](https://www.nuget.org/packages/SpanNetty.Buffers/)|
-|SpanNetty.Codecs|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs)](https://www.nuget.org/packages/SpanNetty.Codecs/)|
-|SpanNetty.Codecs.Http|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Http)](https://www.nuget.org/packages/SpanNetty.Codecs.Http/)|
-|SpanNetty.Codecs.Http2|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Http2)](https://www.nuget.org/packages/SpanNetty.Codecs.Http2/)|
-|SpanNetty.Codecs.Mqtt|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Mqtt)](https://www.nuget.org/packages/SpanNetty.Codecs.Mqtt/)|
-|SpanNetty.Codecs.Protobuf|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Protobuf)](https://www.nuget.org/packages/SpanNetty.Codecs.Protobuf/)|
-|SpanNetty.Handlers|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Handlers)](https://www.nuget.org/packages/SpanNetty.Handlers/)|
-|SpanNetty.Transport|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Transport)](https://www.nuget.org/packages/SpanNetty.Transport/)|
-|SpanNetty.Transport.Libuv|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Transport.Libuv)](https://www.nuget.org/packages/SpanNetty.Transport.Libuv/)|
+|Package|NuGet Version|MyGet Version|
+|------|-------------|-------------|
+|SpanNetty.Common|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Common)](https://www.nuget.org/packages/SpanNetty.Common/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Common)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Common)|
+|SpanNetty.Buffers|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Buffers)](https://www.nuget.org/packages/SpanNetty.Buffers/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Buffers)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Buffers)|
+|SpanNetty.Codecs|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs)](https://www.nuget.org/packages/SpanNetty.Codecs/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Codecs)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Codecs)|
+|SpanNetty.Codecs.Http|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Http)](https://www.nuget.org/packages/SpanNetty.Codecs.Http/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Codecs.Http)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Codecs.Http)|
+|SpanNetty.Codecs.Http2|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Http2)](https://www.nuget.org/packages/SpanNetty.Codecs.Http2/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Codecs.Http2)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Codecs.Http2)|
+|SpanNetty.Codecs.Mqtt|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Mqtt)](https://www.nuget.org/packages/SpanNetty.Codecs.Mqtt/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Codecs.Mqtt)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Codecs.Mqtt)|
+|SpanNetty.Codecs.Protobuf|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Codecs.Protobuf)](https://www.nuget.org/packages/SpanNetty.Codecs.Protobuf/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Codecs.Protobuf)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Codecs.Protobuf)|
+|SpanNetty.Handlers|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Handlers)](https://www.nuget.org/packages/SpanNetty.Handlers/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Handlers)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Handlers)|
+|SpanNetty.Transport|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Transport)](https://www.nuget.org/packages/SpanNetty.Transport/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Transport)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Transport)|
+|SpanNetty.Transport.Libuv|[![NuGet Version and Downloads count](https://buildstats.info/nuget/SpanNetty.Transport.Libuv)](https://www.nuget.org/packages/SpanNetty.Transport.Libuv/)|[![MyGet Version](https://img.shields.io/myget/cuteant/vpre/SpanNetty.Transport.Libuv)](https://www.myget.org/feed/cuteant/package/nuget/SpanNetty.Transport.Libuv)|
 
 ## Performance
 
