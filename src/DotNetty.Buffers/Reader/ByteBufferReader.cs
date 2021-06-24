@@ -40,7 +40,7 @@ namespace DotNetty.Buffers
         private SequencePosition _currentPosition;
         private SequencePosition _nextPosition;
         private bool _moreData;
-        private long _length;
+        private readonly long _length;
 
         private readonly ReadOnlySequence<byte> _sequence;
         private ReadOnlySpan<byte> _currentSpan;
@@ -107,6 +107,10 @@ namespace DotNetty.Buffers
         /// <summary>The underlying <see cref="ReadOnlySequence{T}"/> for the reader.</summary>
         public readonly ReadOnlySequence<byte> Sequence => _sequence;
 
+        /// <summary>Gets the unread portion of the <see cref="Sequence"/>.</summary>
+        /// <value>The unread portion of the <see cref="Sequence"/>.</value>
+        public readonly ReadOnlySequence<byte> UnreadSequence => Sequence.Slice(Position);
+
         /// <summary>The current position in the <see cref="Sequence"/>.</summary>
         public readonly SequencePosition Position
             => _sequence.GetPosition(_currentSpanIndex, _currentPosition);
@@ -170,6 +174,61 @@ namespace DotNetty.Buffers
             }
             value = default;
             return false;
+        }
+
+        /// <summary>Peeks at the next value at specific offset without advancing the reader.</summary>
+        /// <param name="offset">The offset from current position.</param>
+        /// <param name="value">The next value, or the default value if at the end of the reader.</param>
+        /// <returns><c>true</c> if the reader is not at its end and the peek operation succeeded; <c>false</c> if at the end of the reader.</returns>
+        public readonly bool TryPeek(long offset, out byte value)
+        {
+            if (offset < 0L) { ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.offset); }
+
+            // If we've got data and offset is not out of bounds
+            if (!_moreData || Remaining <= offset)
+            {
+                value = default;
+                return false;
+            }
+
+            // Sum CurrentSpanIndex + offset could overflow as is but the value of offset should be very large
+            // because we check Remaining <= offset above so to overflow we should have a ReadOnlySequence close to 8 exabytes
+            Debug.Assert(CurrentSpanIndex + offset >= 0);
+
+            // If offset doesn't fall inside current segment move to next until we find correct one
+            if ((CurrentSpanIndex + offset) <= CurrentSpan.Length - 1)
+            {
+                Debug.Assert(offset <= int.MaxValue);
+
+                value = CurrentSpan[CurrentSpanIndex + (int)offset];
+                return true;
+            }
+            else
+            {
+                long remainingOffset = offset - (CurrentSpan.Length - CurrentSpanIndex);
+                SequencePosition nextPosition = _nextPosition;
+                ReadOnlyMemory<byte> currentMemory;
+
+                while (Sequence.TryGet(ref nextPosition, out currentMemory, advance: true))
+                {
+                    // Skip empty segment
+                    if (currentMemory.Length > 0)
+                    {
+                        if (remainingOffset >= currentMemory.Length)
+                        {
+                            // Subtract current non consumed data
+                            remainingOffset -= currentMemory.Length;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                value = currentMemory.Span[(int)remainingOffset];
+                return true;
+            }
         }
 
         /// <summary>Read the next value and advance the reader.</summary>

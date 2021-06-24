@@ -59,7 +59,11 @@ namespace DotNetty.Common.Internal
                 return true;
             }
 
+#if NET
+            return new ReadOnlySpan<byte>(bytes1, startPos1, length).SequenceEqual(new ReadOnlySpan<byte>(bytes2, startPos2, length));
+#else
             return SpanHelpers.SequenceEqual(ref bytes1[startPos1], ref bytes2[startPos2], length);
+#endif
         }
 
         public static unsafe int ByteArrayEqualsConstantTime(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)

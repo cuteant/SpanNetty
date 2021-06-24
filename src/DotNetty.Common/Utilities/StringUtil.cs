@@ -31,9 +31,11 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
     using System.Text;
     using DotNetty.Common.Internal;
+#if !NET
+    using System.Runtime.InteropServices;
+#endif
 
     /// <summary>
     ///     String utility class.
@@ -131,9 +133,13 @@ namespace DotNetty.Common.Utilities
 
             if (0u >= (uint)length) { return true; }
 
+#if NET
+            return value.AsSpan().Slice(thisStart, length).SequenceEqual(other.AsSpan().Slice(start, length));
+#else
             ref char valueStart = ref MemoryMarshal.GetReference(value.AsSpan());
             ref char otherStart = ref MemoryMarshal.GetReference(other.AsSpan());
             return SpanHelpers.SequenceEqual(ref Unsafe.Add(ref valueStart, thisStart), ref Unsafe.Add(ref otherStart, start), length);
+#endif
         }
 
         /// <summary>

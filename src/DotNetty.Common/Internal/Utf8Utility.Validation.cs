@@ -42,7 +42,7 @@ namespace DotNetty.Common.Internal
                 // If so, short-circuit the remainder of the method.
 
                 inputLength -= (int)numAsciiBytesCounted;
-                if (0u >= inputLength)
+                if (0u >= (uint)inputLength)
                 {
                     utf16CodeUnitCountAdjustment = 0;
                     scalarCountAdjustment = 0;
