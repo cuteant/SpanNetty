@@ -27,6 +27,9 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using DotNetty.Common;
+#if NET
+using System.Runtime.InteropServices;
+#endif
 
 namespace DotNetty.Buffers
 {
@@ -248,7 +251,14 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        ref byte Addr(int index) => ref Memory[index];
+        ref byte Addr(int index)
+        {
+#if NET
+            return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Memory), index);
+#else
+            return ref Memory[index];
+#endif
+        }
 
         public sealed override IByteBuffer SetZero(int index, int length)
         {

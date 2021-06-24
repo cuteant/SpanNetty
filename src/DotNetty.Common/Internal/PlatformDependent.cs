@@ -12,6 +12,9 @@ namespace DotNetty.Common.Internal
     using System.Threading;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
+#if NET
+    using System.Runtime.InteropServices;
+#endif
 
     using static PlatformDependent0;
 
@@ -262,6 +265,11 @@ namespace DotNetty.Common.Internal
                     }
                 }
             }
+#elif NET
+            Unsafe.CopyBlockUnaligned(
+                ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(dst), dstIndex), 
+                ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(src), srcIndex), 
+                nlen);
 #else
             Unsafe.CopyBlockUnaligned(ref dst[dstIndex], ref src[srcIndex], nlen);
 #endif

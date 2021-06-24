@@ -31,6 +31,10 @@ namespace DotNetty.Buffers
     using System.Threading.Tasks;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
+#if NET
+    using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
+#endif
 
     sealed partial class PooledHeapByteBuffer : PooledByteBuffer<byte[]>
     {
@@ -212,7 +216,11 @@ namespace DotNetty.Buffers
         public sealed override ref byte GetPinnableMemoryAddress()
         {
             EnsureAccessible();
+#if NET
+            return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(Memory), Offset);
+#else
             return ref Memory[Offset];
+#endif
         }
 
         public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;

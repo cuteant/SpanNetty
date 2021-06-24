@@ -30,6 +30,9 @@ namespace DotNetty.Buffers
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Internal;
+#if NET
+    using System.Runtime.InteropServices;
+#endif
 
     partial class UnpooledHeapByteBuffer : AbstractReferenceCountedByteBuffer
     {
@@ -134,7 +137,11 @@ namespace DotNetty.Buffers
         public sealed override ref byte GetPinnableMemoryAddress()
         {
             EnsureAccessible();
+#if NET
+            return ref MemoryMarshal.GetArrayDataReference(_array);
+#else
             return ref _array[0];
+#endif
         }
 
         public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
