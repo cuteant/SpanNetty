@@ -248,7 +248,7 @@ namespace DotNetty.Buffers
 
         public static unsafe bool TryReadUnsignedMedium(ref this ByteBufferReader reader, out int value)
         {
-            if (reader.TryPeek(MediumSize, out var span))
+            if (reader.TryPeek(MediumSize, out ReadOnlySpan<byte> span))
             {
                 //fixed (byte* bytes = &MemoryMarshal.GetReference(span))
                 //{
@@ -264,7 +264,7 @@ namespace DotNetty.Buffers
 
         public static bool TryReadUnsignedMediumLE(ref this ByteBufferReader reader, out int value)
         {
-            if (reader.TryPeek(MediumSize, out var span))
+            if (reader.TryPeek(MediumSize, out ReadOnlySpan<byte> span))
             {
                 ref byte b = ref MemoryMarshal.GetReference(span);
                 value = b | Unsafe.Add(ref b, 1) << 8 | Unsafe.Add(ref b, 2) << 16;

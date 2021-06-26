@@ -4,31 +4,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NETCOREAPP_3_0_GREATER
+#if NET
 using System;
 using System.Buffers;
-using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
-using nint = System.Int64;
-using nuint = System.UInt64;
 
 namespace DotNetty.Common.Internal
 {
-    internal static unsafe partial class Utf8Utility64
+    unsafe partial class Utf8Utility
     {
-#if DEBUG
-        static Utf8Utility64()
-        {
-            Debug.Assert(sizeof(nint) == IntPtr.Size && nint.MinValue < 0, "nint is defined incorrectly.");
-            Debug.Assert(sizeof(nuint) == IntPtr.Size && nuint.MinValue == 0, "nuint is defined incorrectly.");
-
-            _ValidateAdditionalNIntDefinitions();
-        }
-#endif // DEBUG
-
         // On method return, pInputBufferRemaining and pOutputBufferRemaining will both point to where
         // the next byte would have been consumed from / the next char would have been written to.
         // inputLength in bytes, outputCharsRemaining in chars.
@@ -43,7 +32,7 @@ namespace DotNetty.Common.Internal
             // First, try vectorized conversion.
 
             {
-                nuint numElementsConverted = ASCIIUtility64.WidenAsciiToUtf16(pInputBuffer, pOutputBuffer, (uint)Math.Min(inputLength, outputCharsRemaining));
+                nuint numElementsConverted = ASCIIUtility.WidenAsciiToUtf16(pInputBuffer, pOutputBuffer, (uint)Math.Min(inputLength, outputCharsRemaining));
 
                 pInputBuffer += numElementsConverted;
                 pOutputBuffer += numElementsConverted;
@@ -75,7 +64,8 @@ namespace DotNetty.Common.Internal
             byte* pLastBufferPosProcessed = null; // used for invariant checking in debug builds
 #endif
 
-            while (pInputBuffer <= pFinalPosWhereCanReadDWordFromInputBuffer)
+            Debug.Assert(pInputBuffer <= pFinalPosWhereCanReadDWordFromInputBuffer);
+            do
             {
                 // Read 32 bits at a time. This is enough to hold any possible UTF8-encoded scalar.
 
@@ -98,7 +88,7 @@ namespace DotNetty.Common.Internal
                         goto ProcessRemainingBytesSlow; // running out of space, but may be able to write some data
                     }
 
-                    Utf8Utility.Widen4AsciiBytesToCharsAndWrite(ref *pOutputBuffer, thisDWord);
+                    ASCIIUtility.WidenFourAsciiBytesToUtf16AndWriteToBuffer(ref *pOutputBuffer, thisDWord);
                     pInputBuffer += 4;
                     pOutputBuffer += 4;
                     outputCharsRemaining -= 4;
@@ -124,8 +114,8 @@ namespace DotNetty.Common.Internal
 
                         pInputBuffer += 8;
 
-                        Utf8Utility.Widen4AsciiBytesToCharsAndWrite(ref pOutputBuffer[0], thisDWord);
-                        Utf8Utility.Widen4AsciiBytesToCharsAndWrite(ref pOutputBuffer[4], secondDWord);
+                        ASCIIUtility.WidenFourAsciiBytesToUtf16AndWriteToBuffer(ref pOutputBuffer[0], thisDWord);
+                        ASCIIUtility.WidenFourAsciiBytesToUtf16AndWriteToBuffer(ref pOutputBuffer[4], secondDWord);
 
                         pOutputBuffer += 8;
                     }
@@ -140,7 +130,7 @@ namespace DotNetty.Common.Internal
                     {
                         // The first DWORD contained all-ASCII bytes, so expand it.
 
-                        Utf8Utility.Widen4AsciiBytesToCharsAndWrite(ref *pOutputBuffer, thisDWord);
+                        ASCIIUtility.WidenFourAsciiBytesToUtf16AndWriteToBuffer(ref *pOutputBuffer, thisDWord);
 
                         // continue the outer loop from the second DWORD
 
@@ -167,25 +157,25 @@ namespace DotNetty.Common.Internal
                 // Next, try stripping off ASCII bytes one at a time.
                 // We only handle up to three ASCII bytes here since we handled the four ASCII byte case above.
 
-                if (Utf8Utility.UInt32FirstByteIsAscii(thisDWord))
+                if (UInt32FirstByteIsAscii(thisDWord))
                 {
                     if (outputCharsRemaining >= 3)
                     {
                         // Fast-track: we don't need to check the destination length for subsequent
                         // ASCII bytes since we know we can write them all now.
 
-                        uint thisDWordLittleEndian = Utf8Utility.ToLittleEndian(thisDWord);
+                        uint thisDWordLittleEndian = ToLittleEndian(thisDWord);
 
                         nuint adjustment = 1;
                         pOutputBuffer[0] = (char)(byte)thisDWordLittleEndian;
 
-                        if (Utf8Utility.UInt32SecondByteIsAscii(thisDWord))
+                        if (UInt32SecondByteIsAscii(thisDWord))
                         {
                             adjustment++;
                             thisDWordLittleEndian >>= 8;
                             pOutputBuffer[1] = (char)(byte)thisDWordLittleEndian;
 
-                            if (Utf8Utility.UInt32ThirdByteIsAscii(thisDWord))
+                            if (UInt32ThirdByteIsAscii(thisDWord))
                             {
                                 adjustment++;
                                 thisDWordLittleEndian >>= 8;
@@ -202,20 +192,20 @@ namespace DotNetty.Common.Internal
                         // Slow-track: we need to make sure each individual write has enough
                         // of a buffer so that we don't overrun the destination.
 
-                        if (0u >= (uint)outputCharsRemaining)
+                        if (outputCharsRemaining == 0)
                         {
                             goto OutputBufferTooSmall;
                         }
 
-                        uint thisDWordLittleEndian = Utf8Utility.ToLittleEndian(thisDWord);
+                        uint thisDWordLittleEndian = ToLittleEndian(thisDWord);
 
                         pInputBuffer++;
                         *pOutputBuffer++ = (char)(byte)thisDWordLittleEndian;
                         outputCharsRemaining--;
 
-                        if (Utf8Utility.UInt32SecondByteIsAscii(thisDWord))
+                        if (UInt32SecondByteIsAscii(thisDWord))
                         {
-                            if (0u >= (uint)outputCharsRemaining)
+                            if (outputCharsRemaining == 0)
                             {
                                 goto OutputBufferTooSmall;
                             }
@@ -236,7 +226,7 @@ namespace DotNetty.Common.Internal
 
                             Debug.Assert(outputCharsRemaining == 1);
 
-                            if (Utf8Utility.UInt32ThirdByteIsAscii(thisDWord))
+                            if (UInt32ThirdByteIsAscii(thisDWord))
                             {
                                 goto OutputBufferTooSmall;
                             }
@@ -269,12 +259,12 @@ namespace DotNetty.Common.Internal
 
                 // Check the 2-byte case.
 
-                if (Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(thisDWord))
+                if (UInt32BeginsWithUtf8TwoByteMask(thisDWord))
                 {
                     // Per Table 3-7, valid sequences are:
                     // [ C2..DF ] [ 80..BF ]
 
-                    if (Utf8Utility.UInt32BeginsWithOverlongUtf8TwoByteSequence(thisDWord))
+                    if (UInt32BeginsWithOverlongUtf8TwoByteSequence(thisDWord))
                     {
                         goto Error;
                     }
@@ -289,8 +279,8 @@ namespace DotNetty.Common.Internal
                     // the value isn't overlong using a single comparison. On big-endian platforms, we'll need
                     // to validate the mask and validate that the sequence isn't overlong as two separate comparisons.
 
-                    if ((BitConverter.IsLittleEndian && Utf8Utility.UInt32EndsWithValidUtf8TwoByteSequenceLittleEndian(thisDWord))
-                        || (!BitConverter.IsLittleEndian && (Utf8Utility.UInt32EndsWithUtf8TwoByteMask(thisDWord) && !Utf8Utility.UInt32EndsWithOverlongUtf8TwoByteSequence(thisDWord))))
+                    if ((BitConverter.IsLittleEndian && UInt32EndsWithValidUtf8TwoByteSequenceLittleEndian(thisDWord))
+                        || (!BitConverter.IsLittleEndian && (UInt32EndsWithUtf8TwoByteMask(thisDWord) && !UInt32EndsWithOverlongUtf8TwoByteSequence(thisDWord))))
                     {
                         // We have two runs of two bytes each.
 
@@ -299,7 +289,7 @@ namespace DotNetty.Common.Internal
                             goto ProcessRemainingBytesSlow; // running out of output buffer
                         }
 
-                        Unsafe.WriteUnaligned<uint>(pOutputBuffer, Utf8Utility.ExtractTwoCharsPackedFromTwoAdjacentTwoByteSequences(thisDWord));
+                        Unsafe.WriteUnaligned<uint>(pOutputBuffer, ExtractTwoCharsPackedFromTwoAdjacentTwoByteSequences(thisDWord));
 
                         pInputBuffer += 4;
                         pOutputBuffer += 2;
@@ -314,7 +304,7 @@ namespace DotNetty.Common.Internal
 
                             if (BitConverter.IsLittleEndian)
                             {
-                                if (Utf8Utility.UInt32BeginsWithValidUtf8TwoByteSequenceLittleEndian(thisDWord))
+                                if (UInt32BeginsWithValidUtf8TwoByteSequenceLittleEndian(thisDWord))
                                 {
                                     // The next sequence is a valid two-byte sequence.
                                     goto ProcessTwoByteSequenceSkipOverlongFormCheck;
@@ -322,9 +312,9 @@ namespace DotNetty.Common.Internal
                             }
                             else
                             {
-                                if (Utf8Utility.UInt32BeginsWithUtf8TwoByteMask(thisDWord))
+                                if (UInt32BeginsWithUtf8TwoByteMask(thisDWord))
                                 {
-                                    if (Utf8Utility.UInt32BeginsWithOverlongUtf8TwoByteSequence(thisDWord))
+                                    if (UInt32BeginsWithOverlongUtf8TwoByteSequence(thisDWord))
                                     {
                                         goto Error; // The next sequence purports to be a 2-byte sequence but is overlong.
                                     }
@@ -347,11 +337,11 @@ namespace DotNetty.Common.Internal
                     // Unlikely that a 3-byte sequence would follow a 2-byte sequence, so perhaps remaining
                     // bytes are ASCII?
 
-                    uint charToWrite = Utf8Utility.ExtractCharFromFirstTwoByteSequence(thisDWord); // optimistically compute this now, but don't store until we know dest is large enough
+                    uint charToWrite = ExtractCharFromFirstTwoByteSequence(thisDWord); // optimistically compute this now, but don't store until we know dest is large enough
 
-                    if (Utf8Utility.UInt32ThirdByteIsAscii(thisDWord))
+                    if (UInt32ThirdByteIsAscii(thisDWord))
                     {
-                        if (Utf8Utility.UInt32FourthByteIsAscii(thisDWord))
+                        if (UInt32FourthByteIsAscii(thisDWord))
                         {
                             if (outputCharsRemaining < 3)
                             {
@@ -406,14 +396,14 @@ namespace DotNetty.Common.Internal
                     }
                     else
                     {
-                        if (0u >= (uint)outputCharsRemaining)
+                        if (outputCharsRemaining == 0)
                         {
                             goto ProcessRemainingBytesSlow; // running out of output buffer
                         }
 
                         pOutputBuffer[0] = (char)charToWrite;
                         pInputBuffer += 2;
-                        pOutputBuffer += 1;
+                        pOutputBuffer++;
                         outputCharsRemaining--;
 
                         if (pFinalPosWhereCanReadDWordFromInputBuffer < pInputBuffer)
@@ -432,7 +422,7 @@ namespace DotNetty.Common.Internal
 
             BeforeProcessThreeByteSequence:
 
-                if (Utf8Utility.UInt32BeginsWithUtf8ThreeByteMask(thisDWord))
+                if (UInt32BeginsWithUtf8ThreeByteMask(thisDWord))
                 {
                 ProcessThreeByteSequenceWithCheck:
 
@@ -463,14 +453,14 @@ namespace DotNetty.Common.Internal
 
                         // Code below becomes 5 instructions: test, jz, lea, test, jz
 
-                        if ((0u >= (thisDWord & 0x0000_200Fu)) || (0u >= ((thisDWord - 0x0000_200Du) & 0x0000_200Fu)))
+                        if (((thisDWord & 0x0000_200Fu) == 0) || (((thisDWord - 0x0000_200Du) & 0x0000_200Fu) == 0))
                         {
                             goto Error; // overlong or surrogate
                         }
                     }
                     else
                     {
-                        if ((0u >= (thisDWord & 0x0F20_0000u)) || (0u >= ((thisDWord - 0x0D20_0000u) & 0x0F20_0000u)))
+                        if (((thisDWord & 0x0F20_0000u) == 0) || (((thisDWord - 0x0D20_0000u) & 0x0F20_0000u) == 0))
                         {
                             goto Error; // overlong or surrogate
                         }
@@ -478,22 +468,20 @@ namespace DotNetty.Common.Internal
 
                     // At this point, we know the incoming scalar is well-formed.
 
-                    if (0u >= (uint)outputCharsRemaining)
+                    if (outputCharsRemaining == 0)
                     {
                         goto OutputBufferTooSmall; // not enough space in the destination buffer to write
                     }
 
                     // As an optimization, on compatible platforms check if a second three-byte sequence immediately
-                    // follows the one we just read, and if so use BSWAP and BMI2 to extract them together.
+                    // follows the one we just read, and if so extract them together.
 
-                    if (Bmi2.X64.IsSupported)
+                    if (BitConverter.IsLittleEndian)
                     {
-                        Debug.Assert(BitConverter.IsLittleEndian, "BMI2 requires little-endian.");
-
                         // First, check that the leftover byte from the original DWORD is in the range [ E0..EF ], which
                         // would indicate the potential start of a second three-byte sequence.
 
-                        if (0u >= ((thisDWord - 0xE000_0000u) & 0xF000_0000u))
+                        if (((thisDWord - 0xE000_0000u) & 0xF000_0000u) == 0)
                         {
                             // The const '3' below is correct because pFinalPosWhereCanReadDWordFromInputBuffer represents
                             // the final place where we can safely perform a DWORD read, and we want to probe whether it's
@@ -501,7 +489,7 @@ namespace DotNetty.Common.Internal
 
                             if (outputCharsRemaining > 1 && (nint)(void*)Unsafe.ByteOffset(ref *pInputBuffer, ref *pFinalPosWhereCanReadDWordFromInputBuffer) >= 3)
                             {
-                                // We're going to attempt to read a second 3-byte sequence and write them both out simultaneously using PEXT.
+                                // We're going to attempt to read a second 3-byte sequence and write them both out one after the other.
                                 // We need to check the continuation bit mask on the remaining two bytes (and we may as well check the leading
                                 // byte mask again since it's free), then perform overlong + surrogate checks. If the overlong or surrogate
                                 // checks fail, we'll fall through to the remainder of the logic which will transcode the original valid
@@ -510,18 +498,12 @@ namespace DotNetty.Common.Internal
 
                                 uint secondDWord = Unsafe.ReadUnaligned<uint>(pInputBuffer + 3);
 
-                                if (Utf8Utility.UInt32BeginsWithUtf8ThreeByteMask(secondDWord)
+                                if (UInt32BeginsWithUtf8ThreeByteMask(secondDWord)
                                     && ((secondDWord & 0x0000_200Fu) != 0)
                                     && (((secondDWord - 0x0000_200Du) & 0x0000_200Fu) != 0))
                                 {
-                                    // combinedQWord = [ 1110ZZZZ 10YYYYYY 10XXXXXX ######## | 1110zzzz 10yyyyyy 10xxxxxx ######## ], where xyz are from first DWORD, XYZ are from second DWORD
-                                    ulong combinedQWord = ((ulong)BinaryPrimitives.ReverseEndianness(secondDWord) << 32) | BinaryPrimitives.ReverseEndianness(thisDWord);
-                                    thisDWord = secondDWord; // store this value in the correct local for the ASCII drain logic
-
-                                    // extractedQWord = [ 00000000 00000000 00000000 00000000 | ZZZZYYYYYYXXXXXX zzzzyyyyyyxxxxxx ]
-                                    ulong extractedQWord = Bmi2.X64.ParallelBitExtract(combinedQWord, 0x0F3F3F00_0F3F3F00ul);
-
-                                    Unsafe.WriteUnaligned<uint>(pOutputBuffer, (uint)extractedQWord);
+                                    pOutputBuffer[0] = (char)ExtractCharFromFirstThreeByteSequence(thisDWord);
+                                    pOutputBuffer[1] = (char)ExtractCharFromFirstThreeByteSequence(secondDWord);
                                     pInputBuffer += 6;
                                     pOutputBuffer += 2;
                                     outputCharsRemaining -= 2;
@@ -536,10 +518,10 @@ namespace DotNetty.Common.Internal
 
                     // Couldn't extract 2x three-byte sequences together, just do this one by itself.
 
-                    *pOutputBuffer = (char)Utf8Utility.ExtractCharFromFirstThreeByteSequence(thisDWord);
+                    *pOutputBuffer = (char)ExtractCharFromFirstThreeByteSequence(thisDWord);
                     pInputBuffer += 3;
-                    pOutputBuffer += 1;
-                    outputCharsRemaining -= 1;
+                    pOutputBuffer++;
+                    outputCharsRemaining--;
 
                 CheckForAsciiByteAfterThreeByteSequence:
 
@@ -547,9 +529,9 @@ namespace DotNetty.Common.Internal
                     // in to the text. If this happens strip it off now before seeing if the next character
                     // consists of three code units.
 
-                    if (Utf8Utility.UInt32FourthByteIsAscii(thisDWord))
+                    if (UInt32FourthByteIsAscii(thisDWord))
                     {
-                        if (0u >= (uint)outputCharsRemaining)
+                        if (outputCharsRemaining == 0)
                         {
                             goto OutputBufferTooSmall;
                         }
@@ -563,9 +545,9 @@ namespace DotNetty.Common.Internal
                             *pOutputBuffer = (char)(byte)thisDWord;
                         }
 
-                        pInputBuffer += 1;
-                        pOutputBuffer += 1;
-                        outputCharsRemaining -= 1;
+                        pInputBuffer++;
+                        pOutputBuffer++;
+                        outputCharsRemaining--;
                     }
 
                     if (pInputBuffer <= pFinalPosWhereCanReadDWordFromInputBuffer)
@@ -577,7 +559,7 @@ namespace DotNetty.Common.Internal
                         // marker now and jump directly to three-byte sequence processing if we see one, skipping
                         // all of the logic at the beginning of the loop.
 
-                        if (Utf8Utility.UInt32BeginsWithUtf8ThreeByteMask(thisDWord))
+                        if (UInt32BeginsWithUtf8ThreeByteMask(thisDWord))
                         {
                             goto ProcessThreeByteSequenceWithCheck; // found a three-byte sequence marker; validate and consume
                         }
@@ -602,7 +584,7 @@ namespace DotNetty.Common.Internal
                     // [ F1..F3 ] [ 80..BF ] [ 80..BF ] [ 80..BF ]
                     // [   F4   ] [ 80..8F ] [ 80..BF ] [ 80..BF ]
 
-                    if (!Utf8Utility.UInt32BeginsWithUtf8FourByteMask(thisDWord))
+                    if (!UInt32BeginsWithUtf8FourByteMask(thisDWord))
                     {
                         goto Error;
                     }
@@ -647,7 +629,7 @@ namespace DotNetty.Common.Internal
                         goto OutputBufferTooSmall;
                     }
 
-                    Unsafe.WriteUnaligned<uint>(pOutputBuffer, Utf8Utility.ExtractCharsFromFourByteSequence(thisDWord));
+                    Unsafe.WriteUnaligned<uint>(pOutputBuffer, ExtractCharsFromFourByteSequence(thisDWord));
 
                     pInputBuffer += 4;
                     pOutputBuffer += 2;
@@ -655,7 +637,7 @@ namespace DotNetty.Common.Internal
 
                     continue; // go back to beginning of loop for processing
                 }
-            }
+            } while (pInputBuffer <= pFinalPosWhereCanReadDWordFromInputBuffer);
 
         ProcessRemainingBytesSlow:
             inputLength = (int)(void*)Unsafe.ByteOffset(ref *pInputBuffer, ref *pFinalPosWhereCanReadDWordFromInputBuffer) + 4;
@@ -666,7 +648,7 @@ namespace DotNetty.Common.Internal
                 uint firstByte = pInputBuffer[0];
                 if (firstByte <= 0x7Fu)
                 {
-                    if (0u >= (uint)outputCharsRemaining)
+                    if (outputCharsRemaining == 0)
                     {
                         goto OutputBufferTooSmall; // we have no hope of writing anything to the output
                     }
@@ -674,10 +656,10 @@ namespace DotNetty.Common.Internal
                     // 1-byte (ASCII) case
                     *pOutputBuffer = (char)firstByte;
 
-                    pInputBuffer += 1;
-                    pOutputBuffer += 1;
-                    inputLength -= 1;
-                    outputCharsRemaining -= 1;
+                    pInputBuffer++;
+                    pOutputBuffer++;
+                    inputLength--;
+                    outputCharsRemaining--;
                     continue;
                 }
 
@@ -693,12 +675,12 @@ namespace DotNetty.Common.Internal
                     }
 
                     uint secondByte = pInputBuffer[1];
-                    if (!Utf8Utility.IsLowByteUtf8ContinuationByte(secondByte))
+                    if (!IsLowByteUtf8ContinuationByte(secondByte))
                     {
                         goto Error; // 2-byte marker not followed by continuation byte
                     }
 
-                    if (0u >= (uint)outputCharsRemaining)
+                    if (outputCharsRemaining == 0)
                     {
                         goto OutputBufferTooSmall; // we have no hope of writing anything to the output
                     }
@@ -707,9 +689,9 @@ namespace DotNetty.Common.Internal
                     *pOutputBuffer = (char)asChar;
 
                     pInputBuffer += 2;
-                    pOutputBuffer += 1;
+                    pOutputBuffer++;
                     inputLength -= 2;
-                    outputCharsRemaining -= 1;
+                    outputCharsRemaining--;
                     continue;
                 }
                 else if ((byte)firstByte <= (0xEFu - 0xC2u))
@@ -719,7 +701,7 @@ namespace DotNetty.Common.Internal
                     {
                         uint secondByte = pInputBuffer[1];
                         uint thirdByte = pInputBuffer[2];
-                        if (!Utf8Utility.IsLowByteUtf8ContinuationByte(secondByte) || !Utf8Utility.IsLowByteUtf8ContinuationByte(thirdByte))
+                        if (!IsLowByteUtf8ContinuationByte(secondByte) || !IsLowByteUtf8ContinuationByte(thirdByte))
                         {
                             goto Error; // 3-byte marker not followed by 2 continuation bytes
                         }
@@ -733,13 +715,13 @@ namespace DotNetty.Common.Internal
                             goto Error; // this is an overlong encoding; fail
                         }
 
-                        partialChar -= ((0xEDu - 0xC2u) << 12) + (0xA0u << 6); //if partialChar = 0, we're at beginning of UTF-16 surrogate code point range
-                        if (partialChar < (0x0800u /* number of code points in UTF-16 surrogate code point range */))
+                        partialChar -= ((0xEDu - 0xC2u) << 12) + (0xA0u << 6); // if partialChar = 0, we're at beginning of UTF-16 surrogate code point range
+                        if (partialChar < 0x0800u /* number of code points in UTF-16 surrogate code point range */)
                         {
                             goto Error; // attempted to encode a UTF-16 surrogate code point; fail
                         }
 
-                        if (0u >= (uint)outputCharsRemaining)
+                        if (outputCharsRemaining == 0)
                         {
                             goto OutputBufferTooSmall; // we have no hope of writing anything to the output
                         }
@@ -753,15 +735,15 @@ namespace DotNetty.Common.Internal
                         *pOutputBuffer = (char)partialChar;
 
                         pInputBuffer += 3;
-                        pOutputBuffer += 1;
+                        pOutputBuffer++;
                         inputLength -= 3;
-                        outputCharsRemaining -= 1;
+                        outputCharsRemaining--;
                         continue;
                     }
                     else if (inputLength >= 2)
                     {
                         uint secondByte = pInputBuffer[1];
-                        if (!Utf8Utility.IsLowByteUtf8ContinuationByte(secondByte))
+                        if (!IsLowByteUtf8ContinuationByte(secondByte))
                         {
                             goto Error; // 3-byte marker not followed by continuation byte
                         }
@@ -792,7 +774,7 @@ namespace DotNetty.Common.Internal
                     }
 
                     uint nextByte = pInputBuffer[1];
-                    if (!Utf8Utility.IsLowByteUtf8ContinuationByte(nextByte))
+                    if (!IsLowByteUtf8ContinuationByte(nextByte))
                     {
                         goto Error; // 4-byte marker not followed by a continuation byte
                     }
@@ -808,7 +790,7 @@ namespace DotNetty.Common.Internal
                         goto InputBufferTooSmall; // ran out of data
                     }
 
-                    if (!Utf8Utility.IsLowByteUtf8ContinuationByte(pInputBuffer[2]))
+                    if (!IsLowByteUtf8ContinuationByte(pInputBuffer[2]))
                     {
                         goto Error; // third byte in 4-byte sequence not a continuation byte
                     }
@@ -818,7 +800,7 @@ namespace DotNetty.Common.Internal
                         goto InputBufferTooSmall; // ran out of data
                     }
 
-                    if (!Utf8Utility.IsLowByteUtf8ContinuationByte(pInputBuffer[3]))
+                    if (!IsLowByteUtf8ContinuationByte(pInputBuffer[3]))
                     {
                         goto Error; // fourth byte in 4-byte sequence not a continuation byte
                     }
@@ -871,7 +853,7 @@ namespace DotNetty.Common.Internal
             // First, try vectorized conversion.
 
             {
-                nuint numElementsConverted = ASCIIUtility64.NarrowUtf16ToAscii(pInputBuffer, pOutputBuffer, (uint)Math.Min(inputLength, outputBytesRemaining));
+                nuint numElementsConverted = ASCIIUtility.NarrowUtf16ToAscii(pInputBuffer, pOutputBuffer, (uint)Math.Min(inputLength, outputBytesRemaining));
 
                 pInputBuffer += numElementsConverted;
                 pOutputBuffer += numElementsConverted;
@@ -897,6 +879,16 @@ namespace DotNetty.Common.Internal
 
             char* pFinalPosWhereCanReadDWordFromInputBuffer = pInputBuffer + (uint)inputLength - CharsPerDWord;
 
+            // We have paths for SSE4.1 vectorization inside the inner loop. Since the below
+            // vector is only used in those code paths, we leave it uninitialized if SSE4.1
+            // is not enabled.
+
+            Unsafe.SkipInit(out Vector128<short> nonAsciiUtf16DataMask);
+            if (Sse41.X64.IsSupported || (AdvSimd.Arm64.IsSupported && BitConverter.IsLittleEndian))
+            {
+                nonAsciiUtf16DataMask = Vector128.Create(unchecked((short)0xFF80)); // mask of non-ASCII bits in a UTF-16 char
+            }
+
             // Begin the main loop.
 
 #if DEBUG
@@ -905,7 +897,8 @@ namespace DotNetty.Common.Internal
 
             uint thisDWord;
 
-            while (pInputBuffer <= pFinalPosWhereCanReadDWordFromInputBuffer)
+            Debug.Assert(pInputBuffer <= pFinalPosWhereCanReadDWordFromInputBuffer);
+            do
             {
                 // Read 32 bits at a time. This is enough to hold any possible UTF16-encoded scalar.
 
@@ -949,27 +942,40 @@ namespace DotNetty.Common.Internal
                     uint inputCharsRemaining = (uint)(pFinalPosWhereCanReadDWordFromInputBuffer - pInputBuffer) + 2;
                     uint minElementsRemaining = (uint)Math.Min(inputCharsRemaining, outputBytesRemaining);
 
-                    if (Bmi2.X64.IsSupported)
+                    if (Sse41.X64.IsSupported || (AdvSimd.Arm64.IsSupported && BitConverter.IsLittleEndian))
                     {
-                        Debug.Assert(BitConverter.IsLittleEndian, "BMI2 requires little-endian.");
-                        const ulong PEXT_MASK = 0x00FF00FF_00FF00FFul;
-
                         // Try reading and writing 8 elements per iteration.
                         uint maxIters = minElementsRemaining / 8;
-                        ulong firstQWord, secondQWord;
+                        ulong possibleNonAsciiQWord;
                         int i;
+                        Vector128<short> utf16Data;
                         for (i = 0; (uint)i < maxIters; i++)
                         {
-                            firstQWord = Unsafe.ReadUnaligned<ulong>(pInputBuffer);
-                            secondQWord = Unsafe.ReadUnaligned<ulong>(pInputBuffer + 4);
+                            utf16Data = Unsafe.ReadUnaligned<Vector128<short>>(pInputBuffer);
 
-                            if (!Utf16Utility.AllCharsInUInt64AreAscii(firstQWord | secondQWord))
+                            if (AdvSimd.IsSupported)
                             {
-                                goto LoopTerminatedDueToNonAsciiData;
-                            }
+                                Vector128<short> isUtf16DataNonAscii = AdvSimd.CompareTest(utf16Data, nonAsciiUtf16DataMask);
+                                bool hasNonAsciiDataInVector = AdvSimd.Arm64.MinPairwise(isUtf16DataNonAscii, isUtf16DataNonAscii).AsUInt64().ToScalar() != 0;
 
-                            Unsafe.WriteUnaligned<uint>(pOutputBuffer, (uint)Bmi2.X64.ParallelBitExtract(firstQWord, PEXT_MASK));
-                            Unsafe.WriteUnaligned<uint>(pOutputBuffer + 4, (uint)Bmi2.X64.ParallelBitExtract(secondQWord, PEXT_MASK));
+                                if (hasNonAsciiDataInVector)
+                                {
+                                    goto LoopTerminatedDueToNonAsciiDataInVectorLocal;
+                                }
+
+                                Vector64<byte> lower = AdvSimd.ExtractNarrowingSaturateUnsignedLower(utf16Data);
+                                AdvSimd.Store(pOutputBuffer, lower);
+                            }
+                            else
+                            {
+                                if (!Sse41.TestZ(utf16Data, nonAsciiUtf16DataMask))
+                                {
+                                    goto LoopTerminatedDueToNonAsciiDataInVectorLocal;
+                                }
+
+                                // narrow and write
+                                Sse2.StoreScalar((ulong*)pOutputBuffer /* unaligned */, Sse2.PackUnsignedSaturate(utf16Data, utf16Data).AsUInt64());
+                            }
 
                             pInputBuffer += 8;
                             pOutputBuffer += 8;
@@ -981,14 +987,23 @@ namespace DotNetty.Common.Internal
 
                         if ((minElementsRemaining & 4) != 0)
                         {
-                            secondQWord = Unsafe.ReadUnaligned<ulong>(pInputBuffer);
-
-                            if (!Utf16Utility.AllCharsInUInt64AreAscii(secondQWord))
+                            possibleNonAsciiQWord = Unsafe.ReadUnaligned<ulong>(pInputBuffer);
+                            if (!Utf16Utility.AllCharsInUInt64AreAscii(possibleNonAsciiQWord))
                             {
-                                goto LoopTerminatedDueToNonAsciiDataInSecondQWord;
+                                goto LoopTerminatedDueToNonAsciiDataInPossibleNonAsciiQWordLocal;
                             }
 
-                            Unsafe.WriteUnaligned<uint>(pOutputBuffer, (uint)Bmi2.X64.ParallelBitExtract(secondQWord, PEXT_MASK));
+                            utf16Data = Vector128.CreateScalarUnsafe(possibleNonAsciiQWord).AsInt16();
+
+                            if (AdvSimd.IsSupported)
+                            {
+                                Vector64<byte> lower = AdvSimd.ExtractNarrowingSaturateUnsignedLower(utf16Data);
+                                AdvSimd.StoreSelectedScalar((uint*)pOutputBuffer, lower.AsUInt32(), 0);
+                            }
+                            else
+                            {
+                                Unsafe.WriteUnaligned<uint>(pOutputBuffer, Sse2.ConvertToUInt32(Sse2.PackUnsignedSaturate(utf16Data, utf16Data).AsUInt32()));
+                            }
 
                             pInputBuffer += 4;
                             pOutputBuffer += 4;
@@ -997,29 +1012,47 @@ namespace DotNetty.Common.Internal
 
                         continue; // Go back to beginning of main loop, read data, check for ASCII
 
-                    LoopTerminatedDueToNonAsciiData:
+                    LoopTerminatedDueToNonAsciiDataInVectorLocal:
 
                         outputBytesRemaining -= 8 * i;
 
-                        // First, see if we can drain any ASCII data from the first QWORD.
-
-                        if (Utf16Utility.AllCharsInUInt64AreAscii(firstQWord))
+                        if (Sse2.X64.IsSupported)
                         {
-                            Unsafe.WriteUnaligned<uint>(pOutputBuffer, (uint)Bmi2.X64.ParallelBitExtract(firstQWord, PEXT_MASK));
-                            pInputBuffer += 4;
-                            pOutputBuffer += 4;
-                            outputBytesRemaining -= 4;
+                            possibleNonAsciiQWord = Sse2.X64.ConvertToUInt64(utf16Data.AsUInt64());
                         }
                         else
                         {
-                            secondQWord = firstQWord;
+                            possibleNonAsciiQWord = utf16Data.AsUInt64().ToScalar();
                         }
 
-                    LoopTerminatedDueToNonAsciiDataInSecondQWord:
+                        // Temporarily set 'possibleNonAsciiQWord' to be the low 64 bits of the vector,
+                        // then check whether it's all-ASCII. If so, narrow and write to the destination
+                        // buffer. Since we know that either the high 64 bits or the low 64 bits of the
+                        // vector contains non-ASCII data, by the end of the following block the
+                        // 'possibleNonAsciiQWord' local is guaranteed to contain the non-ASCII segment.
 
-                        Debug.Assert(!Utf16Utility.AllCharsInUInt64AreAscii(secondQWord)); // this condition should've been checked earlier
+                        if (Utf16Utility.AllCharsInUInt64AreAscii(possibleNonAsciiQWord)) // all chars in first QWORD are ASCII
+                        {
+                            if (AdvSimd.IsSupported)
+                            {
+                                Vector64<byte> lower = AdvSimd.ExtractNarrowingSaturateUnsignedLower(utf16Data);
+                                AdvSimd.StoreSelectedScalar((uint*)pOutputBuffer, lower.AsUInt32(), 0);
+                            }
+                            else
+                            {
+                                Unsafe.WriteUnaligned<uint>(pOutputBuffer, Sse2.ConvertToUInt32(Sse2.PackUnsignedSaturate(utf16Data, utf16Data).AsUInt32()));
+                            }
+                            pInputBuffer += 4;
+                            pOutputBuffer += 4;
+                            outputBytesRemaining -= 4;
+                            possibleNonAsciiQWord = utf16Data.AsUInt64().GetElement(1);
+                        }
 
-                        thisDWord = (uint)secondQWord;
+                    LoopTerminatedDueToNonAsciiDataInPossibleNonAsciiQWordLocal:
+
+                        Debug.Assert(!Utf16Utility.AllCharsInUInt64AreAscii(possibleNonAsciiQWord)); // this condition should've been checked earlier
+
+                        thisDWord = (uint)possibleNonAsciiQWord;
                         if (Utf16Utility.AllCharsInUInt32AreAscii(thisDWord))
                         {
                             // [ 00000000 0bbbbbbb | 00000000 0aaaaaaa ] -> [ 00000000 0bbbbbbb | 0bbbbbbb 0aaaaaaa ]
@@ -1027,14 +1060,14 @@ namespace DotNetty.Common.Internal
                             pInputBuffer += 2;
                             pOutputBuffer += 2;
                             outputBytesRemaining -= 2;
-                            thisDWord = (uint)(secondQWord >> 32);
+                            thisDWord = (uint)(possibleNonAsciiQWord >> 32);
                         }
 
                         goto AfterReadDWordSkipAllCharsAsciiCheck;
                     }
                     else
                     {
-                        // Can't use BMI2 x64, so we'll only read and write 4 elements per iteration.
+                        // Can't use SSE41 x64, so we'll only read and write 4 elements per iteration.
                         uint maxIters = minElementsRemaining / 4;
                         uint secondDWord;
                         int i;
@@ -1089,9 +1122,9 @@ namespace DotNetty.Common.Internal
                 // Next, try stripping off the first ASCII char if it exists.
                 // We don't check for a second ASCII char since that should have been handled above.
 
-                if (Utf8Utility.IsFirstCharAscii(thisDWord))
+                if (IsFirstCharAscii(thisDWord))
                 {
-                    if (0u >= (uint)outputBytesRemaining)
+                    if (outputBytesRemaining == 0)
                     {
                         goto OutputBufferTooSmall;
                     }
@@ -1105,9 +1138,9 @@ namespace DotNetty.Common.Internal
                         pOutputBuffer[0] = (byte)(thisDWord >> 24); // extract [ AA 00 ## ## ]
                     }
 
-                    pInputBuffer += 1;
-                    pOutputBuffer += 1;
-                    outputBytesRemaining -= 1;
+                    pInputBuffer++;
+                    pOutputBuffer++;
+                    outputBytesRemaining--;
 
                     if (pInputBuffer > pFinalPosWhereCanReadDWordFromInputBuffer)
                     {
@@ -1123,14 +1156,14 @@ namespace DotNetty.Common.Internal
 
                 // At this point, we know the first char in the buffer is non-ASCII, but we haven't yet validated it.
 
-                if (!Utf8Utility.IsFirstCharAtLeastThreeUtf8Bytes(thisDWord))
+                if (!IsFirstCharAtLeastThreeUtf8Bytes(thisDWord))
                 {
                 TryConsumeMultipleTwoByteSequences:
 
                     // For certain text (Greek, Cyrillic, ...), 2-byte sequences tend to be clustered. We'll try transcoding them in
                     // a tight loop without falling back to the main loop.
 
-                    if (Utf8Utility.IsSecondCharTwoUtf8Bytes(thisDWord))
+                    if (IsSecondCharTwoUtf8Bytes(thisDWord))
                     {
                         // We have two runs of two bytes each.
 
@@ -1139,7 +1172,7 @@ namespace DotNetty.Common.Internal
                             goto ProcessOneCharFromCurrentDWordAndFinish; // running out of output buffer
                         }
 
-                        Unsafe.WriteUnaligned<uint>(pOutputBuffer, Utf8Utility.ExtractTwoUtf8TwoByteSequencesFromTwoPackedUtf16Chars(thisDWord));
+                        Unsafe.WriteUnaligned<uint>(pOutputBuffer, ExtractTwoUtf8TwoByteSequencesFromTwoPackedUtf16Chars(thisDWord));
 
                         pInputBuffer += 2;
                         pOutputBuffer += 4;
@@ -1156,7 +1189,7 @@ namespace DotNetty.Common.Internal
 
                             thisDWord = Unsafe.ReadUnaligned<uint>(pInputBuffer);
 
-                            if (Utf8Utility.IsFirstCharTwoUtf8Bytes(thisDWord))
+                            if (IsFirstCharTwoUtf8Bytes(thisDWord))
                             {
                                 // Validated we have a two-byte sequence coming up
                                 goto TryConsumeMultipleTwoByteSequences;
@@ -1173,13 +1206,13 @@ namespace DotNetty.Common.Internal
                         goto OutputBufferTooSmall;
                     }
 
-                    Unsafe.WriteUnaligned<ushort>(pOutputBuffer, (ushort)Utf8Utility.ExtractUtf8TwoByteSequenceFromFirstUtf16Char(thisDWord));
+                    Unsafe.WriteUnaligned<ushort>(pOutputBuffer, (ushort)ExtractUtf8TwoByteSequenceFromFirstUtf16Char(thisDWord));
 
                     // The buffer contains a 2-byte sequence followed by 2 bytes that aren't a 2-byte sequence.
                     // Unlikely that a 3-byte sequence would follow a 2-byte sequence, so perhaps remaining
                     // char is ASCII?
 
-                    if (Utf8Utility.IsSecondCharAscii(thisDWord))
+                    if (IsSecondCharAscii(thisDWord))
                     {
                         if (outputBytesRemaining >= 3)
                         {
@@ -1197,14 +1230,14 @@ namespace DotNetty.Common.Internal
                         }
                         else
                         {
-                            pInputBuffer += 1;
+                            pInputBuffer++;
                             pOutputBuffer += 2;
                             goto OutputBufferTooSmall;
                         }
                     }
                     else
                     {
-                        pInputBuffer += 1;
+                        pInputBuffer++;
                         pOutputBuffer += 2;
                         outputBytesRemaining -= 2;
 
@@ -1224,22 +1257,22 @@ namespace DotNetty.Common.Internal
 
             BeforeProcessThreeByteSequence:
 
-                if (!Utf8Utility.IsFirstCharSurrogate(thisDWord))
+                if (!IsFirstCharSurrogate(thisDWord))
                 {
                     // Optimization: A three-byte character could indicate CJK text, which makes it likely
                     // that the character following this one is also CJK. We'll perform the check now
                     // rather than jumping to the beginning of the main loop.
 
-                    if (Utf8Utility.IsSecondCharAtLeastThreeUtf8Bytes(thisDWord))
+                    if (IsSecondCharAtLeastThreeUtf8Bytes(thisDWord))
                     {
-                        if (!Utf8Utility.IsSecondCharSurrogate(thisDWord))
+                        if (!IsSecondCharSurrogate(thisDWord))
                         {
                             if (outputBytesRemaining < 6)
                             {
                                 goto ConsumeSingleThreeByteRun; // not enough space - try consuming as much as we can
                             }
 
-                            Utf8Utility.WriteTwoUtf16CharsAsTwoUtf8ThreeByteSequences(ref *pOutputBuffer, thisDWord);
+                            WriteTwoUtf16CharsAsTwoUtf8ThreeByteSequences(ref *pOutputBuffer, thisDWord);
 
                             pInputBuffer += 2;
                             pOutputBuffer += 6;
@@ -1255,7 +1288,7 @@ namespace DotNetty.Common.Internal
                             {
                                 thisDWord = Unsafe.ReadUnaligned<uint>(pInputBuffer);
 
-                                if (Utf8Utility.IsFirstCharAtLeastThreeUtf8Bytes(thisDWord))
+                                if (IsFirstCharAtLeastThreeUtf8Bytes(thisDWord))
                                 {
                                     goto BeforeProcessThreeByteSequence;
                                 }
@@ -1275,9 +1308,9 @@ namespace DotNetty.Common.Internal
                         goto OutputBufferTooSmall;
                     }
 
-                    Utf8Utility.WriteFirstUtf16CharAsUtf8ThreeByteSequence(ref *pOutputBuffer, thisDWord);
+                    WriteFirstUtf16CharAsUtf8ThreeByteSequence(ref *pOutputBuffer, thisDWord);
 
-                    pInputBuffer += 1;
+                    pInputBuffer++;
                     pOutputBuffer += 3;
                     outputBytesRemaining -= 3;
 
@@ -1285,9 +1318,9 @@ namespace DotNetty.Common.Internal
                     // in to the text. If this happens strip it off now before seeing if the next character
                     // consists of three code units.
 
-                    if (Utf8Utility.IsSecondCharAscii(thisDWord))
+                    if (IsSecondCharAscii(thisDWord))
                     {
-                        if (0u >= (uint)outputBytesRemaining)
+                        if (outputBytesRemaining == 0)
                         {
                             goto OutputBufferTooSmall;
                         }
@@ -1301,9 +1334,9 @@ namespace DotNetty.Common.Internal
                             *pOutputBuffer = (byte)(thisDWord);
                         }
 
-                        pInputBuffer += 1;
-                        pOutputBuffer += 1;
-                        outputBytesRemaining -= 1;
+                        pInputBuffer++;
+                        pOutputBuffer++;
+                        outputBytesRemaining--;
 
                         if (pInputBuffer > pFinalPosWhereCanReadDWordFromInputBuffer)
                         {
@@ -1313,7 +1346,7 @@ namespace DotNetty.Common.Internal
                         {
                             thisDWord = Unsafe.ReadUnaligned<uint>(pInputBuffer);
 
-                            if (Utf8Utility.IsFirstCharAtLeastThreeUtf8Bytes(thisDWord))
+                            if (IsFirstCharAtLeastThreeUtf8Bytes(thisDWord))
                             {
                                 goto BeforeProcessThreeByteSequence;
                             }
@@ -1338,14 +1371,14 @@ namespace DotNetty.Common.Internal
 
                 // Four byte sequence processing
 
-                if (Utf8Utility.IsWellFormedUtf16SurrogatePair(thisDWord))
+                if (IsWellFormedUtf16SurrogatePair(thisDWord))
                 {
                     if (outputBytesRemaining < 4)
                     {
                         goto OutputBufferTooSmall;
                     }
 
-                    Unsafe.WriteUnaligned<uint>(pOutputBuffer, Utf8Utility.ExtractFourUtf8BytesFromSurrogatePair(thisDWord));
+                    Unsafe.WriteUnaligned<uint>(pOutputBuffer, ExtractFourUtf8BytesFromSurrogatePair(thisDWord));
 
                     pInputBuffer += 2;
                     pOutputBuffer += 4;
@@ -1355,7 +1388,7 @@ namespace DotNetty.Common.Internal
                 }
 
                 goto Error; // an ill-formed surrogate sequence: high not followed by low, or low not preceded by high
-            }
+            } while (pInputBuffer <= pFinalPosWhereCanReadDWordFromInputBuffer);
 
         ProcessNextCharAndFinish:
             inputLength = (int)(pFinalPosWhereCanReadDWordFromInputBuffer - pInputBuffer) + CharsPerDWord;
@@ -1363,7 +1396,7 @@ namespace DotNetty.Common.Internal
         ProcessInputOfLessThanDWordSize:
             Debug.Assert(inputLength < CharsPerDWord);
 
-            if (0u >= (uint)inputLength)
+            if (inputLength == 0)
             {
                 goto InputBufferFullyConsumed;
             }
@@ -1385,7 +1418,7 @@ namespace DotNetty.Common.Internal
             {
                 if (thisChar <= 0x7Fu)
                 {
-                    if (0u >= (uint)outputBytesRemaining)
+                    if (outputBytesRemaining == 0)
                     {
                         goto OutputBufferTooSmall; // we have no hope of writing anything to the output
                     }
@@ -1393,8 +1426,8 @@ namespace DotNetty.Common.Internal
                     // 1-byte (ASCII) case
                     *pOutputBuffer = (byte)thisChar;
 
-                    pInputBuffer += 1;
-                    pOutputBuffer += 1;
+                    pInputBuffer++;
+                    pOutputBuffer++;
                 }
                 else if (thisChar < 0x0800u)
                 {
@@ -1407,7 +1440,7 @@ namespace DotNetty.Common.Internal
                     pOutputBuffer[1] = (byte)((thisChar & 0x3Fu) | unchecked((uint)(sbyte)0x80)); // [ 10xxxxxx ]
                     pOutputBuffer[0] = (byte)((thisChar >> 6) | unchecked((uint)(sbyte)0xC0)); // [ 110yyyyy ]
 
-                    pInputBuffer += 1;
+                    pInputBuffer++;
                     pOutputBuffer += 2;
                 }
                 else if (!UnicodeUtility.IsSurrogateCodePoint(thisChar))
@@ -1422,7 +1455,7 @@ namespace DotNetty.Common.Internal
                     pOutputBuffer[1] = (byte)(((thisChar >> 6) & 0x3Fu) | unchecked((uint)(sbyte)0x80)); // [ 10yyyyyy ]
                     pOutputBuffer[0] = (byte)((thisChar >> 12) | unchecked((uint)(sbyte)0xE0)); // [ 1110zzzz ]
 
-                    pInputBuffer += 1;
+                    pInputBuffer++;
                     pOutputBuffer += 3;
                 }
                 else if (thisChar <= 0xDBFFu)

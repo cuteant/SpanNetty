@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace DotNetty.Common.Internal
 {
-    internal static class Utf16Utility
+    internal static partial class Utf16Utility
     {
         /// <summary>
         /// Returns true iff the UInt32 represents two ASCII UTF-16 characters in machine endianness.
@@ -152,6 +152,7 @@ namespace DotNetty.Common.Internal
             Debug.Assert(AllCharsInUInt32AreAscii(valueA));
             Debug.Assert(AllCharsInUInt32AreAscii(valueB));
 
+#if NETCOREAPP3_1
             // a mask of all bits which are different between A and B
             uint differentBits = valueA ^ valueB;
 
@@ -177,6 +178,48 @@ namespace DotNetty.Common.Internal
             // computation we performed at the beginning of the method.
 
             return 0u >= (((combinedIndicator >> 2) | ~0x0020_0020u) & differentBits);
+#else
+            // Generate a mask of all bits which are different between A and B. Since [A-Z]
+            // and [a-z] differ by the 0x20 bit, we'll left-shift this by 2 now so that
+            // this is moved over to the 0x80 bit, which nicely aligns with the calculation
+            // we're going to do on the indicator flag later.
+            //
+            // n.b. All of the logic below assumes we have at least 2 "known zero" bits leading
+            // each of the 7-bit ASCII values. This assumption won't hold if this method is
+            // ever adapted to deal with packed bytes instead of packed chars.
+
+            uint differentBits = (valueA ^ valueB) << 2;
+
+            // Now, we want to generate a mask where for each word in the input, the mask contains
+            // 0xFF7F if the word is [A-Za-z], 0xFFFF if the word is not [A-Za-z]. We know each
+            // input word is ASCII (only low 7 bit set), so we can use a combination of addition
+            // and logical operators as follows.
+            //
+            // original input   +05         |A0         +1A
+            // ====================================================
+            //         00 .. 3F -> 05 .. 44 -> A5 .. E4 -> BF .. FE
+            //               40 ->       45 ->       E5 ->       FF
+            // ([A-Z]) 41 .. 5A -> 46 .. 5F -> E6 .. FF -> 00 .. 19
+            //         5B .. 5F -> 60 .. 64 -> E0 .. E4 -> FA .. FE
+            //               60 ->       65 ->       E5 ->       FF
+            // ([a-z]) 61 .. 7A -> 66 .. 7F -> E6 .. FF -> 00 .. 19
+            //         7B .. 7F -> 80 .. 84 -> A0 .. A4 -> BA .. BE
+            //
+            // This combination of operations results in the 0x80 bit of each word being set
+            // iff the original word value was *not* [A-Za-z].
+
+            uint indicator = valueA + 0x0005_0005u;
+            indicator |= 0x00A0_00A0u;
+            indicator += 0x001A_001Au;
+            indicator |= 0xFF7F_FF7Fu; // normalize each word to 0xFF7F or 0xFFFF
+
+            // At this point, 'indicator' contains the mask of bits which are *not* allowed to
+            // differ between the inputs, and 'differentBits' contains the mask of bits which
+            // actually differ between the inputs. If these masks have any bits in common, then
+            // the two values are *not* equal under an OrdinalIgnoreCase comparer.
+
+            return 0u >= (differentBits & indicator);
+#endif
         }
 
         /// <summary>
@@ -193,6 +236,7 @@ namespace DotNetty.Common.Internal
             Debug.Assert(AllCharsInUInt64AreAscii(valueA));
             Debug.Assert(AllCharsInUInt64AreAscii(valueB));
 
+#if NETCOREAPP3_1
             // the 0x80 bit of each word of 'lowerIndicator' will be set iff the word has value >= 'A'
             ulong lowerIndicator = valueA + 0x0080_0080_0080_0080ul - 0x0041_0041_0041_0041ul;
 
@@ -213,6 +257,17 @@ namespace DotNetty.Common.Internal
             // happens to be faster on x64.
 
             return (valueA | combinedIndicator) == (valueB | combinedIndicator);
+#else
+            // Duplicate of logic in UInt32OrdinalIgnoreCaseAscii, but using 64-bit consts.
+            // See comments in that method for more info.
+
+            ulong differentBits = (valueA ^ valueB) << 2;
+            ulong indicator = valueA + 0x0005_0005_0005_0005ul;
+            indicator |= 0x00A0_00A0_00A0_00A0ul;
+            indicator += 0x001A_001A_001A_001Aul;
+            indicator |= 0xFF7F_FF7F_FF7F_FF7Ful;
+            return 0ul >= (differentBits & indicator);
+#endif
         }
     }
 }

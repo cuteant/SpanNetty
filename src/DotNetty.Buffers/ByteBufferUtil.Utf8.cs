@@ -414,7 +414,7 @@ namespace DotNetty.Buffers
             var utf8Span = buf.GetReadableSpan(index, length);
             ref byte utf8Source = ref MemoryMarshal.GetReference(utf8Span);
 
-            IntPtr offset = (IntPtr)0; // Use IntPtr for arithmetic to avoid unnecessary 64->32->64 truncations
+            nint offset = 0; // Use IntPtr for arithmetic to avoid unnecessary 64->32->64 truncations
             uint uLength = (uint)length;
 
             while ((uint)index < uLength)

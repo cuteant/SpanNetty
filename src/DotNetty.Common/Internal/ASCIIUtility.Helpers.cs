@@ -9,21 +9,23 @@ using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+#if NETCOREAPP3_1
 using System.Runtime.Intrinsics.X86;
+#endif
 
 namespace DotNetty.Common.Internal
 {
-    internal static class ASCIIUtility
+    partial class ASCIIUtility
     {
         /// <summary>
         /// A mask which selects only the high bit of each byte of the given <see cref="uint"/>.
         /// </summary>
-        internal const uint UInt32HighBitsOnlyMask = 0x80808080u;
+        private const uint UInt32HighBitsOnlyMask = 0x80808080u;
 
         /// <summary>
         /// A mask which selects only the high bit of each byte of the given <see cref="ulong"/>.
         /// </summary>
-        internal const ulong UInt64HighBitsOnlyMask = 0x80808080_80808080ul;
+        private const ulong UInt64HighBitsOnlyMask = 0x80808080_80808080ul;
 
         /// <summary>
         /// Returns <see langword="true"/> iff all bytes in <paramref name="value"/> are ASCII.
@@ -48,6 +50,7 @@ namespace DotNetty.Common.Internal
         {
             Debug.Assert(!AllBytesInUInt32AreAscii(value), "Caller shouldn't provide an all-ASCII value.");
 
+#if NETCOREAPP3_1
             // Use BMI1 directly rather than going through BitOperations. We only see a perf gain here
             // if we're able to emit a real tzcnt instruction; the software fallback used by BitOperations
             // is too slow for our purposes since we can provide our own faster, specialized software fallback.
@@ -84,8 +87,22 @@ namespace DotNetty.Common.Internal
 
                 return numAsciiBytes;
             }
+#else
+            if (BitConverter.IsLittleEndian)
+            {
+                return (uint)BitOperations.TrailingZeroCount(value & UInt32HighBitsOnlyMask) >> 3;
+            }
+#endif
             else
             {
+#if NET
+                // Couldn't use tzcnt, use specialized software fallback.
+                // The 'allBytesUpToNowAreAscii' DWORD uses bit twiddling to hold a 1 or a 0 depending
+                // on whether all processed bytes were ASCII. Then we accumulate all of the
+                // results to calculate how many consecutive ASCII bytes are present.
+
+                value = ~value;
+#endif
                 // BinaryPrimitives.ReverseEndianness is only implemented as an intrinsic on
                 // little-endian platforms, so using it in this big-endian path would be too
                 // expensive. Instead we'll just change how we perform the shifts.

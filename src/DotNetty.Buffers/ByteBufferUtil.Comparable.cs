@@ -27,9 +27,11 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Runtime.CompilerServices;
+    using DotNetty.Common.Utilities;
+#if !NET
     using System.Runtime.InteropServices;
     using DotNetty.Common.Internal;
-    using DotNetty.Common.Utilities;
+#endif
 
     partial class ByteBufferUtil
     {
@@ -44,7 +46,11 @@ namespace DotNetty.Buffers
             {
                 var spanA = bufferA.GetReadableSpan();
                 var spanB = bufferB.GetReadableSpan();
+#if NET
+                return spanA.SequenceCompareTo(spanB);
+#else
                 return SpanHelpers.SequenceCompareTo(ref MemoryMarshal.GetReference(spanA), spanA.Length, ref MemoryMarshal.GetReference(spanB), spanB.Length);
+#endif
             }
             return CompareSlow(bufferA, bufferB);
         }

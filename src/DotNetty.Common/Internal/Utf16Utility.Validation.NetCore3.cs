@@ -4,29 +4,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NETCOREAPP_3_0_GREATER
+#if NETCOREAPP3_1
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Numerics;
-using System.Runtime.CompilerServices;
-
-using nint = System.Int64;
-using nuint = System.UInt64;
+using nuint_64 = System.UInt64;
+using nuint_32 = System.UInt32;
 
 namespace DotNetty.Common.Internal
 {
-    internal static unsafe class Utf16Utility64
+    internal static unsafe partial class Utf16Utility
     {
-#if DEBUG
-        static Utf16Utility64()
-        {
-            Debug.Assert(sizeof(nint) == IntPtr.Size && nint.MinValue < 0, "nint is defined incorrectly.");
-            Debug.Assert(sizeof(nuint) == IntPtr.Size && nuint.MinValue == 0, "nuint is defined incorrectly.");
-        }
-#endif // DEBUG
-
         // Returns &inputBuffer[inputLength] if the input buffer is valid.
         /// <summary>
         /// Given an input buffer <paramref name="pInputBuffer"/> of char length <paramref name="inputLength"/>,
@@ -43,7 +34,7 @@ namespace DotNetty.Common.Internal
             // First, we'll handle the common case of all-ASCII. If this is able to
             // consume the entire buffer, we'll skip the remainder of this method's logic.
 
-            int numAsciiCharsConsumedJustNow = (int)ASCIIUtility64.GetIndexOfFirstNonAsciiChar(pInputBuffer, (uint)inputLength);
+            int numAsciiCharsConsumedJustNow = (int)ASCIIUtility.GetIndexOfFirstNonAsciiChar(pInputBuffer, (uint)inputLength);
             Debug.Assert(0 <= numAsciiCharsConsumedJustNow && numAsciiCharsConsumedJustNow <= inputLength);
 
             pInputBuffer += (uint)numAsciiCharsConsumedJustNow;
@@ -59,7 +50,7 @@ namespace DotNetty.Common.Internal
             // If we got here, it means we saw some non-ASCII data, so within our
             // vectorized code paths below we'll handle all non-surrogate UTF-16
             // code points branchlessly. We'll only branch if we see surrogates.
-            // 
+            //
             // We still optimistically assume the data is mostly ASCII. This means that the
             // number of UTF-8 code units and the number of scalars almost matches the number
             // of UTF-16 code units. As we go through the input and find non-ASCII
@@ -281,15 +272,30 @@ namespace DotNetty.Common.Internal
                         Vector<ushort> utf16Data = Unsafe.ReadUnaligned<Vector<ushort>>(pInputBuffer);
                         Vector<ushort> twoOrMoreUtf8Bytes = Vector.GreaterThanOrEqual(utf16Data, vector0080);
                         Vector<ushort> threeOrMoreUtf8Bytes = Vector.GreaterThanOrEqual(utf16Data, vector0800);
-                        Vector<nuint> sumVector = (Vector<nuint>)(Vector<ushort>.Zero - twoOrMoreUtf8Bytes - threeOrMoreUtf8Bytes);
-
-                        // We'll try summing by a natural word (rather than a 16-bit word) at a time,
-                        // which should halve the number of operations we must perform.
-
                         nuint popcnt = 0;
-                        for (int i = 0; i < Vector<nuint>.Count; i++)
+                        if (PlatformDependent.Is64BitProcess)
                         {
-                            popcnt += sumVector[i];
+                            Vector<nuint_64> sumVector = (Vector<nuint_64>)(Vector<ushort>.Zero - twoOrMoreUtf8Bytes - threeOrMoreUtf8Bytes);
+
+                            // We'll try summing by a natural word (rather than a 16-bit word) at a time,
+                            // which should halve the number of operations we must perform.
+
+                            for (int i = 0; i < Vector<nuint_64>.Count; i++)
+                            {
+                                popcnt += (nuint)sumVector[i];
+                            }
+                        }
+                        else
+                        {
+                            Vector<nuint_32> sumVector = (Vector<nuint_32>)(Vector<ushort>.Zero - twoOrMoreUtf8Bytes - threeOrMoreUtf8Bytes);
+
+                            // We'll try summing by a natural word (rather than a 16-bit word) at a time,
+                            // which should halve the number of operations we must perform.
+
+                            for (int i = 0; i < Vector<nuint_32>.Count; i++)
+                            {
+                                popcnt += (nuint)sumVector[i];
+                            }
                         }
 
                         uint popcnt32 = (uint)popcnt;

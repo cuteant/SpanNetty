@@ -83,7 +83,7 @@ namespace DotNetty.Buffers.Tests
             Assert.True(sequence.IsEmpty);
             Assert.False(reader.TryReadTo(out sequence, array));
             Assert.True(sequence.IsEmpty);
-            Assert.False(reader.TryReadTo(out ReadOnlySpan<byte> span, default));
+            Assert.False(reader.TryReadTo(out ReadOnlySpan<byte> span, default(byte)));
             Assert.True(span.IsEmpty);
             Assert.False(reader.TryReadToAny(out sequence, array));
             Assert.True(sequence.IsEmpty);

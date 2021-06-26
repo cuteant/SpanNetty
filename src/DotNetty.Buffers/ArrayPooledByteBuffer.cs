@@ -24,6 +24,9 @@ using System;
 using System.Buffers;
 using DotNetty.Common;
 using DotNetty.Common.Internal;
+#if NET
+using System.Runtime.InteropServices;
+#endif
 
 namespace DotNetty.Buffers
 {
@@ -186,7 +189,11 @@ namespace DotNetty.Buffers
         public sealed override ref byte GetPinnableMemoryAddress()
         {
             EnsureAccessible();
+#if NET
+            return ref MemoryMarshal.GetArrayDataReference(Memory);
+#else
             return ref Memory[0];
+#endif
         }
 
         public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;

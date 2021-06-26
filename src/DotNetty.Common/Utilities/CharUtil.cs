@@ -31,8 +31,10 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+#if !NET
     using System.Runtime.InteropServices;
     using DotNetty.Common.Internal;
+#endif
 
     public static partial class CharUtil
     {
@@ -76,17 +78,25 @@ namespace DotNetty.Common.Utilities
 
             if (left is IHasAsciiSpan thisHasAscii && right is IHasAsciiSpan otherHasAscii)
             {
+#if NET
+                return thisHasAscii.AsciiSpan.SequenceEqual(otherHasAscii.AsciiSpan);
+#else
                 return SpanHelpers.SequenceEqual(
                     ref MemoryMarshal.GetReference(thisHasAscii.AsciiSpan),
                     ref MemoryMarshal.GetReference(otherHasAscii.AsciiSpan),
                     left.Count);
+#endif
             }
             else if (left is IHasUtf16Span thisHasUtf16 && right is IHasUtf16Span otherHasUtf16)
             {
+#if NET
+                return thisHasUtf16.Utf16Span.SequenceEqual(otherHasUtf16.Utf16Span);
+#else
                 return SpanHelpers.SequenceEqual(
                     ref MemoryMarshal.GetReference(thisHasUtf16.Utf16Span),
                     ref MemoryMarshal.GetReference(otherHasUtf16.Utf16Span),
                     left.Count);
+#endif
             }
 
             for (int i = 0; i < left.Count; i++)
@@ -141,10 +151,14 @@ namespace DotNetty.Common.Utilities
 
             if (other is IHasUtf16Span hasUtf16)
             {
+#if NET
+                return value.AsSpan().Slice(thisStart, length).SequenceEqual(hasUtf16.Utf16Span.Slice(start, length));
+#else
                 return SpanHelpers.SequenceEqual(
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(value.AsSpan()), thisStart),
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), start),
                     length);
+#endif
             }
             int o1 = thisStart;
             int o2 = start;
@@ -202,17 +216,25 @@ namespace DotNetty.Common.Utilities
 
             if (value is IHasAsciiSpan thisHasAscii && other is IHasAsciiSpan otherHasAscii)
             {
+#if NET
+                return thisHasAscii.AsciiSpan.Slice(thisStart, length).SequenceEqual(otherHasAscii.AsciiSpan.Slice(start, length));
+#else
                 return SpanHelpers.SequenceEqual(
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(thisHasAscii.AsciiSpan), thisStart),
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(otherHasAscii.AsciiSpan), start),
                     length);
+#endif
             }
             else if (value is IHasUtf16Span thisHasUtf16 && other is IHasUtf16Span otherHasUtf16)
             {
+#if NET
+                return thisHasUtf16.Utf16Span.Slice(thisStart, length).SequenceEqual(otherHasUtf16.Utf16Span.Slice(start, length));
+#else
                 return SpanHelpers.SequenceEqual(
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(thisHasUtf16.Utf16Span), thisStart),
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(otherHasUtf16.Utf16Span), start),
                     length);
+#endif
             }
 
             int o1 = thisStart;

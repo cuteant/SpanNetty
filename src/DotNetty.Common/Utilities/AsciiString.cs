@@ -475,9 +475,13 @@ namespace DotNetty.Common.Utilities
         {
             if (ReferenceEquals(this, other)) { return 0; }
 
+#if NET
+            return this.AsciiSpan.SequenceCompareTo(other.AsciiSpan);
+#else
             return SpanHelpers.SequenceCompareTo(
                 ref MemoryMarshal.GetReference(this.AsciiSpan), this.length,
                 ref MemoryMarshal.GetReference(other.AsciiSpan), other.Count);
+#endif
         }
 
         public int CompareTo(object obj) => this.CompareTo(obj as AsciiString);

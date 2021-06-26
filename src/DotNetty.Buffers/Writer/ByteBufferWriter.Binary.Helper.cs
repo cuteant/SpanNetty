@@ -42,7 +42,7 @@ namespace DotNetty.Buffers
             //    UnsafeByteBufferUtil.SetMedium(bytes, value);
             //}
             uint unsignedValue = (uint)value;
-            IntPtr offset = (IntPtr)0;
+            nint offset = 0;
             Unsafe.AddByteOffset(ref start, offset) = (byte)(unsignedValue >> 16);
             Unsafe.AddByteOffset(ref start, offset + 1) = (byte)(unsignedValue >> 8);
             Unsafe.AddByteOffset(ref start, offset + 2) = (byte)unsignedValue;
@@ -52,7 +52,7 @@ namespace DotNetty.Buffers
         private unsafe static void SetMediumLE(ref byte start, int value)
         {
             uint unsignedValue = (uint)value;
-            IntPtr offset = (IntPtr)0;
+            nint offset = 0;
             Unsafe.AddByteOffset(ref start, offset) = (byte)unsignedValue;
             Unsafe.AddByteOffset(ref start, offset + 1) = (byte)(unsignedValue >> 8);
             Unsafe.AddByteOffset(ref start, offset + 2) = (byte)(unsignedValue >> 16);
@@ -66,8 +66,8 @@ namespace DotNetty.Buffers
             uint mid = (uint)bits[1];
             uint high = (uint)bits[2];
             uint flags = (uint)bits[3];
-            IntPtr offset = (IntPtr)0;
 
+            nint offset = 0;
             Unsafe.AddByteOffset(ref start, offset) = (byte)(lo >> 24); // lo
             Unsafe.AddByteOffset(ref start, offset + 1) = (byte)(lo >> 16);
             Unsafe.AddByteOffset(ref start, offset + 2) = (byte)(lo >> 8);
@@ -76,14 +76,15 @@ namespace DotNetty.Buffers
             Unsafe.AddByteOffset(ref start, offset + 5) = (byte)(mid >> 16);
             Unsafe.AddByteOffset(ref start, offset + 6) = (byte)(mid >> 8);
             Unsafe.AddByteOffset(ref start, offset + 7) = (byte)mid;
-            Unsafe.AddByteOffset(ref start, offset + 8) = (byte)(high >> 24); // high
-            Unsafe.AddByteOffset(ref start, offset + 9) = (byte)(high >> 16);
-            Unsafe.AddByteOffset(ref start, offset + 10) = (byte)(high >> 8);
-            Unsafe.AddByteOffset(ref start, offset + 11) = (byte)high;
-            Unsafe.AddByteOffset(ref start, offset + 12) = (byte)(flags >> 24); // flags
-            Unsafe.AddByteOffset(ref start, offset + 13) = (byte)(flags >> 16);
-            Unsafe.AddByteOffset(ref start, offset + 14) = (byte)(flags >> 8);
-            Unsafe.AddByteOffset(ref start, offset + 15) = (byte)flags;
+            offset += 8;
+            Unsafe.AddByteOffset(ref start, offset) = (byte)(high >> 24); // high
+            Unsafe.AddByteOffset(ref start, offset + 1) = (byte)(high >> 16);
+            Unsafe.AddByteOffset(ref start, offset + 2) = (byte)(high >> 8);
+            Unsafe.AddByteOffset(ref start, offset + 3) = (byte)high;
+            Unsafe.AddByteOffset(ref start, offset + 4) = (byte)(flags >> 24); // flags
+            Unsafe.AddByteOffset(ref start, offset + 5) = (byte)(flags >> 16);
+            Unsafe.AddByteOffset(ref start, offset + 6) = (byte)(flags >> 8);
+            Unsafe.AddByteOffset(ref start, offset + 7) = (byte)flags;
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
@@ -94,8 +95,8 @@ namespace DotNetty.Buffers
             uint mid = (uint)bits[1];
             uint high = (uint)bits[2];
             uint flags = (uint)bits[3];
-            IntPtr offset = (IntPtr)0;
 
+            nint offset = 0;
             Unsafe.AddByteOffset(ref start, offset) = (byte)lo;
             Unsafe.AddByteOffset(ref start, offset + 1) = (byte)(lo >> 8);
             Unsafe.AddByteOffset(ref start, offset + 2) = (byte)(lo >> 16);
@@ -104,14 +105,15 @@ namespace DotNetty.Buffers
             Unsafe.AddByteOffset(ref start, offset + 5) = (byte)(mid >> 8);
             Unsafe.AddByteOffset(ref start, offset + 6) = (byte)(mid >> 16);
             Unsafe.AddByteOffset(ref start, offset + 7) = (byte)(mid >> 24); // mid
-            Unsafe.AddByteOffset(ref start, offset + 8) = (byte)high;
-            Unsafe.AddByteOffset(ref start, offset + 9) = (byte)(high >> 8);
-            Unsafe.AddByteOffset(ref start, offset + 10) = (byte)(high >> 16);
-            Unsafe.AddByteOffset(ref start, offset + 11) = (byte)(high >> 24); // high
-            Unsafe.AddByteOffset(ref start, offset + 12) = (byte)flags;
-            Unsafe.AddByteOffset(ref start, offset + 13) = (byte)(flags >> 8);
-            Unsafe.AddByteOffset(ref start, offset + 14) = (byte)(flags >> 16);
-            Unsafe.AddByteOffset(ref start, offset + 15) = (byte)(flags >> 24); // flags
+            offset += 8;
+            Unsafe.AddByteOffset(ref start, offset) = (byte)high;
+            Unsafe.AddByteOffset(ref start, offset + 1) = (byte)(high >> 8);
+            Unsafe.AddByteOffset(ref start, offset + 2) = (byte)(high >> 16);
+            Unsafe.AddByteOffset(ref start, offset + 3) = (byte)(high >> 24); // high
+            Unsafe.AddByteOffset(ref start, offset + 4) = (byte)flags;
+            Unsafe.AddByteOffset(ref start, offset + 5) = (byte)(flags >> 8);
+            Unsafe.AddByteOffset(ref start, offset + 6) = (byte)(flags >> 16);
+            Unsafe.AddByteOffset(ref start, offset + 7) = (byte)(flags >> 24); // flags
         }
 
         /// <summary>Writes a 32-bit integer in a compressed format.</summary>
