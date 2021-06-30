@@ -1,1 +1,0 @@
-dotnet test --framework net5.0 -- RunConfiguration.TargetPlatform=x64
