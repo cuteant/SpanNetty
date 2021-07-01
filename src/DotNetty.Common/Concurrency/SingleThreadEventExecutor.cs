@@ -446,7 +446,7 @@ namespace DotNetty.Common.Concurrency
         {
             const long MaxDelayMilliseconds = int.MaxValue - 1;
 
-            if ((ulong)delayNanos > 0UL) // delayNanos >= 0
+            if ((ulong)delayNanos > 0UL) // delayNanos 为非负值
             {
                 var timeout = PreciseTime.ToMilliseconds(delayNanos);
                 if (_blockingTaskQueue.TryTake(out task, (int)Math.Min(timeout, MaxDelayMilliseconds)))
