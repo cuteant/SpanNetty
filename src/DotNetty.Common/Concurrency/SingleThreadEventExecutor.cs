@@ -209,7 +209,7 @@ namespace DotNetty.Common.Concurrency
         /// <summary>
         /// Indicates whether executor's backlog is empty. Useful for diagnosing / mitigating stalls due to blocking calls in conjunction with Progress property.
         /// </summary>
-        public bool IsBacklogEmpty => HasTasks;
+        public bool IsBacklogEmpty => !HasTasks;
 
         /// <summary>
         /// Gets length of backlog of tasks queued for immediate execution.
