@@ -21,7 +21,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public void TestShutdownOutput(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -72,7 +72,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public void TestShutdownOutputWithoutOption(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();

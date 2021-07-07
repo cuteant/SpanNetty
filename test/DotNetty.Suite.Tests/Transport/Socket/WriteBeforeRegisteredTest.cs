@@ -16,7 +16,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public void WriteBeforeConnect(IByteBufferAllocator allocator)
         {
             var cb = DefaultClientBootstrapFactory.Instance.NewInstance();
@@ -26,7 +26,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public void LibuvWriteBeforeConnect(IByteBufferAllocator allocator)
         {
             var cb = LibuvClientBootstrapFactory.Instance.NewInstance();

@@ -187,7 +187,7 @@ namespace DotNetty.Codecs.Protobuf.Tests
         }
 
         [Theory]
-        [MemberData(nameof(GetAddressBookCases))]
+        [MemberData(nameof(GetAddressBookCases), DisableDiscoveryEnumeration = true)]
         public void Run1(AddressBook addressBook, bool isCompositeBuffer)
         {
             var channel = new EmbeddedChannel(

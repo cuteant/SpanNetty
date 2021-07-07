@@ -39,6 +39,7 @@ namespace DotNetty.Handlers.Tls
 
             public void SetSource(in ReadOnlyMemory<byte> source)
             {
+                Debug.Assert(SourceReadableBytes == 0);
                 _input = source;
                 _inputOffset = 0;
                 _inputLength = 0;
@@ -46,7 +47,9 @@ namespace DotNetty.Handlers.Tls
 
             public void ResetSource()
             {
+                Debug.Assert(SourceReadableBytes == 0);
                 _input = null;
+                _inputOffset = 0;
                 _inputLength = 0;
             }
 
@@ -60,6 +63,7 @@ namespace DotNetty.Handlers.Tls
                 if (sslBuffer.IsEmpty)
                 {
                     // there is no pending read operation - keep for future
+                    Debug.Assert(_readCompletionSource == null);
                     return;
                 }
                 _sslOwnedBuffer = default;
@@ -87,6 +91,7 @@ namespace DotNetty.Handlers.Tls
                     return new ValueTask<int>(read);
                 }
 
+                Debug.Assert(_readCompletionSource == null);
                 Debug.Assert(_sslOwnedBuffer.IsEmpty);
                 // take note of buffer - we will pass bytes there once available
                 _sslOwnedBuffer = buffer;

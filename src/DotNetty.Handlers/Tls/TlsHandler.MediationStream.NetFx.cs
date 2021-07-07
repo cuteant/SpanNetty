@@ -45,6 +45,7 @@ namespace DotNetty.Handlers.Tls
 
             public void SetSource(byte[] source, int offset)
             {
+                Debug.Assert(SourceReadableBytes == 0);
                 _input = source;
                 _inputStartOffset = offset;
                 _inputOffset = 0;
@@ -53,7 +54,9 @@ namespace DotNetty.Handlers.Tls
 
             public void ResetSource()
             {
+                Debug.Assert(SourceReadableBytes == 0);
                 _input = null;
+                _inputOffset = 0;
                 _inputLength = 0;
             }
 

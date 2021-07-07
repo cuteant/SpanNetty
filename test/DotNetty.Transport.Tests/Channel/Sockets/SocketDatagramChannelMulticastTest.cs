@@ -94,7 +94,7 @@ namespace DotNetty.Transport.Tests.Channel.Sockets
         }
 
         [Theory]
-        [MemberData(nameof(GetData))]
+        [MemberData(nameof(GetData), DisableDiscoveryEnumeration = true)]
         public void Multicast(AddressFamily addressFamily, IByteBufferAllocator allocator)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

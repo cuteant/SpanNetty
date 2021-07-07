@@ -9,30 +9,42 @@ namespace DotNetty.Tests.Common
 
     public static class TestResourceHelper
     {
+        static X509Certificate2 _testCert;
+        static X509Certificate2 _testCert2;
+
         public static X509Certificate2 GetTestCertificate()
         {
-            byte[] certData;
-            using (Stream resStream = typeof(TestResourceHelper).GetTypeInfo().Assembly.GetManifestResourceStream(typeof(TestResourceHelper).Namespace + "." + "dotnetty.com.pfx"))
-            using (var memStream = new MemoryStream())
+            var testCert = _testCert;
+            if (testCert is null)
             {
-                resStream.CopyTo(memStream);
-                certData = memStream.ToArray();
+                byte[] certData;
+                using (Stream resStream = typeof(TestResourceHelper).GetTypeInfo().Assembly.GetManifestResourceStream(typeof(TestResourceHelper).Namespace + "." + "dotnetty.com.pfx"))
+                using (var memStream = new MemoryStream())
+                {
+                    resStream.CopyTo(memStream);
+                    certData = memStream.ToArray();
+                }
+                testCert = _testCert = new X509Certificate2(certData, "password");
             }
 
-            return new X509Certificate2(certData, "password");
+            return testCert;
         }
 
         public static X509Certificate2 GetTestCertificate2()
         {
-            byte[] certData;
-            using (Stream resStream = typeof(TestResourceHelper).GetTypeInfo().Assembly.GetManifestResourceStream(typeof(TestResourceHelper).Namespace + "." + "contoso.com.pfx"))
-            using (var memStream = new MemoryStream())
+            var testCert2 = _testCert2;
+            if (testCert2 is null)
             {
-                resStream.CopyTo(memStream);
-                certData = memStream.ToArray();
+                byte[] certData;
+                using (Stream resStream = typeof(TestResourceHelper).GetTypeInfo().Assembly.GetManifestResourceStream(typeof(TestResourceHelper).Namespace + "." + "contoso.com.pfx"))
+                using (var memStream = new MemoryStream())
+                {
+                    resStream.CopyTo(memStream);
+                    certData = memStream.ToArray();
+                }
+                testCert2 = _testCert2 = new X509Certificate2(certData, "password");
             }
-
-            return new X509Certificate2(certData, "password");
+            return testCert2;
         }
     }
 }

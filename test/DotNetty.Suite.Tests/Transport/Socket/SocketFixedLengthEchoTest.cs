@@ -31,7 +31,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestFixedLengthEcho(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -42,7 +42,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestFixedLengthEcho_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -53,7 +53,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestFixedLengthEcho_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -64,7 +64,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestFixedLengthEcho_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -90,7 +90,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestFixedLengthEchoNotAutoRead(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -101,7 +101,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestFixedLengthEchoNotAutoRead_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -112,7 +112,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestFixedLengthEchoNotAutoRead_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -123,7 +123,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestFixedLengthEchoNotAutoRead_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();

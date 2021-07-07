@@ -29,7 +29,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestLocalAddressAfterConnect(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -40,7 +40,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestLocalAddressAfterConnect_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -51,7 +51,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestLocalAddressAfterConnect_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -62,7 +62,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestLocalAddressAfterConnect_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -122,7 +122,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestChannelEventsFiredWhenClosedDirectly(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -133,7 +133,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestChannelEventsFiredWhenClosedDirectly_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -144,7 +144,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestChannelEventsFiredWhenClosedDirectly_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -155,7 +155,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestChannelEventsFiredWhenClosedDirectly_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();

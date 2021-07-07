@@ -29,7 +29,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public async Task TestSoLingerZeroCausesOnlyRstOnClose(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -50,7 +50,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public async Task TestSoLingerZeroCausesOnlyRstOnClose_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -71,7 +71,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public async Task TestSoLingerZeroCausesOnlyRstOnClose_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -92,7 +92,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public async Task TestSoLingerZeroCausesOnlyRstOnClose_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -153,7 +153,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public async Task TestNoRstIfSoLingerOnClose(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -174,7 +174,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public async Task TestNoRstIfSoLingerOnClose_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -195,7 +195,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public async Task TestNoRstIfSoLingerOnClose_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -216,7 +216,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public async Task TestNoRstIfSoLingerOnClose_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();

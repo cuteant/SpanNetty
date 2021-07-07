@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Theory]
-        [MemberData(nameof(GetJsonFiles))]
+        [MemberData(nameof(GetJsonFiles), DisableDiscoveryEnumeration = true)]
         public void Test(FileInfo file)
         {
             using (var fs = file.Open(FileMode.Open))

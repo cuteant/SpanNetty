@@ -17,7 +17,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestBufRelease(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -28,7 +28,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestBufRelease_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = DefaultServerBootstrapFactory.Instance.NewInstance();
@@ -39,7 +39,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestBufRelease_LibuvServer_SocketClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();
@@ -50,7 +50,7 @@
         }
 
         [Theory]
-        [MemberData(nameof(GetAllocators))]
+        [MemberData(nameof(GetAllocators), DisableDiscoveryEnumeration = true)]
         public Task TestBufRelease_LibuvServer_LibuvClient(IByteBufferAllocator allocator)
         {
             var sb = LibuvServerBootstrapFactory.Instance.NewInstance();

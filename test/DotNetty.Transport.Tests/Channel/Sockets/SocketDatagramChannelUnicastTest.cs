@@ -144,7 +144,7 @@ namespace DotNetty.Transport.Tests.Channel.Sockets
         }
 
         [Theory]
-        [MemberData(nameof(GetData))]
+        [MemberData(nameof(GetData), DisableDiscoveryEnumeration = true)]
         public void SimpleSend(IByteBuffer source, bool bindClient, IByteBufferAllocator allocator, AddressFamily addressFamily, byte[] expectedData, int count)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
