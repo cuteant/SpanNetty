@@ -40,6 +40,9 @@ namespace DotNetty.Handlers.Tls
         private static readonly SslProtocols s_defaultServerProtocol;
         static ServerTlsSettings()
         {
+#if NET
+            s_defaultServerProtocol = SslProtocols.Tls12;
+#else
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 s_defaultServerProtocol = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
@@ -48,6 +51,10 @@ namespace DotNetty.Handlers.Tls
             {
                 s_defaultServerProtocol = SslProtocols.Tls12 | SslProtocols.Tls11;
             }
+#endif
+#if NETCOREAPP_3_0_GREATER
+            s_defaultServerProtocol |= SslProtocols.Tls13;
+#endif
         }
 
         public ServerTlsSettings(X509Certificate certificate)
@@ -113,20 +120,24 @@ namespace DotNetty.Handlers.Tls
         /// </summary>
         public Func<X509Certificate2, X509Chain, SslPolicyErrors, bool> ClientCertificateValidation { get; set; }
 
+        /// <summary>
+        /// Overrides the current <see cref="ClientCertificateValidation"/> callback and allows any client certificate.
+        /// </summary>
+        public void AllowAnyClientCertificate()
+        {
+            ClientCertificateValidation = (_, __, ___) => true;
+        }
+
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
+        public System.Collections.Generic.List<SslApplicationProtocol> ApplicationProtocols { get; set; }
 
         /// <summary>
-        /// <para>
         /// A callback that will be invoked to dynamically select a server certificate. This is higher priority than ServerCertificate.
         /// If SNI is not avialable then the name parameter will be null.
-        /// </para>
-        /// <para>
-        /// If the server certificate has an Extended Key Usage extension, the usages must include Server Authentication (OID 1.3.6.1.5.5.7.3.1).
-        /// </para>
         /// </summary>
         public Func<IChannelHandlerContext, string, X509Certificate2> ServerCertificateSelector { get; set; }
 
-        public System.Collections.Generic.List<SslApplicationProtocol> ApplicationProtocols { get; set; }
+        public Action<IChannelHandlerContext, ServerTlsSettings, SslServerAuthenticationOptions> OnAuthenticate { get; set; }
 #endif
     }
 }

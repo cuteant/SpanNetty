@@ -29,6 +29,7 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
+    using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
@@ -43,7 +44,9 @@ namespace DotNetty.Transport.Libuv
     {
         #region @@ Fields @@
 
-        private const int DefaultBreakoutTime = 100; //ms
+        private const long DefaultBreakoutTime = 100L; //ms
+        private const long MinimumBreakoutTime = 10L; //ms
+        private const long InfiniteBreakoutTime = 0L; //ms
 
         private static long s_initialTime;
         private static long s_startTimeInitialized;
@@ -134,29 +137,34 @@ namespace DotNetty.Transport.Libuv
             IntPtr handle = _loop.Handle;
             try
             {
-                UpdateLastExecutionTime();
-                Initialize();
-                if (!CompareAndSetExecutionState(NotStartedState, StartedState))
-                {
-                    ThrowHelper.ThrowInvalidOperationException_ExecutionState0(NotStartedState);
-                }
-                _loopRunStart.Set();
-                _ = _loop.Run(uv_run_mode.UV_RUN_DEFAULT);
-            }
-            catch (Exception ex)
-            {
-                _loopRunStart.Set();
-                SetExecutionState(TerminatedState);
-                Logger.LoopRunDefaultError(InnerThread, handle, ex);
-            }
-            finally
-            {
-                if (Logger.InfoEnabled) Logger.LoopThreadFinished(InnerThread, handle);
+                bool success = false;
                 try
                 {
-                    CleanupAndTerminate(false);
+                    UpdateLastExecutionTime();
+                    Initialize();
+                    if (!CompareAndSetExecutionState(NotStartedState, StartedState))
+                    {
+                        ThrowHelper.ThrowInvalidOperationException_ExecutionState0(NotStartedState);
+                    }
+                    _loopRunStart.Set();
+                    _ = _loop.Run(uv_run_mode.UV_RUN_DEFAULT);
+                    success = true;
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _loopRunStart.Set();
+                    TrySetExecutionState(TerminatedState);
+                    Logger.LoopRunDefaultError(InnerThread, handle, ex);
+                }
+                finally
+                {
+                    if (Logger.InfoEnabled) { Logger.LoopThreadFinished(InnerThread, handle); }
+                    CleanupAndTerminate(success);
+                }
+            }
+            catch (Exception exc)
+            {
+                _ = TerminationCompletionSource.TrySetException(exc);
             }
         }
 
@@ -176,11 +184,6 @@ namespace DotNetty.Transport.Libuv
         protected sealed override long ToPreciseTime(TimeSpan time)
         {
             return (long)time.TotalMilliseconds;
-        }
-
-        protected override void TaskDelay(int millisecondsTimeout)
-        {
-            _ = _timerHandle.Start(millisecondsTimeout, 0);
         }
 
         #endregion
@@ -237,6 +240,14 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
+        protected override void EnusreWakingUp(bool inEventLoop)
+        {
+            if (_wakeUp)
+            {
+                _ = _timerHandle.Start(DefaultBreakoutTime, 0);
+            }
+        }
+
         protected override void OnBeginRunningAllTasks()
         {
             _wakeUp = false;
@@ -262,23 +273,28 @@ namespace DotNetty.Transport.Libuv
                 return;
             }
 
-            long nextTimeout = DefaultBreakoutTime;
+            var nextTimeout = InfiniteBreakoutTime;
             if (HasTasks)
             {
-                _ = _timerHandle.Start(nextTimeout, 0);
+                nextTimeout = DefaultBreakoutTime;
             }
-            else
+            else if (TryPeekScheduledTask(out IScheduledRunnable nextScheduledTask))
             {
-                if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
+                long delayNanos = nextScheduledTask.DelayNanos;
+                if ((ulong)delayNanos > 0UL) // delayNanos 为非负值
                 {
-                    long delayNanos = nextScheduledTask.DelayNanos;
-                    if ((ulong)delayNanos > 0UL) // delayNanos >= 0
-                    {
-                        var timeout = PreciseTime.ToMilliseconds(delayNanos);
-                        nextTimeout = Math.Min(timeout, MaxDelayMilliseconds);
-                    }
-                    _ = _timerHandle.Start(nextTimeout, 0);
+                    var timeout = PreciseTime.ToMilliseconds(delayNanos);
+                    nextTimeout = Math.Min(timeout, MaxDelayMilliseconds);
                 }
+                else
+                {
+                    nextTimeout = MinimumBreakoutTime;
+                }
+            }
+
+            if ((ulong)nextTimeout > 0UL) // nextTimeout 为非负值
+            {
+                _ = _timerHandle.Start(nextTimeout, 0);
             }
         }
 
@@ -286,7 +302,7 @@ namespace DotNetty.Transport.Libuv
         {
             if (!IsShuttingDown)
             {
-                RunAllTasks(_preciseBreakoutInterval);
+                _ = RunAllTasks(_preciseBreakoutInterval);
             }
             else
             {
@@ -304,35 +320,40 @@ namespace DotNetty.Transport.Libuv
 
         private void DoShutdown()
         {
-            if (ConfirmShutdown())
-            {
-                StopLoop();
-                return;
-            }
+            TrySetExecutionState(ShuttingDownState);
 
-            SetExecutionState(ShuttingDownState);
-
+            ShutdownStatus status;
             // Run all remaining tasks and shutdown hooks. At this point the event loop
             // is in ST_SHUTTING_DOWN state still accepting tasks which is needed for
             // graceful shutdown with quietPeriod.
             while (true)
             {
-                if (ConfirmShutdown())
+                status = DoShuttingdown();
+                if (status == ShutdownStatus.Completed)
                 {
                     break;
+                }
+                else if (status == ShutdownStatus.WaitingForNextPeriod)
+                {
+                    _ = _timerHandle.Start(DefaultBreakoutTime, 0);
+                    return;
                 }
             }
 
             // Now we want to make sure no more tasks can be added from this point. This is
             // achieved by switching the state. Any new tasks beyond this point will be rejected.
-            SetExecutionState(ShutdownState);
+            TrySetExecutionState(ShutdownState);
 
             // We have the final set of tasks in the queue now, no more can be added, run all remaining.
             // No need to loop here, this is the final pass.
-            if (ConfirmShutdown())
+            status = DoShuttingdown();
+            if (status == ShutdownStatus.WaitingForNextPeriod)
             {
-                StopLoop();
+                _ = _timerHandle.Start(DefaultBreakoutTime, 0);
+                return;
             }
+            StopLoop();
+            SetExecutionState(TerminatedState);
         }
 
         protected override void Cleanup()

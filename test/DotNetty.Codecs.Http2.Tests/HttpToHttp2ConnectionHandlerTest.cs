@@ -49,21 +49,21 @@ namespace DotNetty.Codecs.Http2.Tests
         }
     }
 
-    //public sealed class SocketHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
-    //{
-    //    public SocketHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
+    public sealed class SocketHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
+    {
+        public SocketHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
 
-    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
-    //                 .Channel<TcpServerSocketChannel>();
-    //    }
+        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+        {
+            bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
+                     .Channel<TcpServerSocketChannel>();
+        }
 
-    //    protected override void SetupBootstrap(Bootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new MultithreadEventLoopGroup()).Channel<TcpSocketChannel>();
-    //    }
-    //}
+        protected override void SetupBootstrap(Bootstrap bootstrap)
+        {
+            bootstrap.Group(new MultithreadEventLoopGroup()).Channel<TcpSocketChannel>();
+        }
+    }
 
     public sealed class LocalHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
     {

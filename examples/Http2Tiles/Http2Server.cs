@@ -8,6 +8,7 @@ namespace Http2Tiles
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
@@ -25,19 +26,19 @@ namespace Http2Tiles
     {
         public static readonly int PORT = int.Parse(ExampleHelper.Configuration["http2-port"]);
 
-        readonly IEventLoopGroup bossGroup;
-        readonly IEventLoopGroup workGroup;
+        readonly IEventLoopGroup _bossGroup;
+        readonly IEventLoopGroup _workGroup;
 
         public Http2Server(IEventLoopGroup bossGroup, IEventLoopGroup workGroup)
         {
-            this.bossGroup = bossGroup;
-            this.workGroup = workGroup;
+            _bossGroup = bossGroup;
+            _workGroup = workGroup;
         }
 
         public Task<IChannel> StartAsync()
         {
             var bootstrap = new ServerBootstrap();
-            bootstrap.Group(this.bossGroup, this.workGroup);
+            bootstrap.Group(_bossGroup, _workGroup);
 
             if (ServerSettings.UseLibuv)
             {
@@ -59,6 +60,7 @@ namespace Http2Tiles
 
             bootstrap
                 .Option(ChannelOption.SoBacklog, 1024)
+                //.Option(ChannelOption.Allocator, UnpooledByteBufferAllocator.Default)
 
                 .Handler(new LoggingHandler("LSTN"))
 

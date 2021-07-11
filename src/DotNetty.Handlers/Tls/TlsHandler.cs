@@ -34,7 +34,6 @@ namespace DotNetty.Handlers.Tls
     using System.Runtime.CompilerServices;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
-    using System.Threading.Tasks;
     using DotNetty.Codecs;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
@@ -51,7 +50,6 @@ namespace DotNetty.Handlers.Tls
         private readonly ClientTlsSettings _clientSettings;
         private readonly X509Certificate _serverCertificate;
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
-        private readonly bool _hasHttp2Protocol;
         private readonly Func<IChannelHandlerContext, string, X509Certificate2> _serverCertificateSelector;
         private readonly Func<IChannelHandlerContext, string, X509CertificateCollection, X509Certificate, string[], X509Certificate2> _userCertSelector;
 #endif
@@ -60,8 +58,9 @@ namespace DotNetty.Handlers.Tls
         private readonly MediationStream _mediationStream;
         private readonly DefaultPromise _closeFuture;
 
-        private BatchingPendingWriteQueue _pendingUnencryptedWrites;
+        private SslHandlerCoalescingBufferQueue _pendingUnencryptedWrites;
 
+        // TOOD
         private TimeSpan _closeNotifyFlushTimeout = TimeSpan.FromMilliseconds(3000);
         private TimeSpan _closeNotifyReadTimeout = TimeSpan.Zero;
         private bool _outboundClosed;
@@ -110,11 +109,6 @@ namespace DotNetty.Handlers.Tls
                 {
                     ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
                 }
-                var serverApplicationProtocols = _serverSettings.ApplicationProtocols;
-                if (serverApplicationProtocols is object)
-                {
-                    _hasHttp2Protocol = serverApplicationProtocols.Contains(SslApplicationProtocol.Http2);
-                }
 #else
                 if (_serverCertificate is null)
                 {
@@ -126,8 +120,6 @@ namespace DotNetty.Handlers.Tls
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
             if (_clientSettings is object)
             {
-                var clientApplicationProtocols = _clientSettings.ApplicationProtocols;
-                _hasHttp2Protocol = clientApplicationProtocols is object && clientApplicationProtocols.Contains(SslApplicationProtocol.Http2);
                 _userCertSelector = _clientSettings.UserCertSelector;
             }
 #endif
@@ -195,7 +187,7 @@ namespace DotNetty.Handlers.Tls
         {
             base.HandlerAdded(context);
             CapturedContext = context;
-            _pendingUnencryptedWrites = new BatchingPendingWriteQueue(context, c_unencryptedWriteBatchSize);
+            _pendingUnencryptedWrites = new SslHandlerCoalescingBufferQueue(this, context.Channel, 16);
             if (context.Channel.IsActive && !_isServer)
             {
                 // todo: support delayed initialization on an existing/active channel if in client mode
@@ -205,12 +197,13 @@ namespace DotNetty.Handlers.Tls
 
         protected override void HandlerRemovedInternal(IChannelHandlerContext context)
         {
-            if (!_pendingUnencryptedWrites.IsEmpty)
+            var pendingUnencryptedWrites = _pendingUnencryptedWrites;
+            _pendingUnencryptedWrites = null;
+            if (!pendingUnencryptedWrites.IsEmpty())
             {
                 // Check if queue is not empty first because create a new ChannelException is expensive
-                _pendingUnencryptedWrites.RemoveAndFailAll(GetChannelException_Write_has_failed());
+                pendingUnencryptedWrites.ReleaseAndFailAll(GetChannelException_Write_has_failed());
             }
-            _pendingUnencryptedWrites = null;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -286,11 +279,8 @@ namespace DotNetty.Handlers.Tls
             }
             finally
             {
-                if (_pendingUnencryptedWrites is object)
-                {
-                    // Ensure we remove and fail all pending writes in all cases and so release memory quickly.
-                    _pendingUnencryptedWrites.RemoveAndFailAll(cause);
-                }
+                // Ensure we remove and fail all pending writes in all cases and so release memory quickly.
+                _pendingUnencryptedWrites?.ReleaseAndFailAll(cause);
             }
         }
 

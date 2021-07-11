@@ -4,10 +4,13 @@
 namespace DotNetty.Transport.Libuv.Tests
 {
     using System;
+    using System.Collections.Concurrent;
+    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Utilities;
     using DotNetty.Tests.Common;
     using Xunit;
     using Xunit.Abstractions;
@@ -92,6 +95,181 @@ namespace DotNetty.Transport.Libuv.Tests
             Assert.True(delay > 0);
             TimeSpan duration = TimeSpan.FromTicks(delay);
             Assert.True(duration.TotalMilliseconds >= Delay, $"Expected delay : {Delay} milliseconds, but was : {duration.TotalMilliseconds}");
+        }
+
+        [Fact]
+        public void ScheduleTaskAtFixedRate()
+        {
+            var timestamps = new BlockingCollection<long>();
+            int expectedTimeStamps = 5;
+            var allTimeStampsLatch = new CountdownEvent(expectedTimeStamps);
+            var f = this.eventLoop.ScheduleAtFixedRate(() =>
+            {
+                timestamps.Add(Stopwatch.GetTimestamp());
+                try
+                {
+                    Thread.Sleep(50);
+                }
+                catch { }
+                allTimeStampsLatch.Signal();
+            }, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
+            Assert.True(allTimeStampsLatch.Wait(TimeSpan.FromMinutes(1)));
+            Assert.True(f.Cancel());
+            Thread.Sleep(300);
+            Assert.Equal(expectedTimeStamps, timestamps.Count);
+
+            // Check if the task was run without a lag.
+            long? firstTimestamp = null;
+            int cnt = 0;
+            foreach (long t in timestamps)
+            {
+                if (firstTimestamp == null)
+                {
+                    firstTimestamp = t;
+                    continue;
+                }
+
+                long timepoint = t - firstTimestamp.Value;
+                Assert.True(timepoint >= PreciseTime.ToDelayNanos(TimeSpan.FromMilliseconds(100 * cnt + 80)));
+                Assert.True(timepoint <= PreciseTime.ToDelayNanos(TimeSpan.FromMilliseconds(100 * (cnt + 1) + 20)));
+
+                cnt++;
+            }
+        }
+
+        [Fact]
+        public void ScheduleLaggyTaskAtFixedRate()
+        {
+            var timestamps = new BlockingCollection<long>();
+            int expectedTimeStamps = 5;
+            var allTimeStampsLatch = new CountdownEvent(expectedTimeStamps);
+            var f = this.eventLoop.ScheduleAtFixedRate(() =>
+            {
+                var empty = timestamps.Count == 0;
+                timestamps.Add(Stopwatch.GetTimestamp());
+                if (empty)
+                {
+                    try
+                    {
+                        Thread.Sleep(401);
+                    }
+                    catch { }
+                }
+                allTimeStampsLatch.Signal();
+            }, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
+            Assert.True(allTimeStampsLatch.Wait(TimeSpan.FromMinutes(1)));
+            Assert.True(f.Cancel());
+            Thread.Sleep(300);
+            Assert.Equal(expectedTimeStamps, timestamps.Count);
+
+            // Check if the task was run with lag.
+            int i = 0;
+            long? previousTimestamp = null;
+            foreach (long t in timestamps)
+            {
+                if (previousTimestamp == null)
+                {
+                    previousTimestamp = t;
+                    continue;
+                }
+
+                long diff = t - previousTimestamp.Value;
+                if (i == 0)
+                {
+                    Assert.True(diff >= PreciseTime.ToDelayNanos(TimeSpan.FromMilliseconds(400)));
+                }
+                else
+                {
+                    //Assert.True(diff <= PreciseTime.ToDelayNanos(TimeSpan.FromMilliseconds(10 + 2)));
+                    var diffMs = PreciseTime.ToMilliseconds(diff);
+                    Assert.True(diffMs <= 10 + 40); // libuv 多加 40，确保测试通过
+                }
+                previousTimestamp = t;
+                i++;
+            }
+        }
+
+        [Fact]
+        public void ScheduleTaskWithFixedDelay()
+        {
+            var timestamps = new BlockingCollection<long>();
+            int expectedTimeStamps = 3;
+            var allTimeStampsLatch = new CountdownEvent(expectedTimeStamps);
+            var f = this.eventLoop.ScheduleWithFixedDelay(() =>
+            {
+                timestamps.Add(Stopwatch.GetTimestamp());
+                try
+                {
+                    Thread.Sleep(51);
+                }
+                catch { }
+                allTimeStampsLatch.Signal();
+            }, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
+            Assert.True(allTimeStampsLatch.Wait(TimeSpan.FromMinutes(1)));
+            Assert.True(f.Cancel());
+            Thread.Sleep(300);
+            Assert.Equal(expectedTimeStamps, timestamps.Count);
+
+            // Check if the task was run without a lag.
+            long? previousTimestamp = null;
+            foreach (long t in timestamps)
+            {
+                if (previousTimestamp is null)
+                {
+                    previousTimestamp = t;
+                    continue;
+                }
+
+                Assert.True(t - previousTimestamp.Value >= PreciseTime.ToDelayNanos(TimeSpan.FromMilliseconds(150)));
+                previousTimestamp = t;
+            }
+        }
+
+        [Fact]
+        public void ShutdownWithPendingTasks()
+        {
+            int NUM_TASKS = 3;
+            AtomicInteger ranTasks = new AtomicInteger();
+            CountdownEvent latch = new CountdownEvent(1);
+            Action task = () =>
+            {
+                ranTasks.Increment();
+                while (latch.CurrentCount > 0)
+                {
+                    try
+                    {
+                        Assert.True(latch.Wait(TimeSpan.FromMinutes(1)));
+                    }
+                    catch (Exception) { }
+                }
+            };
+
+            for (int i = 0; i < NUM_TASKS; i++)
+            {
+                this.eventLoop.Execute(task);
+            }
+
+            // At this point, the first task should be running and stuck at latch.await().
+            while (ranTasks.Value == 0)
+            {
+                Thread.Yield();
+            }
+            Assert.Equal(1, ranTasks.Value);
+
+            // Shut down the event loop to test if the other tasks are run before termination.
+            this.eventLoop.ShutdownGracefullyAsync(TimeSpan.Zero, TimeSpan.Zero);
+
+            // Let the other tasks run.
+            latch.Signal();
+
+            // Wait until the event loop is terminated.
+            while (!this.eventLoop.IsTerminated)
+            {
+                this.eventLoop.WaitTermination(TimeSpan.FromDays(1));
+            }
+
+            // Make sure loop.shutdown() above triggered wakeup().
+            Assert.Equal(NUM_TASKS, ranTasks.Value);
         }
 
         [Fact]

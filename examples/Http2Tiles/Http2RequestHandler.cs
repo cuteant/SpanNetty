@@ -75,7 +75,10 @@
             HttpUtil.SetContentLength(response, response.Content.ReadableBytes);
             StreamId(response, streamId);
 
-            ctx.Executor.Schedule(() => ctx.WriteAndFlushAsync(response), TimeSpan.FromMilliseconds(latency));
+            ctx.Executor.Schedule(() =>
+            {
+                ctx.WriteAndFlushAsync(response);
+            }, TimeSpan.FromMilliseconds(latency));
         }
 
         private static string StreamId(IFullHttpRequest request)

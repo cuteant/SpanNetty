@@ -49,6 +49,8 @@ namespace DotNetty.Handlers.Tls
 
             public int SourceReadableBytes => _inputLength - _inputOffset;
 
+            public int BytesConsumed => _inputOffset;
+
             public override void Flush()
             {
                 // NOOP: called on SslStream.Close

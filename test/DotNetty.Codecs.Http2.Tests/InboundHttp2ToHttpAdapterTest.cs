@@ -65,21 +65,21 @@ namespace DotNetty.Codecs.Http2.Tests
     //    }
     //}
 
-    //public class SocketInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
-    //{
-    //    public SocketInboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
+    public class SocketInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
+    {
+        public SocketInboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
 
-    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
-    //                 .Channel<TcpServerSocketChannel>();
-    //    }
+        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+        {
+            bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
+                     .Channel<TcpServerSocketChannel>();
+        }
 
-    //    protected override void SetupBootstrap(Bootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new MultithreadEventLoopGroup()).Channel<TcpSocketChannel>();
-    //    }
-    //}
+        protected override void SetupBootstrap(Bootstrap bootstrap)
+        {
+            bootstrap.Group(new MultithreadEventLoopGroup()).Channel<TcpSocketChannel>();
+        }
+    }
 
     public sealed class LocalInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
     {

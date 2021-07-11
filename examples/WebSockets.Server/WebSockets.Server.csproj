@@ -22,8 +22,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="SpanNetty.Codecs.Http" Version="$(SpanNettyCodecsHttpPackageVersion)" />
+    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj" />
     <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
   </ItemGroup>
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 
 </Project>

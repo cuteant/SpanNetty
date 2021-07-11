@@ -56,21 +56,32 @@ namespace DotNetty.Codecs.Http2.Tests
         }
     }
 
-    //public sealed class SocketHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
-    //{
-    //    public SocketHttp2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
+    public sealed class SocketHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
+    {
+        public SocketHttp2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
 
-    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
-    //                 .Channel<TcpServerSocketChannel>();
-    //    }
+        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+        {
+            bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
+                     .Channel<TcpServerSocketChannel>();
+        }
 
-    //    protected override void SetupBootstrap(Bootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new MultithreadEventLoopGroup()).Channel<TcpSocketChannel>();
-    //    }
-    //}
+        protected override void SetupBootstrap(Bootstrap bootstrap)
+        {
+            bootstrap.Group(new MultithreadEventLoopGroup()).Channel<TcpSocketChannel>();
+        }
+
+        [Fact(Skip = "slow")] // TODO https://github.com/cuteant/SpanNetty/issues/66
+        public override void WriteOfEmptyReleasedBufferSingleBufferQueuedInFlowControllerShouldFail()
+        {
+            base.WriteOfEmptyReleasedBufferSingleBufferQueuedInFlowControllerShouldFail();
+        }
+
+        [Fact(Skip = "slow")]
+        public override void StressTest()
+        {
+        }
+    }
 
     public sealed class LocalHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
     {
@@ -801,7 +812,7 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
-        public void WriteOfEmptyReleasedBufferSingleBufferQueuedInFlowControllerShouldFail()
+        public virtual void WriteOfEmptyReleasedBufferSingleBufferQueuedInFlowControllerShouldFail()
         {
             WriteOfEmptyReleasedBufferQueuedInFlowControllerShouldFail(WriteEmptyBufferMode.SINGLE_END_OF_STREAM);
         }

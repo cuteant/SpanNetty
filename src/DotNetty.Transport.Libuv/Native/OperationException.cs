@@ -29,9 +29,10 @@
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
+    using System.IO;
     using DotNetty.Common.Internal;
 
-    public sealed class OperationException : Exception
+    public sealed class OperationException : IOException
     {
         static readonly CachedReadConcurrentDictionary<string, ErrorCode> s_errorCodeCache = new CachedReadConcurrentDictionary<string, ErrorCode>(StringComparer.Ordinal);
         static readonly Func<string, ErrorCode> s_convertErrorCodeFunc = e => ConvertErrorCode(e);

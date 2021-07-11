@@ -15,7 +15,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="SpanNetty.Codecs.Http2" Version="$(SpanNettyCodecsHttp2PackageVersion)" />
+    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj" />
     <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
   </ItemGroup>
   

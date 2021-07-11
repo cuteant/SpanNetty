@@ -144,7 +144,7 @@ namespace DotNetty.Handlers.Tls
                 return length;
             }
 
-            public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count, _owner.CapturedContext.NewPromise());
+            public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count, _owner._lastContextWritePromise);
 
             public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
                 => _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());

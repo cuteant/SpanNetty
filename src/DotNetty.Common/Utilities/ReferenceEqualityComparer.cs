@@ -20,6 +20,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for full license information.
  */
 
+#if !NET
 namespace DotNetty.Common.Utilities
 {
     using System.Collections;
@@ -29,7 +30,7 @@ namespace DotNetty.Common.Utilities
     public sealed class ReferenceEqualityComparer
         : IEqualityComparer, IEqualityComparer<object>
     {
-        public static readonly ReferenceEqualityComparer Default = new ReferenceEqualityComparer();
+        public static readonly ReferenceEqualityComparer Instance = new();
 
         ReferenceEqualityComparer()
         {
@@ -40,3 +41,4 @@ namespace DotNetty.Common.Utilities
         public int GetHashCode(object obj) => RuntimeHelpers.GetHashCode(obj);
     }
 }
+#endif
