@@ -122,7 +122,7 @@ namespace DotNetty.Handlers.Tls
                 _pendingUnencryptedWrites.Add(Unpooled.Empty, context.NewPromise());
             }
 
-            if (!EnsureAuthenticated(context))
+            if (!EnsureAuthenticationCompleted(context))
             {
                 State |= TlsHandlerState.FlushedBeforeHandshake;
                 return;

@@ -58,6 +58,19 @@ namespace DotNetty.Handlers.Tls
             return false;
         }
 
+        private bool EnsureAuthenticationCompleted(IChannelHandlerContext ctx)
+        {
+            var oldState = State;
+            if (oldState.HasAny(TlsHandlerState.AuthenticationStarted))
+            {
+                return oldState.HasAny(TlsHandlerState.AuthenticationCompleted);
+            }
+
+            State = oldState | TlsHandlerState.Authenticating;
+            BeginHandshake(ctx);
+            return false;
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void BeginHandshake(IChannelHandlerContext ctx)
         {

@@ -163,7 +163,7 @@ namespace DotNetty.Handlers.Tls
                 ArraySegment<byte> inputIoBuffer = packet.GetIoBuffer(offset, length);
                 _mediationStream.SetSource(inputIoBuffer.Array, inputIoBuffer.Offset, ctx.Allocator);
 #endif
-                if (!EnsureAuthenticated(ctx))
+                if (!EnsureAuthenticationCompleted(ctx))
                 {
                     _mediationStream.ExpandSource(length);
                     return;
