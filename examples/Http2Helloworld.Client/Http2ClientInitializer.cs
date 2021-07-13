@@ -79,30 +79,21 @@
         void ConfigureSsl(IChannel ch)
         {
             var pipeline = ch.Pipeline;
-            pipeline.AddLast("tls", new TlsHandler(
-                stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true),
-                new ClientTlsSettings(_targetHost)
-#if NETCOREAPP_2_0_GREATER
+            var tlsSettings = new ClientTlsSettings(_targetHost)
+            {
+                ApplicationProtocols = new List<SslApplicationProtocol>(new[]
                 {
-                    ApplicationProtocols = new List<SslApplicationProtocol>(new[]
-                    {
-                        SslApplicationProtocol.Http2,
-                        SslApplicationProtocol.Http11
-                    })
-                }
-#endif
-                ));
+                    SslApplicationProtocol.Http2,
+                    SslApplicationProtocol.Http11
+                })
+            }.AllowAnyServerCertificate();
+            pipeline.AddLast("tls", new TlsHandler(tlsSettings));
 
             // We must wait for the handshake to finish and the protocol to be negotiated before configuring
             // the HTTP/2 components of the pipeline.
-#if NETCOREAPP_2_0_GREATER
             pipeline.AddLast(new ClientApplicationProtocolNegotiationHandler(this));
-#else
-            this.ConfigureClearText(ch);
-#endif
         }
 
-#if NETCOREAPP_2_0_GREATER
         sealed class ClientApplicationProtocolNegotiationHandler : ApplicationProtocolNegotiationHandler
         {
             readonly Http2ClientInitializer _self;
@@ -126,7 +117,6 @@
                 throw new InvalidOperationException("unknown protocol: " + protocol);
             }
         }
-#endif
 
         /// <summary>
         /// Configure the pipeline for a cleartext upgrade from HTTP to HTTP/2.

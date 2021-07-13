@@ -1441,8 +1441,8 @@ namespace DotNetty.Codecs.Http2.Tests
             X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
             string targetHost = tlsCertificate.GetNameInfo(X509NameType.DnsName, false);
             TlsHandler tlsHandler = isClient ?
-                new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)) :
-                new TlsHandler(new ServerTlsSettings(tlsCertificate));
+                new TlsHandler(new ClientTlsSettings(targetHost).AllowAnyServerCertificate()):
+                new TlsHandler(new ServerTlsSettings(tlsCertificate).AllowAnyClientCertificate());
             return tlsHandler;
         }
 

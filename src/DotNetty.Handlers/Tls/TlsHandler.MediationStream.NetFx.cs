@@ -226,6 +226,26 @@ namespace DotNetty.Handlers.Tls
                     throw;
                 }
             }
+
+            #region sync result
+
+            private sealed class SynchronousAsyncResult<T> : IAsyncResult
+            {
+                public T Result { get; set; }
+
+                public bool IsCompleted => true;
+
+                public WaitHandle AsyncWaitHandle
+                {
+                    get { throw new InvalidOperationException("Cannot wait on a synchronous result."); }
+                }
+
+                public object AsyncState { get; set; }
+
+                public bool CompletedSynchronously => true;
+            }
+
+            #endregion
         }
     }
 }

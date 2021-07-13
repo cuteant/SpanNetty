@@ -50,11 +50,20 @@ namespace DotNetty.Handlers.Tls
                 _owner = owner;
             }
 
-            public int TotalReadableBytes => (this._ownedInputBuffer?.ReadableBytes ?? 0) + SourceReadableBytes;
+            public int TotalReadableBytes
+            {
+                get
+                {
+                    var readableBytes = SourceReadableBytes;
+                    if (_ownedInputBuffer is object)
+                    {
+                        readableBytes += _ownedInputBuffer.ReadableBytes;
+                    }
+                    return readableBytes;
+                }
+            }
 
             public int SourceReadableBytes => _inputLength - _inputOffset;
-
-            public int BytesConsumed => _inputOffset;
 
             public override void Flush()
             {
@@ -109,26 +118,6 @@ namespace DotNetty.Handlers.Tls
             {
                 get { throw new NotSupportedException(); }
                 set { throw new NotSupportedException(); }
-            }
-
-            #endregion
-
-            #region sync result
-
-            private sealed class SynchronousAsyncResult<T> : IAsyncResult
-            {
-                public T Result { get; set; }
-
-                public bool IsCompleted => true;
-
-                public WaitHandle AsyncWaitHandle
-                {
-                    get { throw new InvalidOperationException("Cannot wait on a synchronous result."); }
-                }
-
-                public object AsyncState { get; set; }
-
-                public bool CompletedSynchronously => true;
             }
 
             #endregion

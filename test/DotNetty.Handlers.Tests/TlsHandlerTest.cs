@@ -237,8 +237,8 @@ namespace DotNetty.Handlers.Tests
             X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
             string targetHost = tlsCertificate.GetNameInfo(X509NameType.DnsName, false);
             TlsHandler tlsHandler = isClient ?
-                new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(clientProtocol, false, new List<X509Certificate>(), targetHost)) :
-                new TlsHandler(new ServerTlsSettings(tlsCertificate, false, false, serverProtocol));
+                new TlsHandler(new ClientTlsSettings(clientProtocol, false, new List<X509Certificate>(), targetHost).AllowAnyServerCertificate()) :
+                new TlsHandler(new ServerTlsSettings(tlsCertificate, false, false, serverProtocol).AllowAnyClientCertificate());
             //var ch = new EmbeddedChannel(new LoggingHandler("BEFORE"), tlsHandler, new LoggingHandler("AFTER"));
             var ch = new EmbeddedChannel(tlsHandler);
 
@@ -338,7 +338,7 @@ namespace DotNetty.Handlers.Tests
             var readHandler = new ReadRegisterHandler();
             var ch = new EmbeddedChannel(EmbeddedChannelId.Instance, false, false,
                readHandler,
-               TlsHandler.Client("dotnetty.com"),
+               TlsHandler.Client("dotnetty.com", true),
                new ActivatingHandler(dropChannelActive)
             );
 

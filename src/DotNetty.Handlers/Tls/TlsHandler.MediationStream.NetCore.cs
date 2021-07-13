@@ -82,6 +82,7 @@ namespace DotNetty.Handlers.Tls
             public void ExpandSource(int count)
             {
                 int readByteCount;
+                TaskCompletionSource<int> readCompletionSource;
                 lock (this)
                 {
                     Debug.Assert(!_input.IsEmpty);
@@ -89,7 +90,8 @@ namespace DotNetty.Handlers.Tls
                     _inputLength += count;
 
                     var sslBuffer = _sslOwnedBuffer;
-                    if (_readCompletionSource is null)
+                    readCompletionSource = _readCompletionSource;
+                    if (readCompletionSource is null)
                     {
                         // there is no pending read operation - keep for future
                         return;
@@ -100,14 +102,17 @@ namespace DotNetty.Handlers.Tls
                 }
                 // hack: this tricks SslStream's continuation to run synchronously instead of dispatching to TP. Remove once Begin/EndRead are available. 
                 // The continuation can only run synchronously when the TaskScheduler is not ExecutorTaskScheduler
-                new Task(ReadCompletionAction, (this, _readCompletionSource, readByteCount)).RunSynchronously(TaskScheduler.Default);
+                new Task(ReadCompletionAction, (this, readCompletionSource, readByteCount)).RunSynchronously(TaskScheduler.Default);
             }
 
             static readonly Action<object> ReadCompletionAction = s => ReadCompletion(s);
             static void ReadCompletion(object state)
             {
                 var (self, readCompletionSource, readByteCount) = ((MediationStream, TaskCompletionSource<int>, int))state;
-                self._readCompletionSource = null;
+                if (ReferenceEquals(readCompletionSource, self._readCompletionSource))
+                {
+                    self._readCompletionSource = null;
+                }
                 _ = readCompletionSource.TrySetResult(readByteCount);
             }
 

@@ -32,15 +32,6 @@ namespace DotNetty.Handlers.Tls
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
-    internal enum TlsFraming
-    {
-        Unknown = 0,    // Initial before any frame is processd.
-        BeforeSSL3,     // SSlv2
-        SinceSSL3,      // SSlv3 & TLS
-        Unified,        // Intermediate on first frame until response is processes.
-        Invalid         // Somthing is wrong.
-    }
-
     /// Utilities for TLS packets.
     static class TlsUtils
     {

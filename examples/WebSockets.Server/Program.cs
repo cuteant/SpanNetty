@@ -112,7 +112,7 @@ namespace WebSockets.Server
                         IChannelPipeline pipeline = channel.Pipeline;
                         if (ServerSettings.IsSsl)
                         {
-                            pipeline.AddLast(TlsHandler.Server(tlsCertificate));
+                            pipeline.AddLast(TlsHandler.Server(tlsCertificate, true));
                         }
 
                         pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 120));

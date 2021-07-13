@@ -89,7 +89,7 @@ namespace WebSockets.Client
                     IChannelPipeline pipeline = channel.Pipeline;
                     if (cert != null)
                     {
-                        pipeline.AddLast("tls", new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)));
+                        pipeline.AddLast("tls", new TlsHandler(new ClientTlsSettings(targetHost).AllowAnyServerCertificate()));
                     }
 
                     pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 60));

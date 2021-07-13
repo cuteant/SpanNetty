@@ -66,14 +66,16 @@ namespace Http2Tiles
 
                 .ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
                 {
-                    ch.Pipeline.AddLast(new TlsHandler(new ServerTlsSettings(tlsCertificate)
+                    var tlsSettings = new ServerTlsSettings(tlsCertificate)
                     {
                         ApplicationProtocols = new List<SslApplicationProtocol>(new[]
                         {
                             SslApplicationProtocol.Http2,
                             SslApplicationProtocol.Http11
                         })
-                    }));
+                    };
+                    tlsSettings.AllowAnyClientCertificate();
+                    ch.Pipeline.AddLast(new TlsHandler(tlsSettings));
                     ch.Pipeline.AddLast(new Http2OrHttpHandler());
                 }));
 

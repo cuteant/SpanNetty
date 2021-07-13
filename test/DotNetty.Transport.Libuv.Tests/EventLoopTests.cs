@@ -97,6 +97,7 @@ namespace DotNetty.Transport.Libuv.Tests
             Assert.True(duration.TotalMilliseconds >= Delay, $"Expected delay : {Delay} milliseconds, but was : {duration.TotalMilliseconds}");
         }
 
+#if !SKIPTESTINAZUREDEVOPS
         [Fact]
         public void ScheduleTaskAtFixedRate()
         {
@@ -271,6 +272,7 @@ namespace DotNetty.Transport.Libuv.Tests
             // Make sure loop.shutdown() above triggered wakeup().
             Assert.Equal(NUM_TASKS, ranTasks.Value);
         }
+#endif
 
         [Fact]
         public void RegistrationAfterShutdown()

@@ -184,6 +184,7 @@ namespace DotNetty.Handlers.Tls
             {
                 Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
                 self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
+                self._handshakePromise.TryComplete();
 
                 _ = capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
 
@@ -194,30 +195,30 @@ namespace DotNetty.Handlers.Tls
 
                 if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
                 {
-                    self.Wrap(capturedContext);
-                    _ = capturedContext.Flush();
+                    try
+                    {
+                        self.Wrap(capturedContext);
+                        _ = capturedContext.Flush();
+                    }
+                    catch (Exception cause)
+                    {
+                        // Fail pending writes.
+                        self.HandleFailure(capturedContext, cause, true, false, true);
+                    }
                 }
             }
             else if (task.IsCanceled || task.IsFaulted)
             {
                 Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
-                self.HandleFailure(task.Exception);
+                self.State = (oldState | TlsHandlerState.FailedAuthentication) & ~TlsHandlerState.Authenticating;
+                var taskExc = task.Exception;
+                var cause = taskExc.Unwrap();
+                if (self._handshakePromise.TrySetException(taskExc))
+                {
+                    TlsUtils.NotifyHandshakeFailure(capturedContext, cause, true);
+                }
+                self._pendingUnencryptedWrites?.ReleaseAndFailAll(cause);
             }
-        }
-
-        private void NotifyHandshakeFailure(Exception cause, bool notify)
-        {
-            var oldState = State;
-            if (oldState.HasAny(TlsHandlerState.AuthenticationCompleted)) { return; }
-
-            // handshake was not completed yet => TlsHandler react to failure by closing the channel
-            State = (oldState | TlsHandlerState.FailedAuthentication) & ~TlsHandlerState.Authenticating;
-            var capturedContext = CapturedContext;
-            if (notify)
-            {
-                _ = capturedContext.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
-            }
-            this.Close(capturedContext, capturedContext.NewPromise());
         }
     }
 }
