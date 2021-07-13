@@ -39,6 +39,8 @@ namespace DotNetty.Codecs.Base64
         const sbyte EQUALS_SIGN_ENC = -1; // Indicates equals sign in encoding
 
         public static IByteBuffer Encode(IByteBuffer src) => Encode(src, Base64Dialect.Standard);
+        
+        public static IByteBuffer Encode(IByteBuffer src, bool breakLines) => Encode(src, breakLines, Base64Dialect.Standard);
 
         public static IByteBuffer Encode(IByteBuffer src, IBase64Dialect dialect) => Encode(src, src.ReaderIndex, src.ReadableBytes, dialect.BreakLinesByDefault, dialect);
 
