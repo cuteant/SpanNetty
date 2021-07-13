@@ -83,7 +83,7 @@ namespace DotNetty.Handlers.Flow
 
         private IChannelConfiguration _config;
 
-        private int _readRequestCount;
+        private bool _shouldConsume;
 
         /// <summary>Create new instance.</summary>
         public FlowControlHandler()
@@ -160,7 +160,7 @@ namespace DotNetty.Handlers.Flow
                 // It seems no messages were consumed. We need to read() some
                 // messages from upstream and once one arrives it need to be
                 // relayed to downstream to keep the flow going.
-                ++_readRequestCount;
+                _shouldConsume = true;
                 _ = ctx.Read();
             }
         }
@@ -177,8 +177,8 @@ namespace DotNetty.Handlers.Flow
             // We just received one message. Do we need to relay it regardless
             // of the auto reading configuration? The answer is yes if this
             // method was called as a result of a prior read() call.
-            int minConsume = Math.Min(_readRequestCount, _queue.Count);
-            _readRequestCount -= minConsume;
+            int minConsume = _shouldConsume ? 1 : 0;
+            _shouldConsume = false;
 
             _ = Dequeue(ctx, minConsume);
         }

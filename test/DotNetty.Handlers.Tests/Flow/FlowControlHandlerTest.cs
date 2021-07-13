@@ -276,7 +276,7 @@ namespace DotNetty.Handlers.Tests.Flow
                 // channelRead(2)
                 peer.Configuration.IsAutoRead = true;
                 setAutoReadLatch1.Signal();
-                Assert.True(msgRcvLatch2.Wait(TimeSpan.FromSeconds(1)));
+                Assert.True(setAutoReadLatch1.Wait(TimeSpan.FromSeconds(1)));
 
                 // channelRead(3)
                 peer.Configuration.IsAutoRead = true;
@@ -344,77 +344,6 @@ namespace DotNetty.Handlers.Tests.Flow
                 // channelRead(3)
                 peer.Read();
                 Assert.True(msgRcvLatch3.Wait(TimeSpan.FromSeconds(10)));
-                Assert.True(flow.IsQueueEmpty);
-            }
-            finally
-            {
-                Task.WhenAll(client.CloseAsync(), server.CloseAsync()).Wait(TimeSpan.FromSeconds(5));
-            }
-
-            void Signal(CountdownEvent evt)
-            {
-                if (!evt.IsSet)
-                {
-                    evt.Signal();
-                }
-            }
-        }
-
-        /**
-         * The {@link FlowControlHandler} will keep track of read calls when
-         * when read is called multiple times when the FlowControlHandler queue is empty.
-         */
-        [Fact]
-        public async Task TestTrackReadCallCount()
-        {
-            IChannel channel = null;
-            var mre = new ManualResetEventSlim(false);
-
-            var msgRcvLatch1 = new CountdownEvent(1);
-            var msgRcvLatch2 = new CountdownEvent(2);
-            var msgRcvLatch3 = new CountdownEvent(3);
-
-            ChannelHandlerAdapter handler = new TestHandler(
-                onActive: ctx =>
-                {
-                    ctx.FireChannelActive();
-                    //peerRef.exchange(ctx.Channel, 1L, SECONDS);
-                    Interlocked.Exchange(ref channel, ctx.Channel);
-                    mre.Set();
-                },
-                onRead: (ctx, msg) =>
-                {
-                    Signal(msgRcvLatch1);
-                    Signal(msgRcvLatch2);
-                    Signal(msgRcvLatch3);
-                }
-            );
-
-            var flow = new FlowControlHandler();
-            IChannel server = await NewServer(false, flow, handler);
-            IChannel client = await NewClient(server.LocalAddress);
-            try
-            {
-                // The client connection on the server side
-                mre.Wait(TimeSpan.FromSeconds(1));
-                IChannel peer = Interlocked.Exchange(ref channel, null);
-
-                // Confirm that the queue is empty
-                Assert.True(flow.IsQueueEmpty);
-                // Request read 3 times
-                peer.Read();
-                peer.Read();
-                peer.Read();
-
-                // Write the message
-                client.WriteAndFlushAsync(NewOneMessage()).GetAwaiter().GetResult();
-
-                // channelRead(1)
-                Assert.True(msgRcvLatch1.Wait(TimeSpan.FromSeconds(1)));
-                // channelRead(2)
-                Assert.True(msgRcvLatch2.Wait(TimeSpan.FromSeconds(1)));
-                // channelRead(3)
-                Assert.True(msgRcvLatch3.Wait(TimeSpan.FromSeconds(1)));
                 Assert.True(flow.IsQueueEmpty);
             }
             finally
