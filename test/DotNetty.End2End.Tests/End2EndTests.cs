@@ -54,7 +54,7 @@ namespace DotNetty.End2End.Tests
             Func<Task> closeServerFunc = await this.StartServerAsync(true, ch =>
             {
                 ch.Pipeline.AddLast("server logger", new LoggingHandler("SERVER"));
-                ch.Pipeline.AddLast("server tls", TlsHandler.Server(tlsCertificate));
+                ch.Pipeline.AddLast("server tls", TlsHandler.Server(tlsCertificate, true));
                 ch.Pipeline.AddLast("server logger2", new LoggingHandler("SER***"));
                 ch.Pipeline.AddLast("server prepender", new LengthFieldPrepender2(2));
                 ch.Pipeline.AddLast("server decoder", new LengthFieldBasedFrameDecoder2(ushort.MaxValue, 0, 2, 0, 2));
@@ -72,7 +72,7 @@ namespace DotNetty.End2End.Tests
                     string targetHost = tlsCertificate.GetNameInfo(X509NameType.DnsName, false);
                     var clientTlsSettings = new ClientTlsSettings(targetHost);
                     ch.Pipeline.AddLast("client logger", new LoggingHandler("CLIENT"));
-                    ch.Pipeline.AddLast("client tls", new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), clientTlsSettings));
+                    ch.Pipeline.AddLast("client tls", new TlsHandler(clientTlsSettings.AllowAnyServerCertificate()));
                     ch.Pipeline.AddLast("client logger2", new LoggingHandler("CLI***"));
                     ch.Pipeline.AddLast("client prepender", new LengthFieldPrepender2(2));
                     ch.Pipeline.AddLast("client decoder", new LengthFieldBasedFrameDecoder2(ushort.MaxValue, 0, 2, 0, 2));
@@ -124,7 +124,7 @@ namespace DotNetty.End2End.Tests
             {
                 serverChannel = ch;
                 ch.Pipeline.AddLast("server logger", new LoggingHandler("SERVER"));
-                ch.Pipeline.AddLast("server tls", TlsHandler.Server(tlsCertificate));
+                ch.Pipeline.AddLast("server tls", TlsHandler.Server(tlsCertificate, true));
                 ch.Pipeline.AddLast("server logger2", new LoggingHandler("SER***"));
                 ch.Pipeline.AddLast(
                     MqttEncoder.Instance,
@@ -144,7 +144,7 @@ namespace DotNetty.End2End.Tests
                     var clientTlsSettings = new ClientTlsSettings(targetHost);
 
                     ch.Pipeline.AddLast("client logger", new LoggingHandler("CLIENT"));
-                    ch.Pipeline.AddLast("client tls", new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), clientTlsSettings));
+                    ch.Pipeline.AddLast("client tls", new TlsHandler(clientTlsSettings.AllowAnyServerCertificate()));
                     ch.Pipeline.AddLast("client logger2", new LoggingHandler("CLI***"));
                     ch.Pipeline.AddLast(
                         MqttEncoder.Instance,

@@ -38,7 +38,6 @@
                 + $"\nProcessor Count : {Environment.ProcessorCount}\n");
 
             bool useLibuv = ServerSettings.UseLibuv;
-            useLibuv = false;
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

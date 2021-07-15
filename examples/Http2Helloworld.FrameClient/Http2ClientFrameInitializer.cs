@@ -26,17 +26,15 @@
             var pipeline = ch.Pipeline;
             if (_cert is object)
             {
-                pipeline.AddLast("tls", new TlsHandler(
-                    stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true),
-                    new ClientTlsSettings(_targetHost)
+                var tlsSettings = new ClientTlsSettings(_targetHost)
+                {
+                    ApplicationProtocols = new List<SslApplicationProtocol>(new[]
                     {
-                        ApplicationProtocols = new List<SslApplicationProtocol>(new[]
-                        {
-                            SslApplicationProtocol.Http2,
-                            //SslApplicationProtocol.Http11
-                        })
-                    }
-                ));
+                        SslApplicationProtocol.Http2,
+                        SslApplicationProtocol.Http11
+                    })
+                }.AllowAnyServerCertificate();
+                pipeline.AddLast("tls", new TlsHandler(tlsSettings));
             }
             var build = Http2FrameCodecBuilder.ForClient();
             build.InitialSettings = Http2Settings.DefaultSettings(); // this is the default, but shows it can be changed.

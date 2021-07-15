@@ -33,6 +33,7 @@ namespace DotNetty.Handlers.Tls
     using System.Net.Security;
     using System.Runtime.CompilerServices;
     using System.Security.Cryptography.X509Certificates;
+    using System.Security.Authentication;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Codecs;
@@ -51,20 +52,24 @@ namespace DotNetty.Handlers.Tls
         private readonly ClientTlsSettings _clientSettings;
         private readonly X509Certificate _serverCertificate;
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
-        private readonly bool _hasHttp2Protocol;
         private readonly Func<IChannelHandlerContext, string, X509Certificate2> _serverCertificateSelector;
         private readonly Func<IChannelHandlerContext, string, X509CertificateCollection, X509Certificate, string[], X509Certificate2> _userCertSelector;
 #endif
 
-        private readonly SslStream _sslStream;
+        private SslStream _sslStream;
         private readonly MediationStream _mediationStream;
+        // 有可能在 HandleHandshakeCompleted 调用之前，由 wrap/unwrap 触发握手失败
+        private readonly DefaultPromise _handshakePromise;
         private readonly DefaultPromise _closeFuture;
 
-        private BatchingPendingWriteQueue _pendingUnencryptedWrites;
+        private SslHandlerCoalescingBufferQueue _pendingUnencryptedWrites;
 
-        private TimeSpan _closeNotifyFlushTimeout = TimeSpan.FromMilliseconds(3000);
-        private TimeSpan _closeNotifyReadTimeout = TimeSpan.Zero;
+        #region not yet support
+        //private TimeSpan _closeNotifyFlushTimeout = TimeSpan.FromMilliseconds(3000);
+        //private TimeSpan _closeNotifyReadTimeout = TimeSpan.Zero;
+        #endregion
         private bool _outboundClosed;
+        private bool _closeNotify;
 
         private IChannelHandlerContext v_capturedContext;
         private IChannelHandlerContext CapturedContext
@@ -81,6 +86,10 @@ namespace DotNetty.Handlers.Tls
             get => Volatile.Read(ref v_state);
             set => Interlocked.Exchange(ref v_state, value);
         }
+
+        public Task CloseCompletion => _closeFuture.Task;
+
+        public Task HandshakeCompletion => _handshakePromise.Task;
 
         public TlsHandler(TlsSettings settings)
           : this(stream => CreateSslStream(settings, stream), settings)
@@ -107,44 +116,35 @@ namespace DotNetty.Handlers.Tls
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
                 _serverCertificateSelector = _serverSettings.ServerCertificateSelector;
                 if (_serverCertificate is null && _serverCertificateSelector is null)
-                {
-                    ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
-                }
-                var serverApplicationProtocols = _serverSettings.ApplicationProtocols;
-                if (serverApplicationProtocols is object)
-                {
-                    _hasHttp2Protocol = serverApplicationProtocols.Contains(SslApplicationProtocol.Http2);
-                }
 #else
                 if (_serverCertificate is null)
+#endif
                 {
                     ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
                 }
-#endif
             }
             _clientSettings = settings as ClientTlsSettings;
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
             if (_clientSettings is object)
             {
-                var clientApplicationProtocols = _clientSettings.ApplicationProtocols;
-                _hasHttp2Protocol = clientApplicationProtocols is object && clientApplicationProtocols.Contains(SslApplicationProtocol.Http2);
                 _userCertSelector = _clientSettings.UserCertSelector;
             }
 #endif
             _closeFuture = new DefaultPromise();
+            _handshakePromise = new DefaultPromise();
             _mediationStream = new MediationStream(this);
             _sslStream = sslStreamFactory(_mediationStream);
         }
 
         // using workaround mentioned here: https://github.com/dotnet/corefx/issues/4510
-        public X509Certificate2 LocalCertificate => _sslStream.LocalCertificate as X509Certificate2 ?? new X509Certificate2(_sslStream.LocalCertificate?.Export(X509ContentType.Cert));
+        public X509Certificate2 LocalCertificate => _sslStream is object ? _sslStream.LocalCertificate as X509Certificate2 ?? new X509Certificate2(_sslStream.LocalCertificate?.Export(X509ContentType.Cert)) : null;
 
-        public X509Certificate2 RemoteCertificate => _sslStream.RemoteCertificate as X509Certificate2 ?? new X509Certificate2(_sslStream.RemoteCertificate?.Export(X509ContentType.Cert));
+        public X509Certificate2 RemoteCertificate => _sslStream is object ? _sslStream.RemoteCertificate as X509Certificate2 ?? new X509Certificate2(_sslStream.RemoteCertificate?.Export(X509ContentType.Cert)) : null;
 
         public bool IsServer => _isServer;
 
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
-        public SslApplicationProtocol NegotiatedApplicationProtocol => _sslStream.NegotiatedApplicationProtocol;
+        public SslApplicationProtocol NegotiatedApplicationProtocol => _sslStream is object ? _sslStream.NegotiatedApplicationProtocol : default;
 #endif
 
         public override void ChannelActive(IChannelHandlerContext context)
@@ -159,14 +159,28 @@ namespace DotNetty.Handlers.Tls
 
         public override void ChannelInactive(IChannelHandlerContext context)
         {
+            //var cause = _handshakePromise.Task.Exception?.InnerException;
+            //var handshakeFailed = cause is object;
+
             // Make sure to release SslStream,
             // and notify the handshake future if the connection has been closed during handshake.
-            HandleFailure(s_channelClosedException, !_outboundClosed, State.HasAny(TlsHandlerState.AuthenticationStarted));
+            HandleFailure(context, s_channelClosedException, !_outboundClosed, State.HasAny(TlsHandlerState.AuthenticationStarted), false);
 
             // Ensure we always notify the sslClosePromise as well
             NotifyClosePromise(s_channelClosedException);
 
             base.ChannelInactive(context);
+            //try
+            //{
+            //    base.ChannelInactive(context);
+            //}
+            //catch (DecoderException exc)
+            //{
+            //    if (!handshakeFailed || (exc.InnerException is not AuthenticationException))
+            //    {
+            //        throw;
+            //    }
+            //}
         }
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
@@ -182,7 +196,7 @@ namespace DotNetty.Handlers.Tls
             }
             else
             {
-                base.ExceptionCaught(context, exception);
+                context.FireExceptionCaught(exception);
             }
         }
 
@@ -195,7 +209,7 @@ namespace DotNetty.Handlers.Tls
         {
             base.HandlerAdded(context);
             CapturedContext = context;
-            _pendingUnencryptedWrites = new BatchingPendingWriteQueue(context, c_unencryptedWriteBatchSize);
+            _pendingUnencryptedWrites = new SslHandlerCoalescingBufferQueue(this, context.Channel, 16);
             if (context.Channel.IsActive && !_isServer)
             {
                 // todo: support delayed initialization on an existing/active channel if in client mode
@@ -205,12 +219,32 @@ namespace DotNetty.Handlers.Tls
 
         protected override void HandlerRemovedInternal(IChannelHandlerContext context)
         {
-            if (!_pendingUnencryptedWrites.IsEmpty)
+            var pendingUnencryptedWrites = _pendingUnencryptedWrites;
+            _pendingUnencryptedWrites = null;
+            if (!pendingUnencryptedWrites.IsEmpty())
             {
                 // Check if queue is not empty first because create a new ChannelException is expensive
-                _pendingUnencryptedWrites.RemoveAndFailAll(GetChannelException_Write_has_failed());
+                pendingUnencryptedWrites.ReleaseAndFailAll(GetChannelException_Write_has_failed());
             }
-            _pendingUnencryptedWrites = null;
+
+            AuthenticationException cause = null;
+            // If the handshake is not done yet we should fail the handshake promise and notify the rest of the pipeline.
+            if (!_handshakePromise.IsCompleted)
+            {
+                cause = new AuthenticationException("SslHandler removed before handshake completed");
+                if (_handshakePromise.TrySetException(cause))
+                {
+                    context.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
+                }
+            }
+            if (!_closeFuture.IsCompleted)
+            {
+                if (cause is null)
+                {
+                    cause = new AuthenticationException("SslHandler removed before handshake completed");
+                }
+                NotifyClosePromise(cause);
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -219,17 +253,19 @@ namespace DotNetty.Handlers.Tls
             return new ChannelException("Write has failed due to TlsHandler being removed from channel pipeline.");
         }
 
-        //public override void Disconnect(IChannelHandlerContext context, IPromise promise)
-        //{
-        //    CloseOutboundAndChannel(context, promise, true);
-        //}
+        public override void Disconnect(IChannelHandlerContext context, IPromise promise)
+        {
+            CloseOutboundAndChannel(context, promise, true);
+        }
 
         public override void Close(IChannelHandlerContext context, IPromise promise)
         {
-            //CloseOutboundAndChannel(context, promise, false);
-            _ = _closeFuture.TryComplete();
-            _sslStream.Dispose();
-            base.Close(context, promise);
+            CloseOutboundAndChannel(context, promise, false);
+            //_ = _closeFuture.TryComplete();
+            //_mediationStream.Dispose();
+            //_sslStream?.Dispose();
+            //_sslStream = null;
+            //base.Close(context, promise);
         }
 
         private void NotifyClosePromise(Exception cause)
@@ -250,7 +286,8 @@ namespace DotNetty.Handlers.Tls
             }
         }
 
-        private void HandleFailure(Exception cause, bool closeInbound = true, bool notify = true)
+        private void HandleFailure(IChannelHandlerContext context, Exception cause,
+            bool closeInbound = true, bool notify = true, bool alwaysFlushAndClose = false)
         {
             try
             {
@@ -262,7 +299,8 @@ namespace DotNetty.Handlers.Tls
                 {
                     try
                     {
-                        _sslStream.Dispose();
+                        _sslStream?.Dispose();
+                        _sslStream = null;
                     }
                     catch (Exception)
                     {
@@ -277,170 +315,173 @@ namespace DotNetty.Handlers.Tls
                         //    //Logger.Debug("{} SSLEngine.closeInbound() raised an exception.", ctx.channel(), e);
                         //}
                     }
+                    _pendingSslStreamReadBuffer.SafeRelease();
+                    _pendingSslStreamReadBuffer = null;
+                    _pendingSslStreamReadFuture = null;
                 }
-                _pendingSslStreamReadBuffer?.SafeRelease();
-                _pendingSslStreamReadBuffer = null;
-                _pendingSslStreamReadFuture = null;
 
-                NotifyHandshakeFailure(cause, notify);
+                if (_handshakePromise.TrySetException(cause) || alwaysFlushAndClose)
+                {
+                    TlsUtils.NotifyHandshakeFailure(context, cause, notify);
+                }
             }
             finally
             {
-                if (_pendingUnencryptedWrites is object)
+                // Ensure we remove and fail all pending writes in all cases and so release memory quickly.
+                _pendingUnencryptedWrites?.ReleaseAndFailAll(cause);
+            }
+        }
+
+        private void CloseOutboundAndChannel(IChannelHandlerContext context, IPromise promise, bool disconnect)
+        {
+            _outboundClosed = true;
+            _mediationStream.Dispose();
+            _sslStream?.Dispose();
+            _sslStream = null;
+
+            if (!context.Channel.IsActive)
+            {
+                if (disconnect)
                 {
-                    // Ensure we remove and fail all pending writes in all cases and so release memory quickly.
-                    _pendingUnencryptedWrites.RemoveAndFailAll(cause);
+                    context.DisconnectAsync(promise);
+                }
+                else
+                {
+                    context.CloseAsync(promise);
+                }
+                return;
+            }
+
+            var closeNotifyPromise = context.NewPromise();
+
+            try
+            {
+                Flush(context, closeNotifyPromise);
+            }
+            finally
+            {
+                if (!_closeNotify)
+                {
+                    _closeNotify = true;
+                    // It's important that we do not pass the original ChannelPromise to safeClose(...) as when flush(....)
+                    // throws an Exception it will be propagated to the AbstractChannelHandlerContext which will try
+                    // to fail the promise because of this. This will then fail as it was already completed by safeClose(...).
+                    // We create a new ChannelPromise and try to notify the original ChannelPromise
+                    // once it is complete. If we fail to do so we just ignore it as in this case it was failed already
+                    // because of a propagated Exception.
+                    //
+                    // See https://github.com/netty/netty/issues/5931
+                    var p = context.NewPromise();
+                    p.Task.LinkOutcome(promise);
+                    SafeClose(context, closeNotifyPromise, p);
+                }
+                else
+                {
+                    // We already handling the close_notify so just attach the promise to the sslClosePromise.
+                    if (_closeFuture.IsCompleted)
+                    {
+                        promise.TryComplete();
+                    }
+                    else
+                    {
+                        _closeFuture.Task.ContinueWith(s_closeCompletionContinuationAction, promise, TaskContinuationOptions.ExecuteSynchronously);
+                    }
                 }
             }
         }
 
+        private static readonly Action<Task, object> s_closeCompletionContinuationAction = (t, s) => ((IPromise)s).TryComplete();
+
+        private void SafeClose(IChannelHandlerContext ctx, IPromise flushFuture, IPromise promise)
+        {
+            if (!ctx.Channel.IsActive)
+            {
+                ctx.CloseAsync(promise);
+                return;
+            }
+
+            AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), promise);
+            #region not yet support
+            //IScheduledTask timeoutFuture = null;
+            //if (!flushFuture.IsCompleted)
+            //{
+            //    if (_closeNotifyFlushTimeout > TimeSpan.Zero)
+            //    {
+            //        timeoutFuture = ctx.Executor.Schedule(ScheduledForceCloseConnectionAction, (ctx, flushFuture, promise), _closeNotifyFlushTimeout);
+            //    }
+            //}
+            //// Close the connection if close_notify is sent in time.
+            //flushFuture.Task.ContinueWith(CloseConnectionAction, (ctx, promise, timeoutFuture, this), TaskContinuationOptions.ExecuteSynchronously);
+            #endregion
+        }
+
         #region not yet support
-
-        //private void CloseOutboundAndChannel(IChannelHandlerContext context, IPromise promise, bool disconnect)
-        //{
-        //    _outboundClosed = true;
-
-        //    if (!context.Channel.Active)
-        //    {
-        //        if (disconnect)
-        //        {
-        //            context.DisconnectAsync(promise);
-        //        }
-        //        else
-        //        {
-        //            context.CloseAsync(promise);
-        //        }
-        //        return;
-        //    }
-
-        //    var closeNotifyPromise = context.NewPromise();
-
-        //    try
-        //    {
-        //        Flush(context, closeNotifyPromise);
-        //    }
-        //    finally
-        //    {
-        //        // It's important that we do not pass the original ChannelPromise to safeClose(...) as when flush(....)
-        //        // throws an Exception it will be propagated to the AbstractChannelHandlerContext which will try
-        //        // to fail the promise because of this. This will then fail as it was already completed by safeClose(...).
-        //        // We create a new ChannelPromise and try to notify the original ChannelPromise
-        //        // once it is complete. If we fail to do so we just ignore it as in this case it was failed already
-        //        // because of a propagated Exception.
-        //        //
-        //        // See https://github.com/netty/netty/issues/5931
-        //        SafeClose(context, closeNotifyPromise.Task, context.NewPromise());
-        //    }
-        //}
-
-        //private void SafeClose(IChannelHandlerContext ctx, Task flushFuture, IPromise promise)
-        //{
-        //    if (!ctx.Channel.Active)
-        //    {
-        //        _sslStream.Dispose();
-        //        ctx.CloseAsync(promise);
-        //        return;
-        //    }
-
-        //    IScheduledTask timeoutFuture = null;
-        //    if (!flushFuture.IsCompleted)
-        //    {
-        //        if (_closeNotifyFlushTimeout > TimeSpan.Zero)
-        //        {
-        //            timeoutFuture = ctx.Executor.Schedule(ScheduledForceCloseConnectionAction, Tuple.Create(ctx, flushFuture, promise, _sslStream), _closeNotifyFlushTimeout);
-        //        }
-        //        // Close the connection if close_notify is sent in time.
-        //        flushFuture.ContinueWith(CloseConnectionAction, Tuple.Create(ctx, promise, timeoutFuture, this), TaskContinuationOptions.ExecuteSynchronously);
-        //    }
-        //    else
-        //    {
-        //        InternalCloseConnection(flushFuture, Tuple.Create(ctx, promise, timeoutFuture, this));
-        //    }
-        //}
-
         //private static readonly Action<object> ScheduledForceCloseConnectionAction = ScheduledForceCloseConnection;
         //private static void ScheduledForceCloseConnection(object s)
         //{
-        //    var wrapped = (Tuple<IChannelHandlerContext, Task, IPromise, SslStream>)s;
+        //    var (ctx, flushFuture, promise) = ((IChannelHandlerContext, IPromise, IPromise))s;
         //    // May be done in the meantime as cancel(...) is only best effort.
-        //    if (!wrapped.Item2.IsCompleted)
+        //    if (!flushFuture.IsCompleted)
         //    {
-        //        wrapped.Item4.Dispose();
-
-        //        var ctx = wrapped.Item1;
         //        s_logger.Warn("{} Last write attempt timed out; force-closing the connection.", ctx.Channel);
-        //        AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), wrapped.Item3);
+        //        AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), promise);
         //    }
         //}
 
         //private static readonly Action<Task, object> CloseConnectionAction = InternalCloseConnection;
         //private static void InternalCloseConnection(Task t, object s)
         //{
-        //    var wrapped = (Tuple<IChannelHandlerContext, IPromise, IScheduledTask, TlsHandler>)s;
+        //    var (ctx, promise, timeoutFuture, owner) = ((IChannelHandlerContext, IPromise, IScheduledTask, TlsHandler))s;
 
-        //    wrapped.Item3?.Cancel();
+        //    timeoutFuture?.Cancel();
 
-        //    var ctx = wrapped.Item1;
-        //    var promise = wrapped.Item2;
-        //    var owner = wrapped.Item4;
         //    var closeNotifyReadTimeout = owner._closeNotifyReadTimeout;
         //    if (closeNotifyReadTimeout <= TimeSpan.Zero)
         //    {
-        //        owner._sslStream.Dispose();
         //        // Trigger the close in all cases to make sure the promise is notified
         //        // See https://github.com/netty/netty/issues/2358
         //        AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), promise);
         //    }
         //    else
         //    {
-        //        owner._sslStream.Dispose();
-        //        AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), promise);
+        //        var sslClosePromise = owner._closeFuture;
+        //        IScheduledTask closeNotifyReadTimeoutFuture = null;
+        //        if (!sslClosePromise.IsCompleted)
+        //        {
+        //            closeNotifyReadTimeoutFuture = ctx.Executor.Schedule(ScheduledForceCloseConnection0Action, (ctx, sslClosePromise, promise, owner), closeNotifyReadTimeout);
+        //        }
+        //        // Do the close once the we received the close_notify.
+        //        sslClosePromise.Task.ContinueWith(t =>
+        //        {
+        //            closeNotifyReadTimeoutFuture?.Cancel();
 
-        //        // TODO notifyClosure from Unwraps inbound SSL records
-        //        //var sslClosePromise = owner._closeFuture;
-        //        //IScheduledTask closeNotifyReadTimeoutFuture = null;
-        //        //if (!sslClosePromise.IsCompleted)
-        //        //{
-        //        //    closeNotifyReadTimeoutFuture = ctx.Executor.Schedule(ScheduledForceCloseConnection0Action, Tuple.Create(ctx, sslClosePromise, promise, owner), closeNotifyReadTimeout);
-        //        //}
-        //        //// Do the close once the we received the close_notify.
-        //        //sslClosePromise.Task.ContinueWith(t =>
-        //        //{
-        //        //    closeNotifyReadTimeoutFuture?.Cancel();
-
-        //        //    owner._sslStream.Dispose();
-        //        //    AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), promise);
-        //        //}, TaskContinuationOptions.ExecuteSynchronously);
+        //            AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), promise);
+        //        }, TaskContinuationOptions.ExecuteSynchronously);
         //    }
         //}
 
         //private static readonly Action<object> ScheduledForceCloseConnection0Action = ScheduledForceCloseConnection0;
         //private static void ScheduledForceCloseConnection0(object s)
         //{
-        //    var wrapped = (Tuple<IChannelHandlerContext, DefaultPromise, IPromise, TlsHandler>)s;
+        //    var (ctx, sslClosePromise, promise, owner) = ((IChannelHandlerContext, DefaultPromise, IPromise, TlsHandler))s;
         //    // May be done in the meantime as cancel(...) is only best effort.
-        //    if (!wrapped.Item2.IsCompleted)
+        //    if (!sslClosePromise.IsCompleted)
         //    {
-        //        var owner = wrapped.Item4;
-        //        owner._sslStream.Dispose();
-
-        //        var ctx = wrapped.Item1;
         //        s_logger.Warn("{} did not receive close_notify in {}ms; force-closing the connection.", ctx.Channel, owner._closeNotifyReadTimeout);
-        //        AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), wrapped.Item3);
+        //        AddCloseListener(ctx.CloseAsync(ctx.NewPromise()), promise);
         //    }
         //}
-
-        //private static void AddCloseListener(Task future, IPromise promise)
-        //{
-        //    // We notify the promise in the ChannelPromiseNotifier as there is a "race" where the close(...) call
-        //    // by the timeoutFuture and the close call in the flushFuture listener will be called. Because of
-        //    // this we need to use trySuccess() and tryFailure(...) as otherwise we can cause an
-        //    // IllegalStateException.
-        //    // Also we not want to log if the notification happens as this is expected in some cases.
-        //    // See https://github.com/netty/netty/issues/5598
-        //    future.LinkOutcome(promise);
-        //}
-
         #endregion
+
+        private static void AddCloseListener(Task future, IPromise promise)
+        {
+            // We notify the promise in the ChannelPromiseNotifier as there is a "race" where the close(...) call
+            // by the timeoutFuture and the close call in the flushFuture listener will be called. Because of
+            // this we need to use trySuccess() and tryFailure(...) as otherwise we can cause an
+            // IllegalStateException.
+            // Also we not want to log if the notification happens as this is expected in some cases.
+            // See https://github.com/netty/netty/issues/5598
+            future.LinkOutcome(promise);
+        }
     }
 }

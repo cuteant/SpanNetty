@@ -45,6 +45,8 @@ namespace DotNetty.Transport.Channels.Embedded
 
         public Task RegisterAsync(IChannel channel) => channel.Unsafe.RegisterAsync(this);
 
+        protected override bool HasTasks => _tasks.NonEmpty;
+
         public override bool IsShuttingDown => false;
 
         public override Task TerminationCompletion => ThrowHelper.FromNotSupportedException();

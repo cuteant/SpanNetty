@@ -84,7 +84,7 @@ namespace DotNetty.Transport.Channels.Groups
                         {
                             IChannel c = ft.Key;
                             Task f = ft.Value;
-                            if (f.IsFaulted || f.IsCanceled)
+                            if (f.IsFailure())
                             {
                                 if (f.Exception is object)
                                 {

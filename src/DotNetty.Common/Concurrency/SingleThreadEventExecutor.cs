@@ -216,10 +216,8 @@ namespace DotNetty.Common.Concurrency
         /// </summary>
         public int BacklogLength => PendingTasks;
 
-        /// <summary>
-        /// TBD
-        /// </summary>
-        protected virtual bool HasTasks => _taskQueue.NonEmpty;
+        /// <inheritdoc />
+        protected override bool HasTasks => _taskQueue.NonEmpty;
 
         /// <summary>
         /// Gets the number of tasks that are pending for processing.
@@ -239,6 +237,9 @@ namespace DotNetty.Common.Concurrency
 
         /// <inheritdoc />
         public override Task TerminationCompletion => _terminationCompletionSource.Task;
+
+        /// <summary>TBD</summary>
+        protected IPromise TerminationCompletionSource => _terminationCompletionSource;
 
         /// <inheritdoc />
         public override bool IsInEventLoop(Thread t) => _thread == t;
@@ -276,7 +277,7 @@ namespace DotNetty.Common.Concurrency
         {
             try
             {
-                _ = Interlocked.CompareExchange(ref v_executionState, StartedState, NotStartedState);
+                _ = CompareAndSetExecutionState(NotStartedState, StartedState);
 
                 bool success = false;
                 UpdateLastExecutionTime();
@@ -297,7 +298,7 @@ namespace DotNetty.Common.Concurrency
             catch (Exception ex)
             {
                 Logger.ExecutionLoopFailed(_thread, ex);
-                _ = Interlocked.Exchange(ref v_executionState, TerminatedState);
+                SetExecutionState(TerminatedState);
                 _ = _terminationCompletionSource.TrySetException(ex);
             }
         }
@@ -316,17 +317,19 @@ namespace DotNetty.Common.Concurrency
             return PreciseTime.TicksToPreciseTicks(time.Ticks);
         }
 
-        protected virtual void TaskDelay(int millisecondsTimeout)
-        {
-            Thread.Sleep(millisecondsTimeout);
-        }
-
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected bool CompareAndSetExecutionState(int currentState, int newState)
         {
             return currentState == Interlocked.CompareExchange(ref v_executionState, newState, currentState);
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected void SetExecutionState(int newState)
+        {
+            _ = Interlocked.Exchange(ref v_executionState, newState);
+        }
+
+        protected void TrySetExecutionState(int newState)
         {
             var currentState = v_executionState;
             int oldState;
@@ -409,7 +412,7 @@ namespace DotNetty.Common.Concurrency
             Debug.Assert(InEventLoop);
             if (_blockingTaskQueue is null) { ThrowHelper.ThrowNotSupportedException(); }
 
-            if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
+            if (_scheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
             {
                 if (TryTakeTask(scheduledTask.DelayNanos, out IRunnable task)) { return task; }
             }
@@ -428,7 +431,7 @@ namespace DotNetty.Common.Concurrency
         {
             for (; ; )
             {
-                if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
+                if (_scheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
                 {
                     if (TryTakeTask(scheduledTask.DelayNanos, out IRunnable task)) { return task; }
                 }
@@ -465,7 +468,7 @@ namespace DotNetty.Common.Concurrency
 
         protected bool FetchFromScheduledTaskQueue()
         {
-            if (ScheduledTaskQueue.IsEmpty) { return true; }
+            if (_scheduledTaskQueue.IsEmpty) { return true; }
 
             var nanoTime = PreciseTime.NanoTime();
             var scheduledTask = PollScheduledTask(nanoTime);
@@ -475,7 +478,7 @@ namespace DotNetty.Common.Concurrency
                 if (!taskQueue.TryEnqueue(scheduledTask))
                 {
                     // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
-                    _ = ScheduledTaskQueue.TryEnqueue(scheduledTask);
+                    _ = _scheduledTaskQueue.TryEnqueue(scheduledTask);
                     return false;
                 }
                 scheduledTask = PollScheduledTask(nanoTime);
@@ -488,7 +491,7 @@ namespace DotNetty.Common.Concurrency
         /// </summary>
         private bool ExecuteExpiredScheduledTasks()
         {
-            if (ScheduledTaskQueue.IsEmpty) { return false; }
+            if (_scheduledTaskQueue.IsEmpty) { return false; }
 
             var nanoTime = PreciseTime.NanoTime();
             var scheduledTask = PollScheduledTask(nanoTime);
@@ -943,7 +946,7 @@ namespace DotNetty.Common.Concurrency
                 // TODO: Change the behavior of takeTask() so that it returns on timeout.
                 _taskQueue.TryEnqueue(WakeupTask);
 
-                TaskDelay(100);
+                Thread.Sleep(100);
 
                 return false;
             }
@@ -953,9 +956,67 @@ namespace DotNetty.Common.Concurrency
             return true;
         }
 
+        protected ShutdownStatus DoShuttingdown()
+        {
+            if (!InEventLoop) { ThrowHelper.ThrowInvalidOperationException_Must_be_invoked_from_an_event_loop(); }
+
+            CancelScheduledTasks();
+
+            if (0ul >= (ulong)_gracefulShutdownStartTime)
+            {
+                _gracefulShutdownStartTime = GetTimeFromStart();
+            }
+
+            if (RunAllTasks() || RunShutdownHooks())
+            {
+                if (IsShutdown)
+                {
+                    // Executor shut down - no new tasks anymore.
+                    return ShutdownStatus.Completed;
+                }
+
+                // There were tasks in the queue. Wait a little bit more until no tasks are queued for the quiet period or
+                // terminate if the quiet period is 0.
+                // See https://github.com/netty/netty/issues/4241
+                if (0ul >= (ulong)Volatile.Read(ref v_gracefulShutdownQuietPeriod))
+                {
+                    return ShutdownStatus.Completed;
+                }
+                _taskQueue.TryEnqueue(WakeupTask);
+                return ShutdownStatus.Progressing;
+            }
+
+            long nanoTime = GetTimeFromStart();
+
+            if (IsShutdown || (nanoTime - _gracefulShutdownStartTime > Volatile.Read(ref v_gracefulShutdownTimeout)))
+            {
+                return ShutdownStatus.Completed;
+            }
+
+            if (nanoTime - _lastExecutionTime <= Volatile.Read(ref v_gracefulShutdownQuietPeriod))
+            {
+                // Check if any tasks were added to the queue every 100ms.
+                // TODO: Change the behavior of takeTask() so that it returns on timeout.
+                _taskQueue.TryEnqueue(WakeupTask);
+
+                return ShutdownStatus.WaitingForNextPeriod;
+            }
+
+            // No tasks were added for last quiet period - hopefully safe to shut down.
+            // (Hopefully because we really cannot make a guarantee that there will be no execute() calls by a user.)
+            return ShutdownStatus.Completed;
+        }
+
+        protected enum ShutdownStatus
+        {
+            Progressing,
+            WaitingForNextPeriod,
+            Completed,
+        }
+
         protected void CleanupAndTerminate(bool success)
         {
-            SetExecutionState(ShuttingDownState);
+            TrySetExecutionState(ShuttingDownState);
 
             // Check if confirmShutdown() was called at the end of the loop.
             if (success && (0ul >= (ulong)_gracefulShutdownStartTime))
@@ -980,7 +1041,7 @@ namespace DotNetty.Common.Concurrency
 
                     // Now we want to make sure no more tasks can be added from this point. This is
                     // achieved by switching the state. Any new tasks beyond this point will be rejected.
-                    SetExecutionState(ShutdownState);
+                    TrySetExecutionState(ShutdownState);
 
                     // We have the final set of tasks in the queue now, no more can be added, run all remaining.
                     // No need to loop here, this is the final pass.
@@ -995,7 +1056,7 @@ namespace DotNetty.Common.Concurrency
                 }
                 finally
                 {
-                    _ = Interlocked.Exchange(ref v_executionState, TerminatedState);
+                    SetExecutionState(TerminatedState);
                     if (!_threadLock.IsSet) { _ = _threadLock.Signal(); }
                     int numUserTasks = DrainTasks();
                     if ((uint)numUserTasks > 0u && Logger.WarnEnabled)

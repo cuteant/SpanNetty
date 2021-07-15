@@ -26,7 +26,6 @@
  * Licensed under the MIT license. See LICENSE file in the project root for full license information.
  */
 
-
 namespace DotNetty.Transport.Channels
 {
     using System;
@@ -162,7 +161,7 @@ namespace DotNetty.Transport.Channels
         [MethodImpl(MethodImplOptions.NoInlining)]
         private Dictionary<IEventExecutorGroup, IEventExecutor> EnsureExecutorMapCreated()
         {
-            return _childExecutors = new Dictionary<IEventExecutorGroup, IEventExecutor>(4, ReferenceEqualityComparer.Default);
+            return _childExecutors = new Dictionary<IEventExecutorGroup, IEventExecutor>(4, ReferenceEqualityComparer.Instance);
         }
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<IChannelHandler>)this).GetEnumerator();
@@ -1125,7 +1124,7 @@ namespace DotNetty.Transport.Channels
             finally
             {
 #endif
-            _ = ReferenceCountUtil.Release(msg);
+                _ = ReferenceCountUtil.Release(msg);
 #if DEBUG
             }
 #endif

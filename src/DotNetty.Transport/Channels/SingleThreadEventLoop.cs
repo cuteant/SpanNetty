@@ -158,7 +158,7 @@ namespace DotNetty.Transport.Channels
             }
 
             // revisit queue as producer might have put a task in meanwhile
-            if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
+            if (TryPeekScheduledTask(out IScheduledRunnable nextScheduledTask))
             {
                 var delayNanos = nextScheduledTask.DelayNanos;
                 if ((ulong)delayNanos > 0UL) // delayNanos 为非负值

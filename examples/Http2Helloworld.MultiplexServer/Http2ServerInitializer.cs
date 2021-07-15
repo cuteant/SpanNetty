@@ -53,23 +53,17 @@
          */
         void ConfigureSsl(IChannel ch)
         {
-            ch.Pipeline.AddLast(new TlsHandler(new ServerTlsSettings(this.tlsCertificate)
-#if NETCOREAPP_2_0_GREATER
+            var tlsSettings = new ServerTlsSettings(this.tlsCertificate)
             {
                 ApplicationProtocols = new List<SslApplicationProtocol>(new[]
-                        {
-                            SslApplicationProtocol.Http2,
-                            SslApplicationProtocol.Http11
-                        })
-            }
-#endif
-                ));
-#if NETCOREAPP_2_0_GREATER
+                {
+                    SslApplicationProtocol.Http2,
+                    SslApplicationProtocol.Http11
+                })
+            };
+            //tlsSettings.AllowAnyClientCertificate();
+            ch.Pipeline.AddLast(new TlsHandler(tlsSettings));
             ch.Pipeline.AddLast(new Http2OrHttpHandler());
-#else
-            this.ConfigureClearText(ch);
-#endif
-
         }
 
         void ConfigureClearText(IChannel ch)

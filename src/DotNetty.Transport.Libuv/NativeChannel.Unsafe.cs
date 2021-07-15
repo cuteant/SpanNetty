@@ -263,10 +263,10 @@ namespace DotNetty.Transport.Libuv
 
                 try
                 {
-                    ChannelOutboundBuffer input = OutboundBuffer;
+                    var input = OutboundBuffer;
                     if (error is object)
                     {
-                        input.FailFlushed(error, true);
+                        input?.FailFlushed(error, true);
                         _ = ch.Pipeline.FireExceptionCaught(error);
                         Close(VoidPromise(), ThrowHelper.GetChannelException_FailedToWrite(error), WriteClosedChannelException, false);
                     }
@@ -274,7 +274,7 @@ namespace DotNetty.Transport.Libuv
                     {
                         if (bytesWritten > 0)
                         {
-                            input.RemoveBytes(bytesWritten);
+                            input?.RemoveBytes(bytesWritten);
                         }
                     }
                 }

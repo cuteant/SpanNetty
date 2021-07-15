@@ -155,7 +155,7 @@ namespace DotNetty.Common.Concurrency
         {
             Debug.Assert(_executor.InEventLoop);
             ++_doneCount;
-            if (!future.IsSuccess() && _cause is null)
+            if (future.IsFailure() && _cause is null)
             {
                 _cause = future.Exception.InnerException;
             }
