@@ -358,7 +358,7 @@ namespace DotNetty.Codecs.Http
         static readonly Action<Task, object> CloseOnFailureAction = (t, s) => CloseOnFailure(t, s);
         static void CloseOnFailure(Task t, object s)
         {
-            if (!t.IsSuccess())
+            if (t.IsFailure())
             {
                 _ = ((IChannelHandlerContext)s).Channel.CloseAsync();
             }

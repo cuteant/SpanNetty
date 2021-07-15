@@ -213,11 +213,17 @@ namespace DotNetty.Handlers.Tls
                 self.State = (oldState | TlsHandlerState.FailedAuthentication) & ~TlsHandlerState.Authenticating;
                 var taskExc = task.Exception;
                 var cause = taskExc.Unwrap();
-                if (self._handshakePromise.TrySetException(taskExc))
+                try
                 {
-                    TlsUtils.NotifyHandshakeFailure(capturedContext, cause, true);
+                    if (self._handshakePromise.TrySetException(taskExc))
+                    {
+                        TlsUtils.NotifyHandshakeFailure(capturedContext, cause, true);
+                    }
                 }
-                self._pendingUnencryptedWrites?.ReleaseAndFailAll(cause);
+                finally
+                {
+                    self._pendingUnencryptedWrites?.ReleaseAndFailAll(cause);
+                }
             }
         }
     }

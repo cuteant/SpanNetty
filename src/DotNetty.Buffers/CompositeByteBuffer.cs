@@ -740,12 +740,6 @@ namespace DotNetty.Buffers
                         return _components[0].Buffer.IsSingleIoBuffer;
                     default:
                         return false;
-                        //int count = 0;
-                        //for (int i = 0; i < size; i++)
-                        //{
-                        //    count += _components[i].Buffer.IoBufferCount;
-                        //}
-                        //return 1u >= (uint)count;
                 }
             }
         }

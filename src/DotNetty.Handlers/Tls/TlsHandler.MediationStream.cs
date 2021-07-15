@@ -81,7 +81,7 @@ namespace DotNetty.Handlers.Tls
                         _readCompletionSource = null;
                         _ = p.TrySetResult(0);
                     }
-                    _ownedInputBuffer?.SafeRelease();
+                    _ownedInputBuffer.SafeRelease();
                     _ownedInputBuffer = null;
                 }
             }

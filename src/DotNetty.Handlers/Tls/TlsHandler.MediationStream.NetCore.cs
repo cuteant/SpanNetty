@@ -139,42 +139,40 @@ namespace DotNetty.Handlers.Tls
 
                 lock (this)
                 {
-                    int length = 0;
+                    int totalRead = 0;
                     var destLen = destination.Length;
                     int readableBytes;
-                    do
-                    {
-                        var buf = _ownedInputBuffer;
-                        if (buf is object)
-                        {
-                            readableBytes = buf.ReadableBytes;
-                            if (readableBytes > 0)
-                            {
-                                readableBytes = Math.Min(readableBytes, destLen);
-                                buf.ReadBytes(destination.Slice(0, readableBytes));
-                                length += readableBytes;
-                                destLen -= readableBytes;
-                                if (!buf.IsReadable())
-                                {
-                                    buf.SafeRelease();
-                                    _ownedInputBuffer = null;
-                                }
-                                if (0u > (uint)destLen) { break; }
-                            }
-                        }
 
-                        readableBytes = SourceReadableBytes;
+                    var buf = _ownedInputBuffer;
+                    if (buf is object)
+                    {
+                        readableBytes = buf.ReadableBytes;
                         if (readableBytes > 0)
                         {
-                            readableBytes = Math.Min(readableBytes, destLen);
-                            _input.Slice(_inputOffset, readableBytes).CopyTo(destination);
-                            length += readableBytes;
-                            destLen -= readableBytes;
-                            _inputOffset += readableBytes;
+                            var read = Math.Min(readableBytes, destLen);
+                            buf.ReadBytes(destination);
+                            totalRead += read;
+                            destLen -= read;
+                            if (!buf.IsReadable())
+                            {
+                                buf.Release();
+                                _ownedInputBuffer = null;
+                            }
+                            if (0u > (uint)destLen) { return totalRead; }
                         }
-                    } while (false);
+                    }
 
-                    return length;
+                    readableBytes = SourceReadableBytes;
+                    if (readableBytes > 0)
+                    {
+                        var read = Math.Min(readableBytes, destLen);
+                        _input.Slice(_inputOffset, read).CopyTo(destination.Slice(totalRead));
+                        totalRead += read;
+                        destLen -= read;
+                        _inputOffset += read;
+                    }
+
+                    return totalRead;
                 }
             }
 

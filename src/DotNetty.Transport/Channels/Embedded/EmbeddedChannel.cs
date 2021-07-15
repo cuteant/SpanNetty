@@ -185,7 +185,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
             Task future = _loop.RegisterAsync(this);
             Debug.Assert(future.IsCompleted);
-            if (!future.IsSuccess())
+            if (future.IsFailure())
             {
                 throw future.Exception.InnerException;
             }

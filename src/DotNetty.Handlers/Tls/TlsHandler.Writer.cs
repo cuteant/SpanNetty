@@ -157,28 +157,21 @@ namespace DotNetty.Handlers.Tls
                         ? _pendingUnencryptedWrites.Remove(alloc, wrapDataSize, promise)
                         : _pendingUnencryptedWrites.RemoveFirst(promise);
                     if (buf is null) { break; }
-                    if (_sslStream is null) { break; }
 
                     try
                     {
+                        var readableBytes = buf.ReadableBytes;
+                        if (buf is CompositeByteBuffer composite && !composite.IsSingleIoBuffer)
+                        {
+                            buf = context.Allocator.Buffer(readableBytes);
+                            _ = composite.ReadBytes(buf, readableBytes);
+                            composite.Release();
+                        }
                         _lastContextWritePromise = promise;
-                        _ = buf.ReadBytes(_sslStream, buf.ReadableBytes); // this leads to FinishWrap being called 0+ times
-
-                        if (buf.IsReadable())
-                        {
-                            _pendingUnencryptedWrites.AddFirst(buf, promise);
-                            // When we add the buffer/promise pair back we need to be sure we don't complete the promise
-                            // later in finishWrap. We only complete the promise if the buffer is completely consumed.
-                            //promise = null;
-                        }
-                        else
-                        {
-                            buf.Release();
-                        }
+                        _ = buf.ReadBytes(_sslStream, readableBytes); // this leads to FinishWrap being called 0+ times
                     }
                     catch (Exception exc)
                     {
-                        buf.Release();
                         promise.TrySetException(exc);
                         // SslStream has been closed already.
                         // Any further write attempts should be denied.
@@ -187,6 +180,7 @@ namespace DotNetty.Handlers.Tls
                     }
                     finally
                     {
+                        buf.Release();
                         buf = null;
                         promise = null;
                         _lastContextWritePromise = null;
@@ -249,7 +243,6 @@ namespace DotNetty.Handlers.Tls
             }
             else
             {
-                // TODO 优化
                 future = capturedContext.WriteAndFlushAsync(Unpooled.WrappedBuffer(buffer.ToArray()), promise);
             }
             this.ReadIfNeeded(capturedContext);

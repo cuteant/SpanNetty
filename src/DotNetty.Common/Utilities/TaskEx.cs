@@ -358,6 +358,20 @@ namespace DotNetty.Common.Utilities
 #endif
         }
 
+        /// <summary>TBD</summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        public static bool IsFailure(this Task task)
+        {
+            return task.IsFaulted || task.IsCanceled;
+        }
+
+        /// <summary>TBD</summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        public static bool IsFailure<T>(this Task<T> task)
+        {
+            return task.IsFaulted || task.IsCanceled;
+        }
+
         private static readonly Action<Task> IgnoreTaskContinuation = t => { _ = t.Exception; };
 
         /// <summary>Observes and ignores a potential exception on a given Task.

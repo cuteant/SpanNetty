@@ -315,7 +315,7 @@ namespace DotNetty.Handlers.Tls
                         //    //Logger.Debug("{} SSLEngine.closeInbound() raised an exception.", ctx.channel(), e);
                         //}
                     }
-                    _pendingSslStreamReadBuffer?.SafeRelease();
+                    _pendingSslStreamReadBuffer.SafeRelease();
                     _pendingSslStreamReadBuffer = null;
                     _pendingSslStreamReadFuture = null;
                 }
@@ -378,7 +378,14 @@ namespace DotNetty.Handlers.Tls
                 else
                 {
                     // We already handling the close_notify so just attach the promise to the sslClosePromise.
-                    _closeFuture.Task.ContinueWith(s_closeCompletionContinuationAction, promise, TaskContinuationOptions.ExecuteSynchronously);
+                    if (_closeFuture.IsCompleted)
+                    {
+                        promise.TryComplete();
+                    }
+                    else
+                    {
+                        _closeFuture.Task.ContinueWith(s_closeCompletionContinuationAction, promise, TaskContinuationOptions.ExecuteSynchronously);
+                    }
                 }
             }
         }

@@ -704,17 +704,29 @@ namespace DotNetty.Codecs.Http2
 
                 int delta = newWindowSize - _controller._initialWindowSize;
                 _controller._initialWindowSize = newWindowSize;
-                _ = _controller._connection.ForEachActiveStream(Visit);
+                _ = _controller._connection.ForEachActiveStream(new Http2StreamVisitor(_controller, delta));
 
                 if (delta > 0 && _controller.IsChannelWritable())
                 {
                     // The window size increased, send any pending frames for all streams.
                     WritePendingBytes();
                 }
+            }
 
-                bool Visit(IHttp2Stream stream)
+            sealed class Http2StreamVisitor : IHttp2StreamVisitor
+            {
+                private readonly DefaultHttp2RemoteFlowController _rfc;
+                private readonly int _delta;
+
+                public Http2StreamVisitor(DefaultHttp2RemoteFlowController rfc, int delta)
                 {
-                    _ = _controller.GetState(stream).IncrementStreamWindow(delta);
+                    _rfc = rfc;
+                    _delta = delta;
+                }
+
+                public bool Visit(IHttp2Stream stream)
+                {
+                    _ = _rfc.GetState(stream).IncrementStreamWindow(_delta);
                     return true;
                 }
             }

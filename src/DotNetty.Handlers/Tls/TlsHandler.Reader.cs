@@ -23,6 +23,7 @@
 namespace DotNetty.Handlers.Tls
 {
     using System;
+    using System.IO;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
@@ -168,7 +169,7 @@ namespace DotNetty.Handlers.Tls
                     // there was a read pending already, so we make sure we completed that first
                     if (currentReadFuture.IsCompleted)
                     {
-                        if (currentReadFuture.IsFaulted || currentReadFuture.IsCanceled)
+                        if (currentReadFuture.IsFailure())
                         {
                             // The decryption operation failed
                             ExceptionDispatchInfo.Capture(currentReadFuture.Exception.InnerException).Throw();
@@ -226,7 +227,7 @@ namespace DotNetty.Handlers.Tls
                     if (currentReadFuture is object)
                     {
                         if (!currentReadFuture.IsCompleted) { break; }
-                        if (currentReadFuture.IsFaulted || currentReadFuture.IsCanceled)
+                        if (currentReadFuture.IsFailure())
                         {
                             // The decryption operation failed
                             ExceptionDispatchInfo.Capture(currentReadFuture.Exception.InnerException).Throw();
@@ -305,15 +306,26 @@ namespace DotNetty.Handlers.Tls
                 // of the SSLException reported here.
                 WrapAndFlush(context);
             }
-            // TODO revisit
-            //catch (IOException)
-            //{
-            //    if (s_logger.DebugEnabled)
-            //    {
-            //        s_logger.Debug("SSLException during trying to call SSLEngine.wrap(...)" +
-            //                " because of an previous SSLException, ignoring...", ex);
-            //    }
-            //}
+            catch (Exception exc)
+            {
+                if (exc is ArgumentNullException // sslstream closed
+                    or IOException
+                    or NotSupportedException
+                    or OperationCanceledException)
+                {
+#if DEBUG
+                    if (s_logger.DebugEnabled)
+                    {
+                        s_logger.Debug("SSLException during trying to call TlsHandler.Wrap(...)" +
+                                " because of an previous SSLException, ignoring...", exc);
+                    }
+#endif
+                }
+                else
+                {
+                    throw;
+                }
+            }
             finally
             {
                 // ensure we always flush and close the channel.
@@ -329,20 +341,26 @@ namespace DotNetty.Handlers.Tls
                 "not an SSL/TLS record: " + ByteBufferUtil.HexDump(input));
         }
 
-#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         private Task<int> ReadFromSslStreamAsync(IByteBuffer outputBuffer, int outputBufferLength)
         {
-            if (_sslStream is null) { return Task.FromResult(0); }
+            if (_sslStream is null) { return TaskUtil.Zero; }
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             Memory<byte> outlet = outputBuffer.GetMemory(outputBuffer.WriterIndex, outputBufferLength);
             return _sslStream.ReadAsync(outlet).AsTask();
-        }
 #else
-        private Task<int> ReadFromSslStreamAsync(IByteBuffer outputBuffer, int outputBufferLength)
-        {
-            if (_sslStream is null) { return Task.FromResult(0); }
             ArraySegment<byte> outlet = outputBuffer.GetIoBuffer(outputBuffer.WriterIndex, outputBufferLength);
             return _sslStream.ReadAsync(outlet.Array, outlet.Offset, outlet.Count);
-        }
 #endif
+        }
+
+        private static readonly Action<Task, object> s_handleReadFromSslStreamThrowableFunc = (t, s) => HandleReadFromSslStreamThrowable(t, s);
+        private static void HandleReadFromSslStreamThrowable(Task task, object state)
+        {
+            var (owner, ctx) = ((TlsHandler, IChannelHandlerContext))state;
+            if (task.IsFailure())
+            {
+                owner.HandleUnwrapThrowable(ctx, task.Exception.InnerException);
+            }
+        }
     }
 }

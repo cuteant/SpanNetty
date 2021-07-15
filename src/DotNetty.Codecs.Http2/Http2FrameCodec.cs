@@ -511,15 +511,14 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> ResetNufferedStreamsAction = (t, s) => ResetNufferedStreams(t, s);
         private static void ResetNufferedStreams(Task t, object s)
         {
-            var wrapped = ((Http2FrameCodec, int))s;
-            var self = wrapped.Item1;
+            var (self, streamId) = ((Http2FrameCodec, int))s;
             _ = Interlocked.Decrement(ref self.v_numBufferedStreams);
-            self.HandleHeaderFuture(t, wrapped.Item2);
+            self.HandleHeaderFuture(t, streamId);
         }
 
         private void HandleHeaderFuture(Task channelFuture, int streamId)
         {
-            if (!channelFuture.IsSuccess())
+            if (channelFuture.IsFailure())
             {
                 _ = _frameStreamToInitializeMap.TryRemove(streamId, out _);
             }

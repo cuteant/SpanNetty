@@ -30,6 +30,7 @@ namespace DotNetty.Handlers.Tls
 {
     using System;
     using DotNetty.Buffers;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     /// Utilities for TLS packets.
@@ -157,12 +158,16 @@ namespace DotNetty.Handlers.Tls
         {
             // We have may haven written some parts of data before an exception was thrown so ensure we always flush.
             // See https://github.com/netty/netty/issues/3900#issuecomment-172481830
-            ctx.Flush();
+            try
+            {
+                ctx.Flush();
+            }
+            catch { }
             if (notify)
             {
                 ctx.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
             }
-            ctx.CloseAsync();
+            ctx.CloseAsync().Ignore();
         }
     }
 }

@@ -13,9 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="$(MicrosoftExtensionsConfigurationFileExtensionsPackageVersion)" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="$(MicrosoftExtensionsConfigurationJsonPackageVersion)" />
     <PackageReference Include="NLog.Extensions.Logging" Version="$(NLogExtensionsLoggingPackageVersion)" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
+    <PackageReference Include="SpanNetty.Common" Version="$(SpanNettyCommonPackageVersion)" />
   </ItemGroup>
 
 </Project>
