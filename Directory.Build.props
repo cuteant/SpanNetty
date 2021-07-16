@@ -25,7 +25,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <ExamplesTargetFramework>net5.0;netcoreapp3.1</ExamplesTargetFramework>
+    <ExamplesTargetFramework>netcoreapp3.1</ExamplesTargetFramework>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SourceRoot)/build/DotNetty.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
