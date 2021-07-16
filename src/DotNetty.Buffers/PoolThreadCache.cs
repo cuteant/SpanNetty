@@ -185,7 +185,7 @@ namespace DotNetty.Buffers
 
         // val > 0
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        private static int Log2(int val)
+        internal static int Log2(int val)
         {
             return s_integerSizeMinusOne - IntegerExtensions.NumberOfLeadingZeros(val);
         }

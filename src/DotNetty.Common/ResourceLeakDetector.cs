@@ -228,7 +228,7 @@ namespace DotNetty.Common
         {
             private readonly ResourceLeakDetector _owner;
 
-            private RecordEntry v_head;
+            private TraceRecord v_head;
             private long _droppedRecords;
             private readonly WeakReference<GCNotice> _gcNotice;
 
@@ -254,7 +254,7 @@ namespace DotNetty.Common
                 }
                 while (!gcNotice.Arm(this, owner, referent));
                 _gcNotice = new WeakReference<GCNotice>(gcNotice);
-                v_head = RecordEntry.Bottom;
+                v_head = TraceRecord.Bottom;
                 Record();
             }
 
@@ -273,9 +273,9 @@ namespace DotNetty.Common
                 StackTrace stackTrace = null;
 
                 var thisHead = Volatile.Read(ref v_head);
-                RecordEntry oldHead;
-                RecordEntry prevHead;
-                RecordEntry newHead;
+                TraceRecord oldHead;
+                TraceRecord prevHead;
+                TraceRecord newHead;
                 bool dropped;
                 do
                 {
@@ -299,7 +299,7 @@ namespace DotNetty.Common
                         dropped = false;
                     }
                     stackTrace ??= new StackTrace(skipFrames: 3, fNeedFileInfo: true);
-                    newHead = hint is object ? new RecordEntry(prevHead, stackTrace, hint) : new RecordEntry(prevHead, stackTrace);
+                    newHead = hint is object ? new TraceRecord(prevHead, stackTrace, hint) : new TraceRecord(prevHead, stackTrace);
                     thisHead = Interlocked.CompareExchange(ref v_head, newHead, thisHead);
                 }
                 while (thisHead != oldHead);
@@ -334,7 +334,7 @@ namespace DotNetty.Common
 
             public string Dump()
             {
-                RecordEntry oldHead = Interlocked.Exchange(ref v_head, null);
+                TraceRecord oldHead = Interlocked.Exchange(ref v_head, null);
                 if (oldHead is null)
                 {
                     // Already closed
@@ -352,12 +352,12 @@ namespace DotNetty.Common
 
                 int i = 1;
                 var seen = new HashSet<string>(StringComparer.Ordinal);
-                for (; oldHead != RecordEntry.Bottom; oldHead = oldHead.Next)
+                for (; oldHead != TraceRecord.Bottom; oldHead = oldHead.Next)
                 {
                     string s = oldHead.ToString();
                     if (seen.Add(s))
                     {
-                        if (oldHead.Next == RecordEntry.Bottom)
+                        if (oldHead.Next == TraceRecord.Bottom)
                         {
                             _ = buf.Append("Created at:").Append(StringUtil.Newline).Append(s);
                         }
@@ -403,17 +403,17 @@ namespace DotNetty.Common
         }
 
         // Record
-        sealed class RecordEntry
+        sealed class TraceRecord
         {
-            internal static readonly RecordEntry Bottom = new RecordEntry();
+            internal static readonly TraceRecord Bottom = new TraceRecord();
 
-            internal readonly RecordEntry Next;
+            internal readonly TraceRecord Next;
             internal readonly int Pos;
 
             private readonly string _hintString;
             private readonly StackTrace _stackTrace;
 
-            internal RecordEntry(RecordEntry next, StackTrace stackTrace, object hint)
+            internal TraceRecord(TraceRecord next, StackTrace stackTrace, object hint)
             {
                 // This needs to be generated even if toString() is never called as it may change later on.
                 _hintString = hint is IResourceLeakHint leakHint ? leakHint.ToHintString() : null;
@@ -422,7 +422,7 @@ namespace DotNetty.Common
                 _stackTrace = stackTrace;
             }
 
-            internal RecordEntry(RecordEntry next, StackTrace stackTrace)
+            internal TraceRecord(TraceRecord next, StackTrace stackTrace)
             {
                 _hintString = null;
                 Next = next;
@@ -431,7 +431,7 @@ namespace DotNetty.Common
             }
 
             // Used to terminate the stack
-            RecordEntry()
+            TraceRecord()
             {
                 _hintString = null;
                 Next = null;

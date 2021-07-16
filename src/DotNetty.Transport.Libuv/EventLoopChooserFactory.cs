@@ -88,14 +88,15 @@ namespace DotNetty.Transport.Libuv
         {
             private readonly TEventLoop[] _eventLoops;
             private readonly int _amount;
-            //private readonly bool _isSingle;
-            private int _idx;
+            // Use a 'long' counter to avoid non-round-robin behaviour at the 32-bit overflow boundary.
+            // The 64-bit long solves this by placing the overflow so far into the future, that no system
+            // will encounter this in practice.
+            private long _idx;
 
             public GenericEventExecutorChooser(TEventLoop[] eventLoops)
             {
                 _eventLoops = eventLoops;
                 _amount = eventLoops.Length;
-                //_isSingle = 1u >= (uint)_amount; // 最小值为 1
             }
 
             public TEventLoop GetNext()
@@ -114,7 +115,7 @@ namespace DotNetty.Transport.Libuv
                     }
                 }
 
-                return _eventLoops[Math.Abs(Interlocked.Increment(ref _idx) % _amount)];
+                return _eventLoops[(int)Math.Abs(Interlocked.Increment(ref _idx) % _amount)];
             }
         }
     }

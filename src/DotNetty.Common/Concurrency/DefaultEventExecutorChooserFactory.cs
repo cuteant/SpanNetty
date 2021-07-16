@@ -82,20 +82,20 @@ namespace DotNetty.Common.Concurrency
         {
             private readonly TEventExecutor[] _executors;
             private readonly int _amount;
-            //private readonly bool _isSingle;
-            private int _idx;
+            // Use a 'long' counter to avoid non-round-robin behaviour at the 32-bit overflow boundary.
+            // The 64-bit long solves this by placing the overflow so far into the future, that no system
+            // will encounter this in practice.
+            private long _idx;
 
             public GenericEventExecutorChooser(TEventExecutor[] executors)
             {
                 _executors = executors;
                 _amount = executors.Length;
-                //_isSingle = 1u >= (uint)_amount; // 最小值为 1
             }
 
             public TEventExecutor GetNext()
             {
-                //if (_isSingle) { return _executors[0]; }
-                return _executors[Math.Abs(Interlocked.Increment(ref _idx) % _amount)];
+                return _executors[(int)Math.Abs(Interlocked.Increment(ref _idx) % _amount)];
             }
         }
     }

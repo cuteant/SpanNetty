@@ -17,7 +17,7 @@ This is a fork of [DotNetty](https://github.com/azure/dotnetty).
 | .NET Netstandard (Windows) Unit Tests         | [![Build status](https://ci.appveyor.com/api/projects/status/rvx3h1bmahad2giw/branch/main?svg=true)](https://ci.appveyor.com/project/cuteant/SpanNetty/branch/main) |
 
 ## Features
-  - Align with [Netty-4.1.51.Final](https://github.com/netty/netty/tree/netty-4.1.51.Final)
+  - Align with [Netty-4.1.52.Final](https://github.com/netty/netty/tree/netty-4.1.52.Final)
   - ArrayPooledByteBuffer
   - Support **Span&#60;byte&#62;** and **Memory&#60;byte&#62;** in Buffer/Common APIs
   - Add support for IBufferWriter&#60;byte&#62; to the **IByteBuffer**
