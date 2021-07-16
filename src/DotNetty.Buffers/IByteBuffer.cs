@@ -230,11 +230,11 @@ namespace DotNetty.Buffers
         /// <summary>
         ///     Makes sure the number of <see cref="WritableBytes" /> is equal to or greater than
         ///     the specified value (<paramref name="minWritableBytes" />.) If there is enough writable bytes in this buffer,
-        ///     the method returns with no side effect. Otherwise, it raises an <see cref="ArgumentOutOfRangeException" />.
+        ///     the method returns with no side effect.
         /// </summary>
         /// <param name="minWritableBytes">The expected number of minimum writable bytes</param>
         /// <exception cref="IndexOutOfRangeException">
-        ///     if <see cref="WriterIndex" /> + <paramref name="minWritableBytes" /> >
+        ///     if <see cref="WriterIndex" /> + <paramref name="minWritableBytes" /> &gt;
         ///     <see cref="MaxCapacity" />.
         /// </exception>
         IByteBuffer EnsureWritable(int minWritableBytes);
