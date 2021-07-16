@@ -1,55 +1,55 @@
 <Project>
   <!-- Shared Package Versions -->
   <PropertyGroup>
-    <MicrosoftAspNetCoreAuthenticationAzureADUI3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthenticationAzureADUI3PackageVersion>
-    <MicrosoftAspNetCoreAuthenticationFacebook3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthenticationFacebook3PackageVersion>
-    <MicrosoftAspNetCoreAuthenticationGoogle3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthenticationGoogle3PackageVersion>
-    <MicrosoftAspNetCoreAuthenticationJwtBearer3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthenticationJwtBearer3PackageVersion>
-    <MicrosoftAspNetCoreAuthenticationMicrosoftAccount3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthenticationMicrosoftAccount3PackageVersion>
-    <MicrosoftAspNetCoreAuthenticationOpenIdConnect3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthenticationOpenIdConnect3PackageVersion>
-    <MicrosoftAspNetCoreAuthenticationTwitter3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthenticationTwitter3PackageVersion>
-    <MicrosoftAspNetCoreAuthenticationWsFederation3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthenticationWsFederation3PackageVersion>
+    <MicrosoftAspNetCoreAuthenticationAzureADUI3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthenticationAzureADUI3PackageVersion>
+    <MicrosoftAspNetCoreAuthenticationFacebook3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthenticationFacebook3PackageVersion>
+    <MicrosoftAspNetCoreAuthenticationGoogle3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthenticationGoogle3PackageVersion>
+    <MicrosoftAspNetCoreAuthenticationJwtBearer3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthenticationJwtBearer3PackageVersion>
+    <MicrosoftAspNetCoreAuthenticationMicrosoftAccount3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthenticationMicrosoftAccount3PackageVersion>
+    <MicrosoftAspNetCoreAuthenticationOpenIdConnect3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthenticationOpenIdConnect3PackageVersion>
+    <MicrosoftAspNetCoreAuthenticationTwitter3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthenticationTwitter3PackageVersion>
+    <MicrosoftAspNetCoreAuthenticationWsFederation3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthenticationWsFederation3PackageVersion>
 
-    <MicrosoftAspNetCoreAuthorization3PackageVersion>3.1.16</MicrosoftAspNetCoreAuthorization3PackageVersion>
+    <MicrosoftAspNetCoreAuthorization3PackageVersion>3.1.17</MicrosoftAspNetCoreAuthorization3PackageVersion>
 
-    <MicrosoftAspNetCoreConcurrencyLimiter3PackageVersion>3.1.16</MicrosoftAspNetCoreConcurrencyLimiter3PackageVersion>
-    <MicrosoftAspNetCoreConnectionsAbstractions3PackageVersion>3.1.16</MicrosoftAspNetCoreConnectionsAbstractions3PackageVersion>
+    <MicrosoftAspNetCoreConcurrencyLimiter3PackageVersion>3.1.17</MicrosoftAspNetCoreConcurrencyLimiter3PackageVersion>
+    <MicrosoftAspNetCoreConnectionsAbstractions3PackageVersion>3.1.17</MicrosoftAspNetCoreConnectionsAbstractions3PackageVersion>
 
-    <MicrosoftAspNetCoreCryptographyInternal3PackageVersion>3.1.16</MicrosoftAspNetCoreCryptographyInternal3PackageVersion>
-    <MicrosoftAspNetCoreCryptographyKeyDerivation3PackageVersion>3.1.16</MicrosoftAspNetCoreCryptographyKeyDerivation3PackageVersion>
+    <MicrosoftAspNetCoreCryptographyInternal3PackageVersion>3.1.17</MicrosoftAspNetCoreCryptographyInternal3PackageVersion>
+    <MicrosoftAspNetCoreCryptographyKeyDerivation3PackageVersion>3.1.17</MicrosoftAspNetCoreCryptographyKeyDerivation3PackageVersion>
 
-    <MicrosoftAspNetCoreDataProtection3PackageVersion>3.1.16</MicrosoftAspNetCoreDataProtection3PackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAbstractions3PackageVersion>3.1.16</MicrosoftAspNetCoreDataProtectionAbstractions3PackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAzureKeyVault3PackageVersion>3.1.16</MicrosoftAspNetCoreDataProtectionAzureKeyVault3PackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAzureStorage3PackageVersion>3.1.16</MicrosoftAspNetCoreDataProtectionAzureStorage3PackageVersion>
-    <MicrosoftAspNetCoreDataProtectionExtensions3PackageVersion>3.1.16</MicrosoftAspNetCoreDataProtectionExtensions3PackageVersion>
-    <MicrosoftAspNetCoreDataProtectionStackExchangeRedis3PackageVersion>3.1.16</MicrosoftAspNetCoreDataProtectionStackExchangeRedis3PackageVersion>
-    <MicrosoftAspNetCoreDataProtectionSystemWeb3PackageVersion>3.1.16</MicrosoftAspNetCoreDataProtectionSystemWeb3PackageVersion>
+    <MicrosoftAspNetCoreDataProtection3PackageVersion>3.1.17</MicrosoftAspNetCoreDataProtection3PackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAbstractions3PackageVersion>3.1.17</MicrosoftAspNetCoreDataProtectionAbstractions3PackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAzureKeyVault3PackageVersion>3.1.17</MicrosoftAspNetCoreDataProtectionAzureKeyVault3PackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAzureStorage3PackageVersion>3.1.17</MicrosoftAspNetCoreDataProtectionAzureStorage3PackageVersion>
+    <MicrosoftAspNetCoreDataProtectionExtensions3PackageVersion>3.1.17</MicrosoftAspNetCoreDataProtectionExtensions3PackageVersion>
+    <MicrosoftAspNetCoreDataProtectionStackExchangeRedis3PackageVersion>3.1.17</MicrosoftAspNetCoreDataProtectionStackExchangeRedis3PackageVersion>
+    <MicrosoftAspNetCoreDataProtectionSystemWeb3PackageVersion>3.1.17</MicrosoftAspNetCoreDataProtectionSystemWeb3PackageVersion>
 
-    <MicrosoftAspNetCoreJsonPatch3PackageVersion>3.1.16</MicrosoftAspNetCoreJsonPatch3PackageVersion>
+    <MicrosoftAspNetCoreJsonPatch3PackageVersion>3.1.17</MicrosoftAspNetCoreJsonPatch3PackageVersion>
 
-    <MicrosoftAspNetCoreHeaderPropagation3PackageVersion>3.1.16</MicrosoftAspNetCoreHeaderPropagation3PackageVersion>
-    <MicrosoftAspNetCoreHttpConnectionsClient3PackageVersion>3.1.16</MicrosoftAspNetCoreHttpConnectionsClient3PackageVersion>
-    <MicrosoftAspNetCoreHttpConnectionsCommon3PackageVersion>3.1.16</MicrosoftAspNetCoreHttpConnectionsCommon3PackageVersion>
-    <MicrosoftAspNetCoreHttpFeatures3PackageVersion>3.1.16</MicrosoftAspNetCoreHttpFeatures3PackageVersion>
+    <MicrosoftAspNetCoreHeaderPropagation3PackageVersion>3.1.17</MicrosoftAspNetCoreHeaderPropagation3PackageVersion>
+    <MicrosoftAspNetCoreHttpConnectionsClient3PackageVersion>3.1.17</MicrosoftAspNetCoreHttpConnectionsClient3PackageVersion>
+    <MicrosoftAspNetCoreHttpConnectionsCommon3PackageVersion>3.1.17</MicrosoftAspNetCoreHttpConnectionsCommon3PackageVersion>
+    <MicrosoftAspNetCoreHttpFeatures3PackageVersion>3.1.17</MicrosoftAspNetCoreHttpFeatures3PackageVersion>
 
-    <MicrosoftAspNetCoreMvcNewtonsoftJson3PackageVersion>3.1.16</MicrosoftAspNetCoreMvcNewtonsoftJson3PackageVersion>
-    <MicrosoftAspNetCoreMvcRazorRuntimeCompilation3PackageVersion>3.1.16</MicrosoftAspNetCoreMvcRazorRuntimeCompilation3PackageVersion>
+    <MicrosoftAspNetCoreMvcNewtonsoftJson3PackageVersion>3.1.17</MicrosoftAspNetCoreMvcNewtonsoftJson3PackageVersion>
+    <MicrosoftAspNetCoreMvcRazorRuntimeCompilation3PackageVersion>3.1.17</MicrosoftAspNetCoreMvcRazorRuntimeCompilation3PackageVersion>
 
-    <MicrosoftAspNetCoreSignalRClient3PackageVersion>3.1.16</MicrosoftAspNetCoreSignalRClient3PackageVersion>
-    <MicrosoftAspNetCoreSignalRClientCore3PackageVersion>3.1.16</MicrosoftAspNetCoreSignalRClientCore3PackageVersion>
-    <MicrosoftAspNetCoreSignalRClientMsgPack3PackageVersion>3.1.16</MicrosoftAspNetCoreSignalRClientMsgPack3PackageVersion>
-    <MicrosoftAspNetCoreSignalRCommon3PackageVersion>3.1.16</MicrosoftAspNetCoreSignalRCommon3PackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJson3PackageVersion>3.1.16</MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJson3PackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsJson3PackageVersion>3.1.16</MicrosoftAspNetCoreSignalRProtocolsJson3PackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsMessagePack3PackageVersion>3.1.16</MicrosoftAspNetCoreSignalRProtocolsMessagePack3PackageVersion>
-    <MicrosoftAspNetCoreSignalRStackExchangeRedis3PackageVersion>3.1.16</MicrosoftAspNetCoreSignalRStackExchangeRedis3PackageVersion>
+    <MicrosoftAspNetCoreSignalRClient3PackageVersion>3.1.17</MicrosoftAspNetCoreSignalRClient3PackageVersion>
+    <MicrosoftAspNetCoreSignalRClientCore3PackageVersion>3.1.17</MicrosoftAspNetCoreSignalRClientCore3PackageVersion>
+    <MicrosoftAspNetCoreSignalRClientMsgPack3PackageVersion>3.1.17</MicrosoftAspNetCoreSignalRClientMsgPack3PackageVersion>
+    <MicrosoftAspNetCoreSignalRCommon3PackageVersion>3.1.17</MicrosoftAspNetCoreSignalRCommon3PackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJson3PackageVersion>3.1.17</MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJson3PackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsJson3PackageVersion>3.1.17</MicrosoftAspNetCoreSignalRProtocolsJson3PackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsMessagePack3PackageVersion>3.1.17</MicrosoftAspNetCoreSignalRProtocolsMessagePack3PackageVersion>
+    <MicrosoftAspNetCoreSignalRStackExchangeRedis3PackageVersion>3.1.17</MicrosoftAspNetCoreSignalRStackExchangeRedis3PackageVersion>
 
-    <MicrosoftAspNetCoreMvcTesting3PackageVersion>3.1.16</MicrosoftAspNetCoreMvcTesting3PackageVersion>
-    <MicrosoftAspNetCoreTestHost3PackageVersion>3.1.16</MicrosoftAspNetCoreTestHost3PackageVersion>
+    <MicrosoftAspNetCoreMvcTesting3PackageVersion>3.1.17</MicrosoftAspNetCoreMvcTesting3PackageVersion>
+    <MicrosoftAspNetCoreTestHost3PackageVersion>3.1.17</MicrosoftAspNetCoreTestHost3PackageVersion>
 	
-    <MicrosoftAspNetCoreRazorLanguage3PackageVersion>3.1.16</MicrosoftAspNetCoreRazorLanguage3PackageVersion>
-    <MicrosoftCodeAnalysisRazor3PackageVersion>3.1.16</MicrosoftCodeAnalysisRazor3PackageVersion>
+    <MicrosoftAspNetCoreRazorLanguage3PackageVersion>3.1.17</MicrosoftAspNetCoreRazorLanguage3PackageVersion>
+    <MicrosoftCodeAnalysisRazor3PackageVersion>3.1.17</MicrosoftCodeAnalysisRazor3PackageVersion>
 
     <MicrosoftAspNetCoreMvcVersioning3PackageVersion>5.0.0</MicrosoftAspNetCoreMvcVersioning3PackageVersion>
     <MicrosoftAspNetCoreMvcVersioningApiExplorer3PackageVersion>5.0.0</MicrosoftAspNetCoreMvcVersioningApiExplorer3PackageVersion>

@@ -1,55 +1,55 @@
 <Project>
   <!-- Shared Package Versions -->
   <PropertyGroup>
-    <MicrosoftAspNetCoreAuthenticationAzureADUIPackageVersion>5.0.7</MicrosoftAspNetCoreAuthenticationAzureADUIPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationFacebookPackageVersion>5.0.7</MicrosoftAspNetCoreAuthenticationFacebookPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationGooglePackageVersion>5.0.7</MicrosoftAspNetCoreAuthenticationGooglePackageVersion>
-    <MicrosoftAspNetCoreAuthenticationJwtBearerPackageVersion>5.0.7</MicrosoftAspNetCoreAuthenticationJwtBearerPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationMicrosoftAccountPackageVersion>5.0.7</MicrosoftAspNetCoreAuthenticationMicrosoftAccountPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationOpenIdConnectPackageVersion>5.0.7</MicrosoftAspNetCoreAuthenticationOpenIdConnectPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationTwitterPackageVersion>5.0.7</MicrosoftAspNetCoreAuthenticationTwitterPackageVersion>
-    <MicrosoftAspNetCoreAuthenticationWsFederationPackageVersion>5.0.7</MicrosoftAspNetCoreAuthenticationWsFederationPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationAzureADUIPackageVersion>5.0.8</MicrosoftAspNetCoreAuthenticationAzureADUIPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationFacebookPackageVersion>5.0.8</MicrosoftAspNetCoreAuthenticationFacebookPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationGooglePackageVersion>5.0.8</MicrosoftAspNetCoreAuthenticationGooglePackageVersion>
+    <MicrosoftAspNetCoreAuthenticationJwtBearerPackageVersion>5.0.8</MicrosoftAspNetCoreAuthenticationJwtBearerPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationMicrosoftAccountPackageVersion>5.0.8</MicrosoftAspNetCoreAuthenticationMicrosoftAccountPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationOpenIdConnectPackageVersion>5.0.8</MicrosoftAspNetCoreAuthenticationOpenIdConnectPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationTwitterPackageVersion>5.0.8</MicrosoftAspNetCoreAuthenticationTwitterPackageVersion>
+    <MicrosoftAspNetCoreAuthenticationWsFederationPackageVersion>5.0.8</MicrosoftAspNetCoreAuthenticationWsFederationPackageVersion>
 
-    <MicrosoftAspNetCoreAuthorizationPackageVersion>5.0.7</MicrosoftAspNetCoreAuthorizationPackageVersion>
+    <MicrosoftAspNetCoreAuthorizationPackageVersion>5.0.8</MicrosoftAspNetCoreAuthorizationPackageVersion>
 
-    <MicrosoftAspNetCoreConcurrencyLimiterPackageVersion>5.0.7</MicrosoftAspNetCoreConcurrencyLimiterPackageVersion>
-    <MicrosoftAspNetCoreConnectionsAbstractionsPackageVersion>5.0.7</MicrosoftAspNetCoreConnectionsAbstractionsPackageVersion>
+    <MicrosoftAspNetCoreConcurrencyLimiterPackageVersion>5.0.8</MicrosoftAspNetCoreConcurrencyLimiterPackageVersion>
+    <MicrosoftAspNetCoreConnectionsAbstractionsPackageVersion>5.0.8</MicrosoftAspNetCoreConnectionsAbstractionsPackageVersion>
 
-    <MicrosoftAspNetCoreCryptographyInternalPackageVersion>5.0.7</MicrosoftAspNetCoreCryptographyInternalPackageVersion>
-    <MicrosoftAspNetCoreCryptographyKeyDerivationPackageVersion>5.0.7</MicrosoftAspNetCoreCryptographyKeyDerivationPackageVersion>
+    <MicrosoftAspNetCoreCryptographyInternalPackageVersion>5.0.8</MicrosoftAspNetCoreCryptographyInternalPackageVersion>
+    <MicrosoftAspNetCoreCryptographyKeyDerivationPackageVersion>5.0.8</MicrosoftAspNetCoreCryptographyKeyDerivationPackageVersion>
 
-    <MicrosoftAspNetCoreDataProtectionPackageVersion>5.0.7</MicrosoftAspNetCoreDataProtectionPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAbstractionsPackageVersion>5.0.7</MicrosoftAspNetCoreDataProtectionAbstractionsPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>5.0.7</MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>5.0.7</MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>
-    <MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>5.0.7</MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>5.0.7</MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>5.0.7</MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionPackageVersion>5.0.8</MicrosoftAspNetCoreDataProtectionPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAbstractionsPackageVersion>5.0.8</MicrosoftAspNetCoreDataProtectionAbstractionsPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>5.0.8</MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>5.0.8</MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>
+    <MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>5.0.8</MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>5.0.8</MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>5.0.8</MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>
 
-    <MicrosoftAspNetCoreJsonPatchPackageVersion>5.0.7</MicrosoftAspNetCoreJsonPatchPackageVersion>
+    <MicrosoftAspNetCoreJsonPatchPackageVersion>5.0.8</MicrosoftAspNetCoreJsonPatchPackageVersion>
 	
-    <MicrosoftAspNetCoreHeaderPropagationPackageVersion>5.0.7</MicrosoftAspNetCoreHeaderPropagationPackageVersion>
-    <MicrosoftAspNetCoreHttpConnectionsClientPackageVersion>5.0.7</MicrosoftAspNetCoreHttpConnectionsClientPackageVersion>
-    <MicrosoftAspNetCoreHttpConnectionsCommonPackageVersion>5.0.7</MicrosoftAspNetCoreHttpConnectionsCommonPackageVersion>
-    <MicrosoftAspNetCoreHttpFeaturesPackageVersion>5.0.7</MicrosoftAspNetCoreHttpFeaturesPackageVersion>
+    <MicrosoftAspNetCoreHeaderPropagationPackageVersion>5.0.8</MicrosoftAspNetCoreHeaderPropagationPackageVersion>
+    <MicrosoftAspNetCoreHttpConnectionsClientPackageVersion>5.0.8</MicrosoftAspNetCoreHttpConnectionsClientPackageVersion>
+    <MicrosoftAspNetCoreHttpConnectionsCommonPackageVersion>5.0.8</MicrosoftAspNetCoreHttpConnectionsCommonPackageVersion>
+    <MicrosoftAspNetCoreHttpFeaturesPackageVersion>5.0.8</MicrosoftAspNetCoreHttpFeaturesPackageVersion>
 
-    <MicrosoftAspNetCoreMvcNewtonsoftJsonPackageVersion>5.0.7</MicrosoftAspNetCoreMvcNewtonsoftJsonPackageVersion>
-    <MicrosoftAspNetCoreMvcRazorRuntimeCompilationPackageVersion>5.0.7</MicrosoftAspNetCoreMvcRazorRuntimeCompilationPackageVersion>
+    <MicrosoftAspNetCoreMvcNewtonsoftJsonPackageVersion>5.0.8</MicrosoftAspNetCoreMvcNewtonsoftJsonPackageVersion>
+    <MicrosoftAspNetCoreMvcRazorRuntimeCompilationPackageVersion>5.0.8</MicrosoftAspNetCoreMvcRazorRuntimeCompilationPackageVersion>
 
-    <MicrosoftAspNetCoreSignalRClientPackageVersion>5.0.7</MicrosoftAspNetCoreSignalRClientPackageVersion>
-    <MicrosoftAspNetCoreSignalRClientCorePackageVersion>5.0.7</MicrosoftAspNetCoreSignalRClientCorePackageVersion>
-    <MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>5.0.7</MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>
-    <MicrosoftAspNetCoreSignalRCommonPackageVersion>5.0.7</MicrosoftAspNetCoreSignalRCommonPackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>5.0.7</MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>5.0.7</MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>5.0.7</MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>
-    <MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>5.0.7</MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>
+    <MicrosoftAspNetCoreSignalRClientPackageVersion>5.0.8</MicrosoftAspNetCoreSignalRClientPackageVersion>
+    <MicrosoftAspNetCoreSignalRClientCorePackageVersion>5.0.8</MicrosoftAspNetCoreSignalRClientCorePackageVersion>
+    <MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>5.0.8</MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>
+    <MicrosoftAspNetCoreSignalRCommonPackageVersion>5.0.8</MicrosoftAspNetCoreSignalRCommonPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>5.0.8</MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>5.0.8</MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>5.0.8</MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>
+    <MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>5.0.8</MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>
 
-    <MicrosoftAspNetCoreMvcTestingPackageVersion>5.0.7</MicrosoftAspNetCoreMvcTestingPackageVersion>
-    <MicrosoftAspNetCoreTestHostPackageVersion>5.0.7</MicrosoftAspNetCoreTestHostPackageVersion>
+    <MicrosoftAspNetCoreMvcTestingPackageVersion>5.0.8</MicrosoftAspNetCoreMvcTestingPackageVersion>
+    <MicrosoftAspNetCoreTestHostPackageVersion>5.0.8</MicrosoftAspNetCoreTestHostPackageVersion>
 	
-    <MicrosoftAspNetCoreRazorLanguagePackageVersion>5.0.7</MicrosoftAspNetCoreRazorLanguagePackageVersion>
-    <MicrosoftCodeAnalysisRazorPackageVersion>5.0.7</MicrosoftCodeAnalysisRazorPackageVersion>
+    <MicrosoftAspNetCoreRazorLanguagePackageVersion>5.0.8</MicrosoftAspNetCoreRazorLanguagePackageVersion>
+    <MicrosoftCodeAnalysisRazorPackageVersion>5.0.8</MicrosoftCodeAnalysisRazorPackageVersion>
 
     <MicrosoftAspNetCoreMvcVersioningPackageVersion>5.0.0</MicrosoftAspNetCoreMvcVersioningPackageVersion>
     <MicrosoftAspNetCoreMvcVersioningApiExplorerPackageVersion>5.0.0</MicrosoftAspNetCoreMvcVersioningApiExplorerPackageVersion>

@@ -2,20 +2,20 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <MicrosoftCodeAnalysisCSharpNet45PackageVersion>1.3.2</MicrosoftCodeAnalysisCSharpNet45PackageVersion>
-    <MicrosoftCodeAnalysisCompilersPackageVersion>3.9.0</MicrosoftCodeAnalysisCompilersPackageVersion>
-    <MicrosoftCodeAnalysisCommonPackageVersion>3.9.0</MicrosoftCodeAnalysisCommonPackageVersion>
-    <MicrosoftCodeAnalysisCSharpPackageVersion>3.9.0</MicrosoftCodeAnalysisCSharpPackageVersion>
-    <MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>3.9.0</MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>
-    <MicrosoftCodeAnalysisCSharpScriptingPackageVersion>3.9.0</MicrosoftCodeAnalysisCSharpScriptingPackageVersion>
-    <MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>3.9.0</MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>
-    <MicrosoftCodeAnalysisFeaturesPackageVersion>3.9.0</MicrosoftCodeAnalysisFeaturesPackageVersion>
-    <MicrosoftCodeAnalysisScriptingPackageVersion>3.9.0</MicrosoftCodeAnalysisScriptingPackageVersion>
-    <MicrosoftCodeAnalysisScriptingCommonPackageVersion>3.9.0</MicrosoftCodeAnalysisScriptingCommonPackageVersion>
-    <MicrosoftCodeAnalysisVisualBasicPackageVersion>3.9.0</MicrosoftCodeAnalysisVisualBasicPackageVersion>
-    <MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>3.9.0</MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>
+    <MicrosoftCodeAnalysisCompilersPackageVersion>3.10.0</MicrosoftCodeAnalysisCompilersPackageVersion>
+    <MicrosoftCodeAnalysisCommonPackageVersion>3.10.0</MicrosoftCodeAnalysisCommonPackageVersion>
+    <MicrosoftCodeAnalysisCSharpPackageVersion>3.10.0</MicrosoftCodeAnalysisCSharpPackageVersion>
+    <MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>3.10.0</MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>
+    <MicrosoftCodeAnalysisCSharpScriptingPackageVersion>3.10.0</MicrosoftCodeAnalysisCSharpScriptingPackageVersion>
+    <MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>3.10.0</MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>
+    <MicrosoftCodeAnalysisFeaturesPackageVersion>3.10.0</MicrosoftCodeAnalysisFeaturesPackageVersion>
+    <MicrosoftCodeAnalysisScriptingPackageVersion>3.10.0</MicrosoftCodeAnalysisScriptingPackageVersion>
+    <MicrosoftCodeAnalysisScriptingCommonPackageVersion>3.10.0</MicrosoftCodeAnalysisScriptingCommonPackageVersion>
+    <MicrosoftCodeAnalysisVisualBasicPackageVersion>3.10.0</MicrosoftCodeAnalysisVisualBasicPackageVersion>
+    <MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>3.10.0</MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>
 
-    <MicrosoftNetCompilersPackageVersion>3.9.0</MicrosoftNetCompilersPackageVersion>
-    <MicrosoftNETCoreCompilersPackageVersion>3.9.0</MicrosoftNETCoreCompilersPackageVersion>
+    <MicrosoftNetCompilersPackageVersion>3.10.0</MicrosoftNetCompilersPackageVersion>
+    <MicrosoftNETCoreCompilersPackageVersion>3.10.0</MicrosoftNETCoreCompilersPackageVersion>
 
     <MicrosoftCodeAnalysisAnalyzersPackageVersion>3.3.2</MicrosoftCodeAnalysisAnalyzersPackageVersion>
     <MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>3.3.2</MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>
