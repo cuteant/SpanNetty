@@ -226,17 +226,6 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_CheckMaxOrder30(int maxOrder)
-        {
-            throw GetArgumentException(maxOrder);
-
-            static ArgumentException GetArgumentException(int maxOrder)
-            {
-                return new ArgumentException("maxOrder should be < 30, but is: " + maxOrder, nameof(maxOrder));
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_CheckMaxOrder14(int maxOrder)
         {
             throw GetArgumentException(maxOrder);

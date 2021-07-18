@@ -39,19 +39,7 @@ namespace DotNetty.Buffers
             _data = data;
         }
 
-        public IByteBuffer Content
-        {
-            get
-            {
-                var refCnt = _data.ReferenceCount;
-                if ((uint)(refCnt - 1) > SharedConstants.TooBigOrNegative) // <= 0
-                {
-                    ThrowHelper.ThrowIllegalReferenceCountException(refCnt);
-                }
-
-                return _data;
-            }
-        }
+        public IByteBuffer Content => ByteBufferUtil.EnsureAccessible(_data);
 
         public virtual IByteBufferHolder Copy() => Replace(_data.Copy());
 

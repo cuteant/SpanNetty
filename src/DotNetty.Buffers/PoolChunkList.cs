@@ -132,8 +132,9 @@ namespace DotNetty.Buffers
             _prevList = list;
         }
 
-        internal bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, int normCapacity, PoolThreadCache<T> threadCache)
+        internal bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, int sizeIdx, PoolThreadCache<T> threadCache)
         {
+            int normCapacity = _arena.SizeIdx2Size(sizeIdx);
             if (_head is null || normCapacity > _maxCapacity)
             {
                 // Either this PoolChunkList is empty or the requested capacity is larger then the capacity which can
@@ -143,7 +144,7 @@ namespace DotNetty.Buffers
 
             for (PoolChunk<T> cur = _head; cur is object; cur = cur.Next)
             {
-                if (cur.Allocate(buf, reqCapacity, normCapacity, threadCache))
+                if (cur.Allocate(buf, reqCapacity, sizeIdx, threadCache))
                 {
                     if (cur._freeBytes <= _freeMinThreshold)
                     {
@@ -156,9 +157,9 @@ namespace DotNetty.Buffers
             return false;
         }
 
-        internal bool Free(PoolChunk<T> chunk, long handle)
+        internal bool Free(PoolChunk<T> chunk, long handle, int normCapacity)
         {
-            chunk.Free(handle);
+            chunk.Free(handle, normCapacity);
             if (chunk._freeBytes > _freeMaxThreshold)
             {
                 Remove(chunk);

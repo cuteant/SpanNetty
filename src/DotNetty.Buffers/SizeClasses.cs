@@ -93,7 +93,7 @@ namespace DotNetty.Buffers
     /// </para>
     ///   ( 76,    24,       22,        1,       yes,            no,        no)
     /// </summary>
-    internal class SizeClasses : ISizeClassesMetric
+    internal abstract class SizeClasses : ISizeClassesMetric
     {
         internal const int LOG2_QUANTUM = 4;
 
@@ -108,13 +108,12 @@ namespace DotNetty.Buffers
         private const int SUBPAGE_IDX = 5;
         private const int LOG2_DELTA_LOOKUP_IDX = 6;
 
-        private const byte c_no = 0, c_yes = 1;
+        private const sbyte c_no = 0, c_yes = 1;
 
-
-        protected readonly int _pageSize;
-        protected readonly int _pageShifts;
-        protected readonly int _chunkSize;
-        protected readonly int _directMemoryCacheAlignment;
+        internal readonly int PageSize;
+        internal readonly int PageShifts;
+        internal readonly int ChunkSize;
+        private readonly int _directMemoryCacheAlignment;
 
         internal readonly int _nSizes;
         internal int _nSubpages;
@@ -137,22 +136,22 @@ namespace DotNetty.Buffers
 
         protected SizeClasses(int pageSize, int pageShifts, int chunkSize, int directMemoryCacheAlignment)
         {
-            _pageSize = pageSize;
-            _pageShifts = pageShifts;
-            _chunkSize = chunkSize;
+            PageSize = pageSize;
+            PageShifts = pageShifts;
+            ChunkSize = chunkSize;
             _directMemoryCacheAlignment = directMemoryCacheAlignment;
 
-            int group = PoolThreadCache<byte>.Log2(chunkSize) + 1 - LOG2_QUANTUM;
+            int group = PoolThreadCache<byte[]>.Log2(chunkSize) + 1 - LOG2_QUANTUM;
 
             // generate size classes
             // [index, log2Group, log2Delta, nDelta, isMultiPageSize, isSubPage, log2DeltaLookup]
             var count = group << LOG2_SIZE_CLASS_GROUP;
             _sizeClasses = new short[count][];
-            for (int idx = 0; idx < _sizeClasses.Length; idx++)
+            for (int idx = 0; idx < count; idx++)
             {
                 _sizeClasses[idx] = new short[7];
             }
-            _nSizes = SizeClasses0();
+            _nSizes = InitSizeClasses();
 
             // generate lookup table
             _sizeIdx2SizeTab = new int[_nSizes];
@@ -163,7 +162,7 @@ namespace DotNetty.Buffers
             Size2IdxTab(_size2IdxTab);
         }
 
-        private int SizeClasses0()
+        private int InitSizeClasses()
         {
             int normalMaxSize = -1;
 
@@ -184,11 +183,11 @@ namespace DotNetty.Buffers
             log2Group += LOG2_SIZE_CLASS_GROUP;
 
             // All remaining groups, nDelta start at 1.
-            while (size < _chunkSize)
+            while (size < ChunkSize)
             {
                 nDelta = 1;
 
-                while (nDelta <= ndeltaLimit && size < _chunkSize)
+                while (nDelta <= ndeltaLimit && size < ChunkSize)
                 {
                     size = SizeClass(index++, log2Group, log2Delta, nDelta++);
                     normalMaxSize = size;
@@ -199,7 +198,7 @@ namespace DotNetty.Buffers
             }
 
             // _chunkSize must be normalMaxSize
-            Debug.Assert(_chunkSize == normalMaxSize);
+            Debug.Assert(ChunkSize == normalMaxSize);
 
             // return number of size index
             return index;
@@ -209,21 +208,21 @@ namespace DotNetty.Buffers
         private int SizeClass(int index, int log2Group, int log2Delta, int nDelta)
         {
             short isMultiPageSize;
-            if (log2Delta >= _pageShifts)
+            if (log2Delta >= PageShifts)
             {
                 isMultiPageSize = c_yes;
             }
             else
             {
-                int pageSize = 1 << _pageShifts;
+                int pageSize = 1 << PageShifts;
                 int size0 = (1 << log2Group) + (1 << log2Delta) * nDelta;
 
                 isMultiPageSize = size0 == size0 / pageSize * pageSize ? c_yes : c_no;
             }
 
-            int log2Ndelta = nDelta == 0 ? 0 : PoolThreadCache<byte>.Log2(nDelta);
+            int log2Ndelta = 0u >= (uint)nDelta ? 0 : PoolThreadCache<byte[]>.Log2(nDelta);
 
-            byte remove = 1 << log2Ndelta < nDelta ? c_yes : c_no;
+            sbyte remove = 1 << log2Ndelta < nDelta ? c_yes : c_no;
 
             int log2Size = log2Delta + log2Ndelta == log2Group ? log2Group + 1 : log2Group;
             if (log2Size == log2Group)
@@ -231,7 +230,7 @@ namespace DotNetty.Buffers
                 remove = c_yes;
             }
 
-            short isSubpage = log2Size < _pageShifts + LOG2_SIZE_CLASS_GROUP ? c_yes : c_no;
+            short isSubpage = log2Size < PageShifts + LOG2_SIZE_CLASS_GROUP ? c_yes : c_no;
 
             int log2DeltaLookup = log2Size < LOG2_MAX_LOOKUP_SIZE ||
                                   log2Size == LOG2_MAX_LOOKUP_SIZE && remove == c_no
@@ -317,10 +316,10 @@ namespace DotNetty.Buffers
             int group = sizeIdx >> LOG2_SIZE_CLASS_GROUP;
             int mod = sizeIdx & (1 << LOG2_SIZE_CLASS_GROUP) - 1;
 
-            int groupSize = group == 0 ? 0 :
+            int groupSize = 0u >= (uint)group ? 0 :
                     1 << LOG2_QUANTUM + LOG2_SIZE_CLASS_GROUP - 1 << group;
 
-            int shift = group == 0 ? 1 : group;
+            int shift = 0u >= (uint)group ? 1 : group;
             int lgDelta = shift + LOG2_QUANTUM - 1;
             int modSize = mod + 1 << lgDelta;
 
@@ -344,10 +343,10 @@ namespace DotNetty.Buffers
             int mod = pageIdx & (1 << LOG2_SIZE_CLASS_GROUP) - 1;
 
             long groupSize = 0u >= (uint)group ? 0 :
-                    1L << _pageShifts + LOG2_SIZE_CLASS_GROUP - 1 << group;
+                    1L << PageShifts + LOG2_SIZE_CLASS_GROUP - 1 << group;
 
-            int shift = group == 0 ? 1 : group;
-            int log2Delta = shift + _pageShifts - 1;
+            int shift = 0u >= (uint)group ? 1 : group;
+            int log2Delta = shift + PageShifts - 1;
             int modSize = mod + 1 << log2Delta;
 
             return groupSize + modSize;
@@ -359,7 +358,7 @@ namespace DotNetty.Buffers
         public int Size2SizeIdx(int size)
         {
             if (0u >= (uint)size) { return 0; }
-            if (size > _chunkSize) { return _nSizes; }
+            if (size > ChunkSize) { return _nSizes; }
 
             if (_directMemoryCacheAlignment > 0)
             {
@@ -372,7 +371,7 @@ namespace DotNetty.Buffers
                 return _size2IdxTab[size - 1 >> LOG2_QUANTUM];
             }
 
-            int x = PoolThreadCache<byte>.Log2((size << 1) - 1);
+            int x = PoolThreadCache<byte[]>.Log2((size << 1) - 1);
             int shift = x < LOG2_SIZE_CLASS_GROUP + LOG2_QUANTUM + 1
                     ? 0 : x - (LOG2_SIZE_CLASS_GROUP + LOG2_QUANTUM);
 
@@ -406,21 +405,21 @@ namespace DotNetty.Buffers
 
         private int Pages2PageIdxCompute(int pages, bool floor)
         {
-            int pageSize = pages << _pageShifts;
-            if (pageSize > _chunkSize)
+            int pageSize = pages << PageShifts;
+            if (pageSize > ChunkSize)
             {
                 return _nPSizes;
             }
 
-            int x = PoolThreadCache<byte>.Log2((pageSize << 1) - 1);
+            int x = PoolThreadCache<byte[]>.Log2((pageSize << 1) - 1);
 
-            int shift = x < LOG2_SIZE_CLASS_GROUP + _pageShifts
-                    ? 0 : x - (LOG2_SIZE_CLASS_GROUP + _pageShifts);
+            int shift = x < LOG2_SIZE_CLASS_GROUP + PageShifts
+                    ? 0 : x - (LOG2_SIZE_CLASS_GROUP + PageShifts);
 
             int group = shift << LOG2_SIZE_CLASS_GROUP;
 
-            int log2Delta = x < LOG2_SIZE_CLASS_GROUP + _pageShifts + 1 ?
-                    _pageShifts : x - LOG2_SIZE_CLASS_GROUP - 1;
+            int log2Delta = x < LOG2_SIZE_CLASS_GROUP + PageShifts + 1 ?
+                    PageShifts : x - LOG2_SIZE_CLASS_GROUP - 1;
 
             int deltaInverseMask = -1 << log2Delta;
             int mod = (pageSize - 1 & deltaInverseMask) >> log2Delta &
@@ -428,7 +427,7 @@ namespace DotNetty.Buffers
 
             int pageIdx = group + mod;
 
-            if (floor && _pageIdx2SizeTab[pageIdx] > pages << _pageShifts)
+            if (floor && _pageIdx2SizeTab[pageIdx] > pages << PageShifts)
             {
                 pageIdx--;
             }
@@ -440,7 +439,7 @@ namespace DotNetty.Buffers
         private int AlignSize(int size)
         {
             int delta = size & _directMemoryCacheAlignment - 1;
-            return delta == 0 ? size : size + _directMemoryCacheAlignment - delta;
+            return 0u >= (uint)delta ? size : size + _directMemoryCacheAlignment - delta;
         }
 
         /// <summary>Normalizes usable size that would result from allocating an object with the
@@ -469,7 +468,7 @@ namespace DotNetty.Buffers
 
         private static int NormalizeSizeCompute(int size)
         {
-            int x = PoolThreadCache<byte>.Log2((size << 1) - 1);
+            int x = PoolThreadCache<byte[]>.Log2((size << 1) - 1);
             int log2Delta = x < LOG2_SIZE_CLASS_GROUP + LOG2_QUANTUM + 1
                     ? LOG2_QUANTUM : x - LOG2_SIZE_CLASS_GROUP - 1;
             int delta = 1 << log2Delta;

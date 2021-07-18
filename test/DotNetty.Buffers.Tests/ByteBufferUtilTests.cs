@@ -773,5 +773,102 @@ namespace DotNetty.Buffers.Tests
                 buffer.Release();
             }
         }
+
+        [Fact]
+        public void GetBytesHeap()
+        {
+            var buf = Unpooled.Buffer(4);
+            try
+            {
+                Assert.True(buf.HasArray);
+                CheckGetBytes(buf);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void GetBytesDirect()
+        {
+            var buf = Unpooled.DirectBuffer(4);
+            try
+            {
+                Assert.True(buf.HasArray);
+                CheckGetBytes(buf);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void GetBytesHeapWithNonZeroArrayOffset()
+        {
+            var buf = Unpooled.Buffer(5);
+            try
+            {
+                buf.SetByte(0, 0x05);
+
+                var slice = buf.Slice(1, 4);
+                slice.SetWriterIndex(0);
+
+                Assert.True(slice.HasArray);
+                Assert.Equal(1, slice.ArrayOffset);
+                Assert.Equal(slice.Array.Length, buf.Capacity);
+
+                CheckGetBytes(slice);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void GetBytesHeapWithArrayLengthGreaterThanCapacity()
+        {
+            var buf = Unpooled.Buffer(5);
+            try
+            {
+                buf.SetByte(4, 0x05);
+
+                var slice = buf.Slice(0, 4);
+                slice.SetWriterIndex(0);
+
+                Assert.True(slice.HasArray);
+                Assert.Equal(0, slice.ArrayOffset);
+                Assert.True(slice.Array.Length > slice.Capacity);
+
+                CheckGetBytes(slice);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        private static void CheckGetBytes(IByteBuffer buf)
+        {
+            buf.WriteInt(0x01020304);
+
+            byte[] expected = { 0x01, 0x02, 0x03, 0x04 };
+            Assert.Equal(expected, ByteBufferUtil.GetBytes(buf));
+            Assert.Equal(expected, ByteBufferUtil.GetBytes(buf, 0, buf.ReadableBytes, false));
+
+            expected = new byte[] { 0x01, 0x02, 0x03 };
+            Assert.Equal(expected, ByteBufferUtil.GetBytes(buf, 0, 3));
+            Assert.Equal(expected, ByteBufferUtil.GetBytes(buf, 0, 3, false));
+
+            expected = new byte[] { 0x02, 0x03, 0x04 };
+            Assert.Equal(expected, ByteBufferUtil.GetBytes(buf, 1, 3));
+            Assert.Equal(expected, ByteBufferUtil.GetBytes(buf, 1, 3, false));
+
+            expected = new byte[] { 0x02, 0x03 };
+            Assert.Equal(expected, ByteBufferUtil.GetBytes(buf, 1, 2));
+            Assert.Equal(expected, ByteBufferUtil.GetBytes(buf, 1, 2, false));
+        }
     }
 }

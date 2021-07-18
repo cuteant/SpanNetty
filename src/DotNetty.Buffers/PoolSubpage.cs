@@ -31,9 +31,9 @@ namespace DotNetty.Buffers
     sealed class PoolSubpage<T> : IPoolSubpageMetric
     {
         internal readonly PoolChunk<T> Chunk;
-        private readonly int _memoryMapIdx;
+        private readonly int _pageShifts;
         private readonly int _runOffset;
-        private readonly int _pageSize;
+        private readonly int _runSize;
         private readonly long[] _bitmap;
 
         internal PoolSubpage<T> Prev;
@@ -51,33 +51,33 @@ namespace DotNetty.Buffers
 
         /** Special constructor that creates a linked list head */
 
-        public PoolSubpage(int pageSize)
+        public PoolSubpage()
         {
             Chunk = null;
-            _memoryMapIdx = -1;
+            _pageShifts = -1;
             _runOffset = -1;
             ElemSize = -1;
-            _pageSize = pageSize;
+            _runSize = -1;
             _bitmap = null;
         }
 
-        public PoolSubpage(PoolSubpage<T> head, PoolChunk<T> chunk, int memoryMapIdx, int runOffset, int pageSize, int elemSize)
+        public PoolSubpage(PoolSubpage<T> head, PoolChunk<T> chunk, int pageShifts, int runOffset, int runSize, int elemSize)
         {
             Chunk = chunk;
-            _memoryMapIdx = memoryMapIdx;
+            _pageShifts = pageShifts;
             _runOffset = runOffset;
-            _pageSize = pageSize;
-            _bitmap = new long[pageSize.RightUShift(10)]; // pageSize / 16 / 64
+            _runSize = runSize;
+            ElemSize = elemSize;
+            _bitmap = new long[runSize.RightUShift(6) + SizeClasses.LOG2_QUANTUM]; // runSize / 64 / QUANTUM
             Init(head, elemSize);
         }
 
         public void Init(PoolSubpage<T> head, int elemSize)
         {
             DoNotDestroy = true;
-            ElemSize = elemSize;
             if (elemSize != 0)
             {
-                _maxNumElems = _numAvail = _pageSize / elemSize;
+                _maxNumElems = _numAvail = _runSize / elemSize;
                 _nextAvail = 0;
                 _bitmapLength = _maxNumElems.RightUShift(6);
                 if ((_maxNumElems & 63) != 0)
@@ -100,11 +100,6 @@ namespace DotNetty.Buffers
 
         internal long Allocate()
         {
-            if (0u >= (uint)ElemSize)
-            {
-                return ToHandle(0);
-            }
-
             if (0u >= (uint)_numAvail || !DoNotDestroy)
             {
                 return -1;
@@ -241,7 +236,15 @@ namespace DotNetty.Buffers
             return -1;
         }
 
-        long ToHandle(int bitmapIdx) => 0x4000000000000000L | (long)bitmapIdx << 32 | (uint)_memoryMapIdx;
+        long ToHandle(int bitmapIdx)
+        {
+            int pages = _runSize >> _pageShifts;
+            return ((long)_runOffset << PoolChunk<T>.RUN_OFFSET_SHIFT)
+                   | ((long)pages << PoolChunk<T>.SIZE_SHIFT)
+                   | (1L << PoolChunk<T>.IS_USED_SHIFT)
+                   | (1L << PoolChunk<T>.IS_SUBPAGE_SHIFT)
+                   | (long)bitmapIdx;
+        }
 
         public override string ToString()
         {
@@ -281,11 +284,11 @@ namespace DotNetty.Buffers
 
             if (!doNotDestroy)
             {
-                return "(" + _memoryMapIdx + ": not in use)";
+                return "(" + _runOffset + ": not in use)";
             }
 
-            return "(" + _memoryMapIdx + ": " + (maxNumElems - numAvail) + "/" + maxNumElems +
-                ", offset: " + _runOffset + ", length: " + _pageSize + ", elemSize: " + elemSize + ")";
+            return "(" + _runOffset + ": " + (maxNumElems - numAvail) + "/" + maxNumElems +
+                ", offset: " + _runOffset + ", length: " + _runSize + ", elemSize: " + elemSize + ")";
         }
 
         public int MaxNumElements
@@ -342,7 +345,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        public int PageSize => _pageSize;
+        public int PageSize => 1 << _pageShifts;
 
         internal void Destroy() => Chunk?.Destroy();
     }

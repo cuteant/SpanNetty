@@ -136,13 +136,15 @@ namespace DotNetty.Buffers
 
         sealed class ArrayPooledNonRetainedDuplicateByteBuffer : UnpooledDuplicatedByteBuffer
         {
-            readonly IReferenceCounted _referenceCountDelegate;
+            readonly IByteBuffer _referenceCountDelegate;
 
-            internal ArrayPooledNonRetainedDuplicateByteBuffer(IReferenceCounted referenceCountDelegate, AbstractByteBuffer buffer)
+            internal ArrayPooledNonRetainedDuplicateByteBuffer(IByteBuffer referenceCountDelegate, AbstractByteBuffer buffer)
                 : base(buffer)
             {
                 _referenceCountDelegate = referenceCountDelegate;
             }
+
+            protected override bool IsAccessible0() => _referenceCountDelegate.IsAccessible;
 
             protected override int ReferenceCount0() => _referenceCountDelegate.ReferenceCount;
 
@@ -192,13 +194,15 @@ namespace DotNetty.Buffers
 
         sealed class ArrayPooledNonRetainedSlicedByteBuffer : UnpooledSlicedByteBuffer
         {
-            readonly IReferenceCounted _referenceCountDelegate;
+            readonly IByteBuffer _referenceCountDelegate;
 
-            public ArrayPooledNonRetainedSlicedByteBuffer(IReferenceCounted referenceCountDelegate, AbstractByteBuffer buffer, int index, int length)
+            public ArrayPooledNonRetainedSlicedByteBuffer(IByteBuffer referenceCountDelegate, AbstractByteBuffer buffer, int index, int length)
                 : base(buffer, index, length)
             {
                 _referenceCountDelegate = referenceCountDelegate;
             }
+
+            protected override bool IsAccessible0() => _referenceCountDelegate.IsAccessible;
 
             protected override int ReferenceCount0() => _referenceCountDelegate.ReferenceCount;
 

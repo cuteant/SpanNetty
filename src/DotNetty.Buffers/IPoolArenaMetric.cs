@@ -25,77 +25,84 @@
 
 namespace DotNetty.Buffers
 {
+    using System;
     using System.Collections.Generic;
 
-    public interface IPoolArenaMetric
+    /// <summary>Expose metrics for an arena.</summary>
+    public interface IPoolArenaMetric : ISizeClassesMetric
     {
-        /// Returns the number of thread caches backed by this arena.
+        /// <summary>Returns the number of thread caches backed by this arena.</summary>
         int NumThreadCaches { get; }
 
-        /// Returns the number of tiny sub-pages for the arena.
+        /// <summary>Returns the number of tiny sub-pages for the arena.</summary>
+        [Obsolete("Tiny sub-pages have been merged into small sub-pages.")]
         int NumTinySubpages { get; }
 
-        /// Returns the number of small sub-pages for the arena.
+        /// <summary>Returns the number of small sub-pages for the arena.</summary>
         int NumSmallSubpages { get; }
 
-        /// Returns the number of chunk lists for the arena.
+        /// <summary>Returns the number of chunk lists for the arena.</summary>
         int NumChunkLists { get; }
 
-        /// Returns an unmodifiable {@link List} which holds {@link PoolSubpageMetric}s for tiny sub-pages.
+        /// <summary>Returns an unmodifiable <see cref="IReadOnlyList{T}"/> which holds <see cref="IPoolSubpageMetric"/>s for tiny sub-pages.</summary>
+        [Obsolete("Tiny sub-pages have been merged into small sub-pages.")]
         IReadOnlyList<IPoolSubpageMetric> TinySubpages { get; }
 
-        /// Returns an unmodifiable {@link List} which holds {@link PoolSubpageMetric}s for small sub-pages.
+        /// <summary>Returns an unmodifiable <see cref="IReadOnlyList{T}"/> which holds <see cref="IPoolSubpageMetric"/>s for small sub-pages.</summary>
         IReadOnlyList<IPoolSubpageMetric> SmallSubpages { get; }
 
-        /// Returns an unmodifiable {@link List} which holds {@link PoolChunkListMetric}s.
+        /// <summary>Returns an unmodifiable <see cref="IReadOnlyList{T}"/> which holds <see cref="IPoolChunkListMetric"/>s.</summary>
         IReadOnlyList<IPoolChunkListMetric> ChunkLists { get; }
 
-        /// Return the number of allocations done via the arena. This includes all sizes.
+        /// <summary>Return the number of allocations done via the arena. This includes all sizes.</summary>
         long NumAllocations { get; }
 
-        /// Return the number of tiny allocations done via the arena.
+        /// <summary>Return the number of tiny allocations done via the arena.</summary>
+        [Obsolete("Tiny allocations have been merged into small allocations.")]
         long NumTinyAllocations { get; }
 
-        /// Return the number of small allocations done via the arena.
+        /// <summary>Return the number of small allocations done via the arena.</summary>
         long NumSmallAllocations { get; }
 
-        /// Return the number of normal allocations done via the arena.
+        /// <summary>Return the number of normal allocations done via the arena.</summary>
         long NumNormalAllocations { get; }
 
-        /// Return the number of huge allocations done via the arena.
+        /// <summary>Return the number of huge allocations done via the arena.</summary>
         long NumHugeAllocations { get; }
 
-        /// Return the number of deallocations done via the arena. This includes all sizes.
+        /// <summary>Return the number of deallocations done via the arena. This includes all sizes.</summary>
         long NumDeallocations { get; }
 
-        /// Return the number of tiny deallocations done via the arena.
+        /// <summary>Return the number of tiny deallocations done via the arena.</summary>
+        [Obsolete("Tiny deallocations have been merged into small deallocations.")]
         long NumTinyDeallocations { get; }
 
-        /// Return the number of small deallocations done via the arena.
+        /// <summary>Return the number of small deallocations done via the arena.</summary>
         long NumSmallDeallocations { get; }
 
-        /// Return the number of normal deallocations done via the arena.
+        /// <summary>Return the number of normal deallocations done via the arena.</summary>
         long NumNormalDeallocations { get; }
 
-        /// Return the number of huge deallocations done via the arena.
+        /// <summary>Return the number of huge deallocations done via the arena.</summary>
         long NumHugeDeallocations { get; }
 
-        /// Return the number of currently active allocations.
+        /// <summary>Return the number of currently active allocations.</summary>
         long NumActiveAllocations { get; }
 
-        /// Return the number of currently active tiny allocations.
+        /// <summary>Return the number of currently active tiny allocations.</summary>
+        [Obsolete("Tiny allocations have been merged into small allocations.")]
         long NumActiveTinyAllocations { get; }
 
-        /// Return the number of currently active small allocations.
+        /// <summary>Return the number of currently active small allocations.</summary>
         long NumActiveSmallAllocations { get; }
 
-        /// Return the number of currently active normal allocations.
+        /// <summary>Return the number of currently active normal allocations.</summary>
         long NumActiveNormalAllocations { get; }
 
-        /// Return the number of currently active huge allocations.
+        /// <summary>Return the number of currently active huge allocations.</summary>
         long NumActiveHugeAllocations { get; }
 
-        /// Return the number of active bytes that are currently allocated by the arena.
+        /// <summary>Return the number of active bytes that are currently allocated by the arena.</summary>
         long NumActiveBytes { get; }
     }
 }

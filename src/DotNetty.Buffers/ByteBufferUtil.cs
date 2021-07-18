@@ -75,10 +75,31 @@ namespace DotNetty.Buffers
             AsciiByteProcessor = new FindNonAscii();
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool EnsureWritableSuccess(int ensureWritableResult)
         {
             var nresult = (uint)ensureWritableResult;
             return 0u >= nresult || 2u == nresult;
+        }
+
+        /// <summary>whether the specified buffer has a nonzero ref count.</summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        public static bool IsAccessible(IByteBuffer buffer)
+        {
+            //if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            return buffer.IsAccessible;
+        }
+
+        /// <summary>throws IllegalReferenceCountException if the buffer has a zero ref count.</summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        public static IByteBuffer EnsureAccessible(IByteBuffer buffer)
+        {
+            //if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (!buffer.IsAccessible)
+            {
+                ThrowHelper.ThrowIllegalReferenceCountException(buffer.ReferenceCount);
+            }
+            return buffer;
         }
 
         /// <summary>
@@ -148,16 +169,17 @@ namespace DotNetty.Buffers
 
             if (buf.HasArray)
             {
-                if (copy || start != 0 || length != capacity)
+                int baseOffset = buf.ArrayOffset + start;
+                var bytes = buf.Array;
+                if (copy || baseOffset != 0 || length != bytes.Length)
                 {
-                    int baseOffset = buf.ArrayOffset + start;
-                    var bytes = new byte[length];
-                    PlatformDependent.CopyMemory(buf.Array, baseOffset, bytes, 0, length);
-                    return bytes;
+                    var result = new byte[length];
+                    PlatformDependent.CopyMemory(bytes, baseOffset, result, 0, length);
+                    return result;
                 }
                 else
                 {
-                    return buf.Array;
+                    return bytes;
                 }
             }
 

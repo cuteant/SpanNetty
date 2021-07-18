@@ -40,7 +40,9 @@ namespace DotNetty.Buffers
         {
         }
 
-        public sealed override bool IsAccessible => Unwrap().IsAccessible;
+        public sealed override bool IsAccessible => IsAccessible0();
+
+        protected virtual bool IsAccessible0() => Unwrap().IsAccessible;
 
         public sealed override int ReferenceCount => ReferenceCount0();
 
