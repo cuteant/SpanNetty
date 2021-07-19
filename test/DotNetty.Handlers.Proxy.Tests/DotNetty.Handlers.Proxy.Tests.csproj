@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="..\xunitSettings.props" />
+
+    <PropertyGroup>
+        <TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
+        <RootNamespace>DotNetty.Handlers.Proxy.Tests</RootNamespace>
+        <AssemblyName>DotNetty.Handlers.Proxy.Tests</AssemblyName>
+        <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNetTestSdkPackageVersion)" />
+        <PackageReference Include="xunit" Version="$(xUnitPackageVersion)" />
+        <PackageReference Include="xunit.analyzers" Version="$(xUnitAnalyzersPackageVersion)" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\DotNetty.Handlers.Proxy\DotNetty.Handlers.Proxy.csproj" />
+      <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
+      <ProjectReference Include="..\DotNetty.Tests.Common\DotNetty.Tests.Common.csproj" />
+    </ItemGroup>
+    
+</Project>

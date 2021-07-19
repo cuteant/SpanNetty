@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using DotNetty.Buffers;
@@ -201,6 +202,9 @@ namespace DotNetty.Handlers.Proxy
         /// <returns>the formatted String</returns>
         static bool TryParseEndpoint(EndPoint addr, out string hostnameString, out int port) 
         {
+            hostnameString = null;
+            port = 0;
+            
             if (addr is DnsEndPoint eDns)
             {
                 hostnameString = eDns.Host;
@@ -209,14 +213,23 @@ namespace DotNetty.Handlers.Proxy
             } 
             else if (addr is IPEndPoint eIp)
             {
-                hostnameString = eIp.Address.ToString();
                 port = eIp.Port;
-                return true;
+                switch (addr.AddressFamily)
+                {
+                    case AddressFamily.InterNetwork:
+                        hostnameString = eIp.Address.ToString();
+                        return true;
+                    
+                    case AddressFamily.InterNetworkV6:
+                        hostnameString = $"[{eIp.Address}]";
+                        return true;
+                    
+                    default:
+                        return false;
+                }
             }
             else
             {
-                hostnameString = null;
-                port = 0;
                 return false;
             }
         }
