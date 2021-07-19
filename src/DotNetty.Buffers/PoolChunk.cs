@@ -38,7 +38,7 @@ namespace DotNetty.Buffers
     /// > page  - a page is the smallest unit of memory chunk that can be allocated
     /// > run   - a run is a collection of pages
     /// > chunk - a chunk is a collection of runs
-    /// > in this code chunkSize = maxPages /// pageSize
+    /// > in this code chunkSize = maxPages / pageSize
     ///
     /// To begin we allocate a byte array of size = chunkSize
     /// Whenever a ByteBuf of given size needs to be created we search for the first position
@@ -46,9 +46,9 @@ namespace DotNetty.Buffers
     /// return a (long) handle that encodes this offset information, (this memory segment is then
     /// marked as reserved so it is always used by exactly one ByteBuf and no more)
     ///
-    /// For simplicity all sizes are normalized according to {@link PoolArena#size2SizeIdx(int)} method.
+    /// For simplicity all sizes are normalized according to <see cref="SizeClasses.Size2SizeIdx(int)"/> method.
     /// This ensures that when we request for memory segments of size > pageSize the normalizedCapacity
-    /// equals the next nearest size in {@link SizeClasses}.
+    /// equals the next nearest size in <see cref="SizeClasses"/>.
     ///
     ///
     ///  A chunk has the following layout:
@@ -99,7 +99,7 @@ namespace DotNetty.Buffers
     ///
     /// runsAvail:
     /// ----------
-    /// an array of {@link PriorityQueue}.
+    /// an array of <see cref="PriorityQueue{T}"/>.
     /// Each queue manages same size of runs.
     /// Runs are sorted by offset, so that we always allocate runs with smaller offset.
     ///
@@ -361,7 +361,6 @@ namespace DotNetty.Buffers
                 // get run with min offset in this queue
                 var queue = _runsAvail[queueIdx];
 
-                // long handle = queue.poll();
                 long handle = queue.Poll();
 
                 Debug.Assert(!IsUsed(handle));
@@ -415,7 +414,7 @@ namespace DotNetty.Buffers
             for (int i = pageIdx; i < Arena._nPSizes; i++)
             {
                 var queue = _runsAvail[i];
-                if (queue is object && (uint)queue.Count > 0U)
+                if (queue is object && !queue.IsEmpty)
                 {
                     return i;
                 }
@@ -678,7 +677,7 @@ namespace DotNetty.Buffers
 
         private static bool IsUsed(long handle)
         {
-            return (handle >> IS_USED_SHIFT & 1) == 1L;
+            return (handle >> IS_USED_SHIFT & 1L) == 1L;
         }
 
         private static bool IsRun(long handle)
@@ -688,7 +687,7 @@ namespace DotNetty.Buffers
 
         internal static bool IsSubpage(long handle)
         {
-            return (handle >> IS_SUBPAGE_SHIFT & 1) == 1L;
+            return (handle >> IS_SUBPAGE_SHIFT & 1L) == 1L;
         }
 
         private static int BitmapIdx(long handle)

@@ -12,7 +12,10 @@ namespace DotNetty.Buffers
         private readonly List<T> _list;
         private readonly IComparer<T> _comparer;
 
+        public bool IsEmpty => 0u >= (uint)_list.Count;
+
         public int Count => _list.Count;
+
         public bool IsReadOnly => false;
 
         public PriorityQueue()

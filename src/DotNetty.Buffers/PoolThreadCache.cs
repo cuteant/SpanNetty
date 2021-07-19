@@ -178,7 +178,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         internal static int Log2(int val)
         {
-            return c_integerSizeMinusOne - IntegerExtensions.NumberOfLeadingZeros(val);
+            return c_integerSizeMinusOne - val.NumberOfLeadingZeros();
         }
 
         /// <summary>Try to allocate a small buffer out of the cache.</summary>
