@@ -36,13 +36,13 @@ namespace DotNetty.Buffers
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
-    enum SizeClass
+    internal enum SizeClass
     {
         Small,
         Normal
     }
 
-    abstract class PoolArena<T> : SizeClasses, IPoolArenaMetric
+    internal abstract class PoolArena<T> : SizeClasses, IPoolArenaMetric
     {
         internal readonly PooledByteBufferAllocator Parent;
 
@@ -114,7 +114,7 @@ namespace DotNetty.Buffers
             _chunkListMetrics = metrics;
         }
 
-        PoolSubpage<T> NewSubpagePoolHead()
+        private PoolSubpage<T> NewSubpagePoolHead()
         {
             var head = new PoolSubpage<T>();
             head.Prev = head;
@@ -122,7 +122,7 @@ namespace DotNetty.Buffers
             return head;
         }
 
-        PoolSubpage<T>[] NewSubpagePoolArray(int size) => new PoolSubpage<T>[size];
+        private PoolSubpage<T>[] NewSubpagePoolArray(int size) => new PoolSubpage<T>[size];
 
         internal abstract bool IsDirect { get; }
 
@@ -229,7 +229,7 @@ namespace DotNetty.Buffers
             Interlocked.Increment(ref _allocationsSmall);
         }
 
-        void AllocateHuge(PooledByteBuffer<T> buf, int reqCapacity)
+        private void AllocateHuge(PooledByteBuffer<T> buf, int reqCapacity)
         {
             PoolChunk<T> chunk = NewUnpooledChunk(reqCapacity);
             _ = Interlocked.Add(ref _activeBytesHuge, chunk.ChunkSize);
@@ -259,7 +259,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        SizeClass SizeClass(long handle)
+        private SizeClass SizeClass(long handle)
         {
             return PoolChunk<T>.IsSubpage(handle) ? Buffers.SizeClass.Small : Buffers.SizeClass.Normal;
         }
@@ -345,13 +345,13 @@ namespace DotNetty.Buffers
 
         public int NumChunkLists => _chunkListMetrics.Count;
 
-        public IReadOnlyList<IPoolSubpageMetric> TinySubpages => Array.Empty<IPoolSubpageMetric>();
+        public IReadOnlyList<IPoolSubpageMetric> TinySubpages => EmptyArray<IPoolSubpageMetric>.Instance;
 
         public IReadOnlyList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(_smallSubpagePools);
 
         public IReadOnlyList<IPoolChunkListMetric> ChunkLists => _chunkListMetrics;
 
-        static List<IPoolSubpageMetric> SubPageMetricList(PoolSubpage<T>[] pages)
+        private static List<IPoolSubpageMetric> SubPageMetricList(PoolSubpage<T>[] pages)
         {
             var metrics = new List<IPoolSubpageMetric>();
             foreach (PoolSubpage<T> head in pages)
@@ -544,7 +544,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        static void AppendPoolSubPages(StringBuilder buf, PoolSubpage<T>[] subpages)
+        private static void AppendPoolSubPages(StringBuilder buf, PoolSubpage<T>[] subpages)
         {
             for (int i = 0; i < subpages.Length; i++)
             {
@@ -576,7 +576,7 @@ namespace DotNetty.Buffers
             DestroyPoolChunkLists(_qInit, _q000, _q025, _q050, _q075, _q100);
         }
 
-        static void DestroyPoolSubPages(PoolSubpage<T>[] pages)
+        private static void DestroyPoolSubPages(PoolSubpage<T>[] pages)
         {
             for (int i = 0; i < pages.Length; i++)
             {
@@ -584,7 +584,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        void DestroyPoolChunkLists(params PoolChunkList<T>[] chunkLists)
+        private void DestroyPoolChunkLists(params PoolChunkList<T>[] chunkLists)
         {
             for (int i = 0; i < chunkLists.Length; i++)
             {
@@ -593,14 +593,14 @@ namespace DotNetty.Buffers
         }
     }
 
-    sealed class HeapArena : PoolArena<byte[]>
+    internal sealed class HeapArena : PoolArena<byte[]>
     {
         public HeapArena(PooledByteBufferAllocator parent, int pageSize, int pageShifts, int chunkSize)
             : base(parent, pageSize, pageShifts, chunkSize)
         {
         }
 
-        static byte[] NewByteArray(int size) => new byte[size];
+        private static byte[] NewByteArray(int size) => new byte[size];
 
         internal override bool IsDirect => false;
 
@@ -629,7 +629,7 @@ namespace DotNetty.Buffers
     // 1、IByteBuffer直接操作数组性能更高，参考 System.IO.Pipelines 和 System.Buffers 的内部实现
     // 2、IByetBuffer实现 IReferenceCounted 接口，IMemoryOwner的管理会更加混乱
     // 3、现在 IByteBuffer 已经实现了 IBufferWriter<byte> 接口
-    sealed class DirectArena : PoolArena<byte[]>
+    internal sealed class DirectArena : PoolArena<byte[]>
     {
         private readonly List<MemoryChunk> _memoryChunks;
 
@@ -639,7 +639,7 @@ namespace DotNetty.Buffers
             _memoryChunks = new List<MemoryChunk>();
         }
 
-        static MemoryChunk NewMemoryChunk(int size) => new MemoryChunk(size);
+        private static MemoryChunk NewMemoryChunk(int size) => new MemoryChunk(size);
 
         internal override bool IsDirect => true;
 
@@ -679,7 +679,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        sealed class MemoryChunk : IDisposable
+        private sealed class MemoryChunk : IDisposable
         {
             internal byte[] Bytes;
             private GCHandle _handle;
@@ -692,7 +692,7 @@ namespace DotNetty.Buffers
                 NativePointer = _handle.AddrOfPinnedObject();
             }
 
-            void Release()
+            private void Release()
             {
                 if (_handle.IsAllocated)
                 {
@@ -721,7 +721,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        sealed class OwnedPinnedBlock : MemoryManager<byte>, IPoolMemoryOwner<byte>
+        private sealed class OwnedPinnedBlock : MemoryManager<byte>, IPoolMemoryOwner<byte>
         {
             private byte[] _array;
             private IntPtr _origin;

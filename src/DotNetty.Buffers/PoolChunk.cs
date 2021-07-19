@@ -139,7 +139,7 @@ namespace DotNetty.Buffers
     /// 3) merge continuous avail runs
     /// 4) save the merged run
     /// </summary>
-    sealed class PoolChunk<T> : IPoolChunkMetric
+    internal sealed class PoolChunk<T> : IPoolChunkMetric
     {
         private const int OFFSET_BIT_LENGTH = 15;
         private const int SIZE_BIT_LENGTH = 15;
@@ -162,7 +162,7 @@ namespace DotNetty.Buffers
         private Dictionary<int, long> _runsAvailMap;
 
         /// <summary>manage all avail runs</summary>
-        private SortedList<long, long>[] _runsAvail;
+        private PriorityQueue<long>[] _runsAvail;
 
         /// <summary>manage all subpages in this chunk</summary>
         private readonly PoolSubpage<T>[] _subpages;
@@ -202,8 +202,7 @@ namespace DotNetty.Buffers
             InsertAvailRun(0, pages, initHandle);
         }
 
-        /** Creates a special chunk that is not pooled. */
-
+        /// <summary>Creates a special chunk that is not pooled.</summary>
         internal PoolChunk(PoolArena<T> arena, T memory, int size, int offset, IntPtr pointer)
         {
             Unpooled = true;
@@ -219,12 +218,12 @@ namespace DotNetty.Buffers
             _chunkSize = size;
         }
 
-        private static SortedList<long, long>[] NewRunsAvailqueueArray(int size)
+        private static PriorityQueue<long>[] NewRunsAvailqueueArray(int size)
         {
-            var queueArray = new SortedList<long, long>[size];
+            var queueArray = new PriorityQueue<long>[size];
             for (int i = 0; i < queueArray.Length; i++)
             {
-                queueArray[i] = new SortedList<long, long>();
+                queueArray[i] = new PriorityQueue<long>();
             }
             return queueArray;
         }
@@ -233,13 +232,13 @@ namespace DotNetty.Buffers
         {
             int pageIdxFloor = Arena.Pages2PageIdxFloor(pages);
             var queue = _runsAvail[pageIdxFloor];
-            queue.Add(handle, handle);
+            queue.Add(handle);
 
-            //insert first page of run
+            // insert first page of run
             InsertAvailRun0(runOffset, handle);
             if (pages > 1)
             {
-                //insert last page of run
+                // insert last page of run
                 InsertAvailRun0(LastPage(runOffset, pages), handle);
             }
         }
@@ -261,7 +260,7 @@ namespace DotNetty.Buffers
             RemoveAvailRun(queue, handle);
         }
 
-        private void RemoveAvailRun(SortedList<long, long> queue, long handle)
+        private void RemoveAvailRun(PriorityQueue<long> queue, long handle)
         {
             queue.Remove(handle);
 
@@ -300,7 +299,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        int GetUsage(int freeBytes)
+        private int GetUsage(int freeBytes)
         {
             if (0u >= (uint)freeBytes)
             {
@@ -352,19 +351,18 @@ namespace DotNetty.Buffers
 
             lock (_runsAvail)
             {
-                //find first queue which has at least one big enough run
+                // find first queue which has at least one big enough run
                 int queueIdx = RunFirstBestFit(pageIdx);
                 if (queueIdx == -1)
                 {
                     return -1;
                 }
 
-                //get run with min offset in this queue
+                // get run with min offset in this queue
                 var queue = _runsAvail[queueIdx];
 
-                //long handle = queue.poll();
-                long handle = queue.Values[0];
-                queue.RemoveAt(0);
+                // long handle = queue.poll();
+                long handle = queue.Poll();
 
                 Debug.Assert(!IsUsed(handle));
 
@@ -388,7 +386,7 @@ namespace DotNetty.Buffers
 
             int elemSize = Arena.SizeIdx2Size(sizeIdx);
 
-            //find lowest common multiple of pageSize and elemSize
+            // find lowest common multiple of pageSize and elemSize
             do
             {
                 runSize += _pageSize;
@@ -452,14 +450,12 @@ namespace DotNetty.Buffers
             return handle;
         }
 
-        /**
-         * Create / initialize a new PoolSubpage of normCapacity. Any PoolSubpage created / initialized here is added to
-         * subpage pool in the PoolArena that owns this PoolChunk
-         *
-         * @param sizeIdx sizeIdx of normalized size
-         *
-         * @return index in memoryMap
-         */
+        /// <summary>
+        /// Create / initialize a new PoolSubpage of normCapacity. Any PoolSubpage created / initialized here is added to
+        /// subpage pool in the PoolArena that owns this PoolChunk
+        /// </summary>
+        /// <param name="sizeIdx">sizeIdx of normalized size</param>
+        /// <returns>index in memoryMap</returns>
         private long AllocateSubpage(int sizeIdx)
         {
             // Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.
@@ -467,9 +463,9 @@ namespace DotNetty.Buffers
             PoolSubpage<T> head = Arena.FindSubpagePoolHead(sizeIdx);
             lock (head)
             {
-                //allocate a new run
+                // allocate a new run
                 int runSize = CalculateRunSize(sizeIdx);
-                //runSize must be multiples of pageSize
+                // runSize must be multiples of pageSize
                 long runHandle = AllocateRun(runSize);
                 if (runHandle < 0)
                 {
@@ -487,13 +483,13 @@ namespace DotNetty.Buffers
             }
         }
 
-        /**
-         * Free a subpage or a run of pages When a subpage is freed from PoolSubpage, it might be added back to subpage pool
-         * of the owning PoolArena. If the subpage pool in PoolArena has at least one other PoolSubpage of given elemSize,
-         * we can completely free the owning Page so it is available for subsequent allocations
-         *
-         * @param handle handle to free
-         */
+        /// <summary>
+        /// Free a subpage or a run of pages When a subpage is freed from PoolSubpage, it might be added back to subpage pool
+        /// of the owning PoolArena. If the subpage pool in PoolArena has at least one other PoolSubpage of given elemSize,
+        /// we can completely free the owning Page so it is available for subsequent allocations
+        /// </summary>
+        /// <param name="handle">handle to free</param>
+        /// <param name="normCapacity"></param>
         internal void Free(long handle, int normCapacity)
         {
             if (IsSubpage(handle))
@@ -516,7 +512,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            //start free run
+            // start free run
             int pages = RunPages(handle);
 
             lock (_runsAvail)
@@ -525,9 +521,9 @@ namespace DotNetty.Buffers
                 // will be removed from runsAvail and runsAvailMap
                 long finalRun = CollapseRuns(handle);
 
-                //set run as not used
+                // set run as not used
                 finalRun &= ~(1L << IS_USED_SHIFT);
-                //if it is a subpage, set it to run
+                // if it is a subpage, set it to run
                 finalRun &= ~(1L << IS_SUBPAGE_SHIFT);
 
                 InsertAvailRun(RunOffset(finalRun), RunPages(finalRun), finalRun);
@@ -556,10 +552,10 @@ namespace DotNetty.Buffers
                 int pastOffset = RunOffset(pastRun.Value);
                 int pastPages = RunPages(pastRun.Value);
 
-                //is continuous
+                // is continuous
                 if (pastRun != handle && pastOffset + pastPages == runOffset)
                 {
-                    //remove past run
+                    // remove past run
                     RemoveAvailRun(pastRun.Value);
                     handle = ToRunHandle(pastOffset, pastPages + runPages, 0);
                 }
@@ -586,10 +582,10 @@ namespace DotNetty.Buffers
                 int nextOffset = RunOffset(nextRun.Value);
                 int nextPages = RunPages(nextRun.Value);
 
-                //is continuous
+                // is continuous
                 if (nextRun != handle && runOffset + runPages == nextOffset)
                 {
-                    //remove next run
+                    // remove next run
                     RemoveAvailRun(nextRun.Value);
                     handle = ToRunHandle(runOffset, runPages + nextPages, 0);
                 }
@@ -680,12 +676,12 @@ namespace DotNetty.Buffers
             return (int)(handle >> SIZE_SHIFT & 0x7fff);
         }
 
-        static bool IsUsed(long handle)
+        private static bool IsUsed(long handle)
         {
             return (handle >> IS_USED_SHIFT & 1) == 1L;
         }
 
-        static bool IsRun(long handle)
+        private static bool IsRun(long handle)
         {
             return !IsSubpage(handle);
         }
@@ -695,7 +691,7 @@ namespace DotNetty.Buffers
             return (handle >> IS_SUBPAGE_SHIFT & 1) == 1L;
         }
 
-        static int BitmapIdx(long handle)
+        private static int BitmapIdx(long handle)
         {
             return (int)handle;
         }

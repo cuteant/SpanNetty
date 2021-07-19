@@ -28,7 +28,7 @@ namespace DotNetty.Buffers
     using System.Diagnostics;
     using DotNetty.Common.Utilities;
 
-    sealed class PoolSubpage<T> : IPoolSubpageMetric
+    internal sealed class PoolSubpage<T> : IPoolSubpageMetric
     {
         internal readonly PoolChunk<T> Chunk;
         private readonly int _pageShifts;
@@ -49,8 +49,7 @@ namespace DotNetty.Buffers
         // TODO: Test if adding padding helps under contention
         //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;
 
-        /** Special constructor that creates a linked list head */
-
+        /// <summary>Special constructor that creates a linked list head.</summary>
         public PoolSubpage()
         {
             Chunk = null;
@@ -94,10 +93,7 @@ namespace DotNetty.Buffers
             AddToPool(head);
         }
 
-        /**
-         * Returns the bitmap index of the subpage allocation.
-         */
-
+        /// <summary>Returns the bitmap index of the subpage allocation.</summary>
         internal long Allocate()
         {
             if (0u >= (uint)_numAvail || !DoNotDestroy)
@@ -119,11 +115,11 @@ namespace DotNetty.Buffers
             return ToHandle(bitmapIdx);
         }
 
-        /**
-         * @return <c>true</c> if this subpage is in use.
-         *         <c>false</c> if this subpage is not used by its chunk and thus it's OK to be released.
-         */
-
+        /// <summary>TBD</summary>
+        /// <returns>
+        /// <c>true</c> if this subpage is in use.
+        ///  <c>false</c> if this subpage is not used by its chunk and thus it's OK to be released.
+        /// </returns>
         internal bool Free(PoolSubpage<T> head, int bitmapIdx)
         {
             if (0u >= (uint)ElemSize)
@@ -164,7 +160,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        void AddToPool(PoolSubpage<T> head)
+        private void AddToPool(PoolSubpage<T> head)
         {
             Debug.Assert(Prev is null && Next is null);
 
@@ -174,7 +170,7 @@ namespace DotNetty.Buffers
             head.Next = this;
         }
 
-        void RemoveFromPool()
+        private void RemoveFromPool()
         {
             Debug.Assert(Prev is object && Next is object);
 
@@ -184,9 +180,9 @@ namespace DotNetty.Buffers
             Prev = null;
         }
 
-        void SetNextAvail(int bitmapIdx) => _nextAvail = bitmapIdx;
+        private void SetNextAvail(int bitmapIdx) => _nextAvail = bitmapIdx;
 
-        int GetNextAvail()
+        private int GetNextAvail()
         {
             int nextAvail = _nextAvail;
             if (nextAvail >= 0)
@@ -197,7 +193,7 @@ namespace DotNetty.Buffers
             return FindNextAvail();
         }
 
-        int FindNextAvail()
+        private int FindNextAvail()
         {
             long[] bitmap = _bitmap;
             int bitmapLength = _bitmapLength;
@@ -212,7 +208,7 @@ namespace DotNetty.Buffers
             return -1;
         }
 
-        int FindNextAvail0(int i, long bits)
+        private int FindNextAvail0(int i, long bits)
         {
             int maxNumElems = _maxNumElems;
             int baseVal = i << 6;
@@ -236,7 +232,7 @@ namespace DotNetty.Buffers
             return -1;
         }
 
-        long ToHandle(int bitmapIdx)
+        private long ToHandle(int bitmapIdx)
         {
             int pages = _runSize >> _pageShifts;
             return ((long)_runOffset << PoolChunk<T>.RUN_OFFSET_SHIFT)
