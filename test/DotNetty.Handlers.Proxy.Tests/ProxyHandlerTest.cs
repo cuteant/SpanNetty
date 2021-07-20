@@ -5,20 +5,24 @@ using System.Net;
 using System.Net.Security;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using DotNetty.Buffers;
 using DotNetty.Codecs;
 using DotNetty.Common.Internal.Logging;
 using DotNetty.Common.Utilities;
 using DotNetty.Handlers.Tls;
+using DotNetty.Tests.Common;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using Microsoft.Extensions.Logging;
 using Xunit;
+using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace DotNetty.Handlers.Proxy.Tests
 {
-    public class ProxyHandlerTest : IClassFixture<ProxyHandlerTest.ProxyHandlerTestFixture>, IDisposable
+    public class ProxyHandlerTest : TestBase, IClassFixture<ProxyHandlerTest.ProxyHandlerTestFixture>, IDisposable
     {
         private class ProxyHandlerTestFixture : IDisposable
         {
@@ -27,7 +31,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 StopServers();
             }
         }
-        
+
         private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ProxyHandlerTest>();
 
         private static readonly EndPoint DESTINATION = new DnsEndPoint("destination.com", 42);
@@ -76,8 +80,8 @@ namespace DotNetty.Handlers.Proxy.Tests
         // set to non-zero value in case you need predictable shuffling of test cases
         // look for "Seed used: *" debug message in test logs
         private static readonly int ReproducibleSeed = 0;
-
-        public ProxyHandlerTest()
+        
+        public ProxyHandlerTest(ITestOutputHelper output) : base(output)
         {
             ClearServerExceptions();
         }
@@ -201,15 +205,15 @@ namespace DotNetty.Handlers.Proxy.Tests
                     DESTINATION, "status: 401",
                     CreateClientTlsHandler(),
                     new HttpProxyHandler(HttpsProxy.Address, BAD_USERNAME, BAD_PASSWORD)),
-
+                
                 new TimeoutTestItem(
                     "HTTPS proxy: timeout",
                     CreateClientTlsHandler(),
                     new HttpProxyHandler(DeadHttpsProxy.Address))
 
-
-                // SOCKS4 -----------------------------------------------------
 /*
+                // SOCKS4 -----------------------------------------------------
+
                     new SuccessTestItem(
                             "Anonymous SOCKS4: successful connection, AUTO_READ on",
                             DESTINATION,
@@ -380,7 +384,6 @@ namespace DotNetty.Handlers.Proxy.Tests
             Logger.Debug($"Seed used: {seed}\n");
             var rnd = new Random(seed);
             parameters = parameters.OrderBy(_ => rnd.Next()).ToList();
-
             return parameters;
         }
 
@@ -672,8 +675,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 }
 
                 var testHandler = new FailureTestHandler();
-                var b = new Bootstrap();
-                b
+                var b = new Bootstrap()
                     .Group(Group)
                     .Channel<TcpSocketChannel>()
                     .Resolver(NoopNameResolver.Instance)
@@ -685,7 +687,8 @@ namespace DotNetty.Handlers.Proxy.Tests
                         p.AddLast(testHandler);
                     }));
 
-                var cf = b.ConnectAsync(DESTINATION).Result.CloseCompletion;
+                var channel = b.ConnectAsync(DESTINATION).Result;
+                var cf = channel.CloseCompletion;
                 var finished = cf.Wait(TimeSpan.FromMilliseconds(timeout * 2));
                 finished &= testHandler.Latch.Wait(TimeSpan.FromMilliseconds(timeout * 2));
 
