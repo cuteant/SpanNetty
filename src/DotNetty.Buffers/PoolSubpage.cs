@@ -68,11 +68,7 @@ namespace DotNetty.Buffers
             _runSize = runSize;
             ElemSize = elemSize;
             _bitmap = new long[runSize.RightUShift(6) + SizeClasses.LOG2_QUANTUM]; // runSize / 64 / QUANTUM
-            Init(head, elemSize);
-        }
 
-        public void Init(PoolSubpage<T> head, int elemSize)
-        {
             DoNotDestroy = true;
             if (elemSize != 0)
             {

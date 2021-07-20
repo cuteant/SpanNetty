@@ -205,7 +205,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        // Method must be called inside synchronized(this) { ... } block
+        // Method must be called inside synchronized(this) { ... } block
         private void AllocateNormal(PooledByteBuffer<T> buf, int reqCapacity, int sizeIdx, PoolThreadCache<T> threadCache)
         {
             if (_q050.Allocate(buf, reqCapacity, sizeIdx, threadCache) ||

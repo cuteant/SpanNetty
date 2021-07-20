@@ -26,6 +26,7 @@
 namespace DotNetty.Buffers
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Threading;
@@ -56,9 +57,6 @@ namespace DotNetty.Buffers
         private readonly MemoryRegionCache[] _normalHeapCaches;
         private readonly MemoryRegionCache[] _normalDirectCaches;
 
-        // Used for bitshifting when calculate the index of normal caches later
-        private readonly int _numShiftsNormalDirect;
-        private readonly int _numShiftsNormalHeap;
         private readonly int _freeSweepAllocationThreshold;
         private int _freed = SharedConstants.False;
 
@@ -83,7 +81,6 @@ namespace DotNetty.Buffers
                 _smallSubPageDirectCaches = CreateSubPageCaches(
                     smallCacheSize, directArena.NumSmallSubpagePools);
 
-                _numShiftsNormalDirect = Log2(directArena.PageSize);
                 _normalDirectCaches = CreateNormalCaches(
                     normalCacheSize, maxCachedBufferCapacity, directArena);
 
@@ -94,7 +91,6 @@ namespace DotNetty.Buffers
                 // No directArea is configured so just null out all caches
                 _smallSubPageDirectCaches = null;
                 _normalDirectCaches = null;
-                _numShiftsNormalDirect = -1;
             }
             if (heapArena is object)
             {
@@ -102,7 +98,6 @@ namespace DotNetty.Buffers
                 _smallSubPageHeapCaches = CreateSubPageCaches(
                     smallCacheSize, heapArena.NumSmallSubpagePools);
 
-                _numShiftsNormalHeap = Log2(heapArena.PageSize);
                 _normalHeapCaches = CreateNormalCaches(
                     normalCacheSize, maxCachedBufferCapacity, heapArena);
 
@@ -113,7 +108,6 @@ namespace DotNetty.Buffers
                 // No heapArea is configured so just null out all caches
                 _smallSubPageHeapCaches = null;
                 _normalHeapCaches = null;
-                _numShiftsNormalHeap = -1;
             }
 
             // We only need to watch the thread when any cache is used.
@@ -159,14 +153,14 @@ namespace DotNetty.Buffers
             if (cacheSize > 0 && maxCachedBufferCapacity > 0)
             {
                 int max = Math.Min(area.ChunkSize, maxCachedBufferCapacity);
-                int arraySize = Math.Max(1, Log2(max / area.PageSize) + 1);
-
-                var cache = new MemoryRegionCache[arraySize];
-                for (int i = 0; i < cache.Length; i++)
+                // Create as many normal caches as we support based on how many sizeIdx we have and what the upper
+                // bound is that we want to cache in general.
+                List<MemoryRegionCache> cache = new List<MemoryRegionCache>();
+                for (int idx = area.NumSmallSubpagePools; idx < area._nSizes && area.SizeIdx2Size(idx) <= max; idx++)
                 {
-                    cache[i] = new NormalMemoryRegionCache(cacheSize);
+                    cache.Add(new NormalMemoryRegionCache(cacheSize));
                 }
-                return cache;
+                return cache.ToArray();
             }
             else
             {
@@ -188,8 +182,8 @@ namespace DotNetty.Buffers
 
         /// <summary>Try to allocate a small buffer out of the cache</summary>
         /// <returns><c>true</c> if successful <c>false</c> otherwise</returns>
-        internal bool AllocateNormal(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
-            Allocate(CacheForNormal(area, normCapacity), buf, reqCapacity);
+        internal bool AllocateNormal(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int sizeIdx) =>
+            Allocate(CacheForNormal(area, sizeIdx), buf, reqCapacity);
 
         private bool Allocate(MemoryRegionCache cache, PooledByteBuffer<T> buf, int reqCapacity)
         {
@@ -314,7 +308,9 @@ namespace DotNetty.Buffers
 
         private MemoryRegionCache CacheForNormal(PoolArena<T> area, int sizeIdx)
         {
-            return Cache(area.IsDirect ? _normalDirectCaches : _normalHeapCaches, sizeIdx);
+            // We need to substract area.numSmallSubpagePools as sizeIdx is the overall index for all sizes.
+            int idx = sizeIdx - area.NumSmallSubpagePools;
+            return Cache(area.IsDirect ? _normalDirectCaches : _normalHeapCaches, idx);
         }
 
         private static MemoryRegionCache Cache(MemoryRegionCache[] cache, int sizeIdx)

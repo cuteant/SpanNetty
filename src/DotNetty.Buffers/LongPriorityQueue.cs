@@ -27,16 +27,16 @@ namespace DotNetty.Buffers
     internal sealed class LongPriorityQueue
     {
         private const int DefaultCapacity = 9;
-        public const int NO_VALUE = -1;
+        public const long NO_VALUE = -1L;
 
         private long[] _array = new long[DefaultCapacity];
         private int _size;
 
         public void Offer(long handle)
         {
-            if (handle == NO_VALUE)
+            if (0ul >= (ulong)(NO_VALUE - handle))
             {
-                throw new ArgumentException("The NO_VALUE (" + NO_VALUE + ") cannot be added to the queue.");
+                ThrowHelper.ThrowArgumentException_NoValueCannotBeAdded();
             }
             _size++;
             if (_size == _array.Length)

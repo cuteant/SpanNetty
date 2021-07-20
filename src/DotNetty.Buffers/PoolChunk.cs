@@ -99,7 +99,7 @@ namespace DotNetty.Buffers
     ///
     /// runsAvail:
     /// ----------
-    /// an array of <see cref="PriorityQueue{T}"/>.
+    /// an array of <see cref="LongPriorityQueue"/>.
     /// Each queue manages same size of runs.
     /// Runs are sorted by offset, so that we always allocate runs with smaller offset.
     ///
@@ -141,7 +141,6 @@ namespace DotNetty.Buffers
     /// </summary>
     internal sealed class PoolChunk<T> : IPoolChunkMetric
     {
-        private const int OFFSET_BIT_LENGTH = 15;
         private const int SIZE_BIT_LENGTH = 15;
         private const int INUSED_BIT_LENGTH = 1;
         private const int SUBPAGE_BIT_LENGTH = 1;
@@ -159,10 +158,10 @@ namespace DotNetty.Buffers
         internal readonly IntPtr NativePointer;
 
         /// <summary>store the first page and last page of each avail run</summary>
-        private Dictionary<int, long> _runsAvailMap;
+        private LongLongHashMap _runsAvailMap;
 
         /// <summary>manage all avail runs</summary>
-        private PriorityQueue<long>[] _runsAvail;
+        private LongPriorityQueue[] _runsAvail;
 
         /// <summary>manage all subpages in this chunk</summary>
         private readonly PoolSubpage<T>[] _subpages;
@@ -193,7 +192,7 @@ namespace DotNetty.Buffers
             _freeBytes = chunkSize;
 
             _runsAvail = NewRunsAvailqueueArray(maxPageIdx);
-            _runsAvailMap = new Dictionary<int, long>();
+            _runsAvailMap = new LongLongHashMap(LongPriorityQueue.NO_VALUE);
             _subpages = new PoolSubpage<T>[chunkSize >> pageShifts];
 
             //insert initial run, offset = 0, pages = chunkSize / pageSize
@@ -218,12 +217,12 @@ namespace DotNetty.Buffers
             _chunkSize = size;
         }
 
-        private static PriorityQueue<long>[] NewRunsAvailqueueArray(int size)
+        private static LongPriorityQueue[] NewRunsAvailqueueArray(int size)
         {
-            var queueArray = new PriorityQueue<long>[size];
+            var queueArray = new LongPriorityQueue[size];
             for (int i = 0; i < queueArray.Length; i++)
             {
-                queueArray[i] = new PriorityQueue<long>();
+                queueArray[i] = new LongPriorityQueue();
             }
             return queueArray;
         }
@@ -232,7 +231,7 @@ namespace DotNetty.Buffers
         {
             int pageIdxFloor = Arena.Pages2PageIdxFloor(pages);
             var queue = _runsAvail[pageIdxFloor];
-            queue.Add(handle);
+            queue.Offer(handle);
 
             // insert first page of run
             InsertAvailRun0(runOffset, handle);
@@ -245,12 +244,8 @@ namespace DotNetty.Buffers
 
         private void InsertAvailRun0(int runOffset, long handle)
         {
-#if NETCOREAPP || NETSTANDARD_2_0_GREATER
-            var result = _runsAvailMap.TryAdd(runOffset, handle);
-            Debug.Assert(result);
-#else
-            _runsAvailMap.Add(runOffset, handle);
-#endif
+            var pre = _runsAvailMap.Put(runOffset, handle);
+            Debug.Assert(pre == LongPriorityQueue.NO_VALUE);
         }
 
         private void RemoveAvailRun(long handle)
@@ -260,7 +255,7 @@ namespace DotNetty.Buffers
             RemoveAvailRun(queue, handle);
         }
 
-        private void RemoveAvailRun(PriorityQueue<long> queue, long handle)
+        private void RemoveAvailRun(LongPriorityQueue queue, long handle)
         {
             queue.Remove(handle);
 
@@ -280,9 +275,9 @@ namespace DotNetty.Buffers
             return runOffset + pages - 1;
         }
 
-        private long? GetAvailRunByOffset(int runOffset)
+        private long GetAvailRunByOffset(int runOffset)
         {
-            return _runsAvailMap.TryGetValue(runOffset, out var result) ? result : default;
+            return _runsAvailMap.Get(runOffset);
         }
 
         public int Usage
@@ -363,7 +358,7 @@ namespace DotNetty.Buffers
 
                 long handle = queue.Poll();
 
-                Debug.Assert(!IsUsed(handle));
+                Debug.Assert(handle != LongPriorityQueue.NO_VALUE && !IsUsed(handle), "invalid handle: " + handle);
 
                 RemoveAvailRun(queue, handle);
 
@@ -414,7 +409,7 @@ namespace DotNetty.Buffers
             for (int i = pageIdx; i < Arena._nPSizes; i++)
             {
                 var queue = _runsAvail[i];
-                if (queue is object && !queue.IsEmpty)
+                if (queue is object && !queue.IsEmpty())
                 {
                     return i;
                 }
@@ -472,6 +467,7 @@ namespace DotNetty.Buffers
                 }
 
                 int runOffset = RunOffset(runHandle);
+                Debug.Assert(_subpages[runOffset] is null);
                 int elemSize = Arena.SizeIdx2Size(sizeIdx);
 
                 PoolSubpage<T> subpage = new(head, this, _pageShifts, runOffset,
@@ -496,7 +492,8 @@ namespace DotNetty.Buffers
                 int sizeIdx = Arena.Size2SizeIdx(normCapacity);
                 PoolSubpage<T> head = Arena.FindSubpagePoolHead(sizeIdx);
 
-                PoolSubpage<T> subpage = _subpages[RunOffset(handle)];
+                int sIdx = RunOffset(handle);
+                PoolSubpage<T> subpage = _subpages[sIdx];
                 Debug.Assert(subpage is object && subpage.DoNotDestroy);
 
                 // Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.
@@ -508,6 +505,9 @@ namespace DotNetty.Buffers
                         //the subpage is still used, do not free it
                         return;
                     }
+                    Debug.Assert(!subpage.DoNotDestroy);
+                    // Null out slot in the array as it was freed and we should not use it anymore.
+                    _subpages[sIdx] = null;
                 }
             }
 
@@ -543,19 +543,19 @@ namespace DotNetty.Buffers
                 int runPages = RunPages(handle);
 
                 var pastRun = GetAvailRunByOffset(runOffset - 1);
-                if (pastRun is null)
+                if (0ul >= (ulong)(LongPriorityQueue.NO_VALUE - pastRun))
                 {
                     return handle;
                 }
 
-                int pastOffset = RunOffset(pastRun.Value);
-                int pastPages = RunPages(pastRun.Value);
+                int pastOffset = RunOffset(pastRun);
+                int pastPages = RunPages(pastRun);
 
                 // is continuous
                 if (pastRun != handle && pastOffset + pastPages == runOffset)
                 {
                     // remove past run
-                    RemoveAvailRun(pastRun.Value);
+                    RemoveAvailRun(pastRun);
                     handle = ToRunHandle(pastOffset, pastPages + runPages, 0);
                 }
                 else
@@ -573,19 +573,19 @@ namespace DotNetty.Buffers
                 int runPages = RunPages(handle);
 
                 var nextRun = GetAvailRunByOffset(runOffset + runPages);
-                if (nextRun is null)
+                if (0ul >= (ulong)(LongPriorityQueue.NO_VALUE - nextRun))
                 {
                     return handle;
                 }
 
-                int nextOffset = RunOffset(nextRun.Value);
-                int nextPages = RunPages(nextRun.Value);
+                int nextOffset = RunOffset(nextRun);
+                int nextPages = RunPages(nextRun);
 
                 // is continuous
                 if (nextRun != handle && runOffset + runPages == nextOffset)
                 {
                     // remove next run
-                    RemoveAvailRun(nextRun.Value);
+                    RemoveAvailRun(nextRun);
                     handle = ToRunHandle(runOffset, runPages + nextPages, 0);
                 }
                 else

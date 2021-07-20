@@ -316,9 +316,9 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_InvalidOffLen()
         {
-            throw GetArgumentOutOfRangeException();
+            throw GetArgumentException();
 
-            static ArgumentException GetArgumentOutOfRangeException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
             }
@@ -327,9 +327,9 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_FailedToGetLargerSpan()
         {
-            throw GetArgumentOutOfRangeException();
+            throw GetArgumentException();
 
-            static ArgumentException GetArgumentOutOfRangeException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("The 'IByteBuffer' could not provide an output buffer that is large enough to continue writing.");
             }
@@ -338,11 +338,22 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_FailedToGetMinimumSizeSpan(int minimumSize)
         {
-            throw GetArgumentOutOfRangeException(minimumSize);
+            throw GetArgumentException(minimumSize);
 
-            static ArgumentException GetArgumentOutOfRangeException(int minimumSize)
+            static ArgumentException GetArgumentException(int minimumSize)
             {
                 return new ArgumentException($"The 'IByteBuffer' could not provide an output buffer that is large enough to continue writing. Need at least {minimumSize} bytes.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_NoValueCannotBeAdded()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("The NO_VALUE (" + LongPriorityQueue.NO_VALUE + ") cannot be added to the queue.");
             }
         }
 

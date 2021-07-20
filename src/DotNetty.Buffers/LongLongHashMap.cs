@@ -46,7 +46,7 @@ namespace DotNetty.Buffers
 
         public long Put(long key, long value)
         {
-            if (key == 0)
+            if (0ul >= (ulong)key)
             {
                 long prev = _zeroVal;
                 _zeroVal = value;
@@ -59,9 +59,9 @@ namespace DotNetty.Buffers
                 for (int i = 0; i < _maxProbe; i++)
                 {
                     long existing = _array[index];
-                    if (existing == key || existing == 0)
+                    if (existing == key || 0ul >= (ulong)existing)
                     {
-                        long prev = existing == 0 ? _emptyVal : _array[index + 1];
+                        long prev = 0ul >= (ulong)existing ? _emptyVal : _array[index + 1];
                         _array[index] = key;
                         _array[index + 1] = value;
                         for (; i < _maxProbe; i++)
@@ -84,7 +84,7 @@ namespace DotNetty.Buffers
 
         public void Remove(long key)
         {
-            if (key == 0)
+            if (0ul >= (ulong)key)
             {
                 _zeroVal = _emptyVal;
                 return;
@@ -104,7 +104,7 @@ namespace DotNetty.Buffers
 
         public long Get(long key)
         {
-            if (key == 0)
+            if (0ul >= (ulong)key)
             {
                 return _zeroVal;
             }
