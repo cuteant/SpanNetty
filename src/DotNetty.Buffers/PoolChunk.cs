@@ -322,7 +322,7 @@ namespace DotNetty.Buffers
             {
                 // small
                 handle = AllocateSubpage(sizeIdx);
-                if (handle < 0)
+                if (handle < 0L)
                 {
                     return false;
                 }
@@ -334,7 +334,7 @@ namespace DotNetty.Buffers
                 // runSize must be multiple of pageSize
                 int runSize = Arena.SizeIdx2Size(sizeIdx);
                 handle = AllocateRun(runSize);
-                if (handle < 0)
+                if (handle < 0L)
                 {
                     return false;
                 }
@@ -466,7 +466,7 @@ namespace DotNetty.Buffers
                 int runSize = CalculateRunSize(sizeIdx);
                 // runSize must be multiples of pageSize
                 long runHandle = AllocateRun(runSize);
-                if (runHandle < 0)
+                if (runHandle < 0L)
                 {
                     return -1;
                 }
