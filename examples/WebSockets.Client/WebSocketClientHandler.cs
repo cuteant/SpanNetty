@@ -3,18 +3,17 @@
 
 namespace WebSockets.Client
 {
-    using System;
-    using System.Text;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
-    using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
+    using System;
+    using System.Text;
+    using System.Threading.Tasks;
 
     public class WebSocketClientHandler : SimpleChannelInboundHandler<object>
     {
@@ -45,14 +44,14 @@ namespace WebSockets.Client
             s_logger.LogInformation("WebSocket Client disconnected!");
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, object msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, object msg)
         {
-            IChannel ch = ctx.Channel;
+            IChannel channel = context.Channel;
             if (!_handshaker.IsHandshakeComplete)
             {
                 try
                 {
-                    _handshaker.FinishHandshake(ch, (IFullHttpResponse)msg);
+                    _handshaker.FinishHandshake(channel, (IFullHttpResponse)msg);
                     s_logger.LogInformation("WebSocket Client connected!");
                     _handshakeFuture.TryComplete();
                 }
@@ -85,11 +84,11 @@ namespace WebSockets.Client
             }
         }
 
-        public override void ExceptionCaught(IChannelHandlerContext ctx, Exception exception)
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
             s_logger.LogError(exception, $"{nameof(WebSocketClientHandler)} caught exception:");
             _handshakeFuture.TrySetException(exception);
-            ctx.CloseAsync();
+            context.CloseAsync();
         }
 
         public override void UserEventTriggered(IChannelHandlerContext context, object evt)

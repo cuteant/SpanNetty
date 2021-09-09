@@ -3,13 +3,6 @@
 
 namespace HttpServer
 {
-    using System;
-    using System.IO;
-    using System.Net;
-    using System.Runtime;
-    using System.Runtime.InteropServices;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Codecs.Http;
     using DotNetty.Common;
     using DotNetty.Handlers.Logging;
@@ -19,6 +12,13 @@ namespace HttpServer
     using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv;
     using Examples.Common;
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Runtime;
+    using System.Runtime.InteropServices;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -38,7 +38,7 @@ namespace HttpServer
 
 
             bool useLibuv = ServerSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type : {(useLibuv ? "Libuv" : "Socket")}");
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -67,6 +67,7 @@ namespace HttpServer
             {
                 tlsCertificate = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
             }
+
             try
             {
                 var bootstrap = new ServerBootstrap();

@@ -3,11 +3,6 @@
 
 namespace Echo.Client
 {
-    using System;
-    using System.Net;
-    using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Codecs;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
@@ -15,6 +10,11 @@ namespace Echo.Client
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
+    using System;
+    using System.Net;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -31,6 +31,7 @@ namespace Echo.Client
                 cert = new X509Certificate2("dotnetty.com.pfx", "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();

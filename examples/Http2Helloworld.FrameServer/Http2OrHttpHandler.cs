@@ -1,12 +1,12 @@
 ﻿#if NETCOREAPP_2_0_GREATER
 namespace Http2Helloworld.FrameServer
 {
-    using System;
-    using System.Net.Security;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
+    using System;
+    using System.Net.Security;
 
     public class Http2OrHttpHandler : ApplicationProtocolNegotiationHandler
     {

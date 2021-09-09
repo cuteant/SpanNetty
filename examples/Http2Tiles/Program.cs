@@ -1,13 +1,13 @@
 ﻿namespace Http2Tiles
 {
-    using System;
-    using System.Runtime;
-    using System.Runtime.InteropServices;
-    using System.Threading.Tasks;
     using DotNetty.Common;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv;
     using Examples.Common;
+    using System;
+    using System.Runtime;
+    using System.Runtime.InteropServices;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -26,7 +26,7 @@
                 + $"\nProcessor Count : {Environment.ProcessorCount}\n");
 
             bool useLibuv = ServerSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type : {(useLibuv ? "Libuv" : "Socket")}");
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -65,16 +65,16 @@
                 Http2Server http2 = useLibuv ? new Http2Server(bossGroup2, workGroup2) : new Http2Server(bossGroup, workGroup);
                 http2Channel = await http2.StartAsync();
 
-                Console.WriteLine("Open your web browser and navigate to " + "http://127.0.0.1:" + HttpServer.PORT);
+                Console.WriteLine($"Open your web browser and navigate to http://127.0.0.1:{HttpServer.PORT}");
                 HttpServer http = new HttpServer(bossGroup, workGroup);
                 httpChannel = await http.StartAsync();
 
-                Console.WriteLine("按任意键退出");
+                Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
             }
-            catch (Exception exc)
+            catch (Exception exception)
             {
-                Console.WriteLine(exc.ToString());
+                Console.WriteLine($"{exception}");
                 Console.ReadKey();
             }
             finally

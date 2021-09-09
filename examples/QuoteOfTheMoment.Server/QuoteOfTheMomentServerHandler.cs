@@ -3,11 +3,11 @@
 
 namespace QuoteOfTheMoment.Server
 {
-    using System;
-    using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
+    using System;
+    using System.Text;
 
     public class QuoteOfTheMomentServerHandler : SimpleChannelInboundHandler<DatagramPacket>
     {
@@ -43,7 +43,7 @@ namespace QuoteOfTheMoment.Server
                 return;
             }
 
-            byte[] bytes = Encoding.UTF8.GetBytes("QOTM: " + NextQuote());
+            byte[] bytes = Encoding.UTF8.GetBytes($"QOTM: {NextQuote()}");
             IByteBuffer buffer = Unpooled.WrappedBuffer(bytes);
             ctx.WriteAsync(new DatagramPacket(buffer, packet.Sender));
         }
@@ -52,7 +52,7 @@ namespace QuoteOfTheMoment.Server
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            Console.WriteLine("Exception: " + exception);
+            Console.WriteLine($"{exception}");
             // We don't close the channel because we can keep serving requests.
         }
     }

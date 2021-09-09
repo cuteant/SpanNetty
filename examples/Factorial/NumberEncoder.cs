@@ -3,11 +3,10 @@
 
 namespace Factorial
 {
-    using System.Collections.Generic;
-    using System.Numerics;
     using DotNetty.Buffers;
     using DotNetty.Codecs;
     using DotNetty.Transport.Channels;
+    using System.Collections.Generic;
 
     public class NumberEncoder : MessageToMessageEncoder<System.Numerics.BigInteger>
     {

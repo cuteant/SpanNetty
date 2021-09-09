@@ -3,19 +3,18 @@
 
 namespace WebSockets.Server
 {
-    using System;
-    using DotNetty.Buffers;
     using DotNetty.Codecs.Http.WebSockets;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Transport.Channels;
-    using DotNetty.Common.Internal.Logging;
     using Microsoft.Extensions.Logging;
+    using System;
 
     public sealed class WebSocketServerFrameHandler : SimpleChannelInboundHandler<WebSocketFrame>
     {
         static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<WebSocketServerFrameHandler>();
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, WebSocketFrame frame)
+        protected override void ChannelRead0(IChannelHandlerContext context, WebSocketFrame frame)
         {
             if (frame is TextWebSocketFrame textFrame)
             {
@@ -25,23 +24,23 @@ namespace WebSockets.Server
                     throw new Exception(msg.Substring(6, msg.Length - 6));
                 }
                 // Echo the frame
-                ctx.Channel.WriteAndFlushAsync(new TextWebSocketFrame(msg));
+                context.Channel.WriteAndFlushAsync(new TextWebSocketFrame(msg));
                 return;
             }
 
             if (frame is BinaryWebSocketFrame binaryFrame)
             {
                 // Echo the frame
-                ctx.Channel.WriteAndFlushAsync(new BinaryWebSocketFrame(binaryFrame.Content.RetainedDuplicate()));
+                context.Channel.WriteAndFlushAsync(new BinaryWebSocketFrame(binaryFrame.Content.RetainedDuplicate()));
             }
         }
 
         //public override void ChannelReadComplete(IChannelHandlerContext context) => context.Flush();
 
-        public override void ExceptionCaught(IChannelHandlerContext ctx, Exception e)
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            s_logger.LogError(e, $"{nameof(WebSocketServerFrameHandler)} caught exception:");
-            ctx.CloseAsync();
+            s_logger.LogError(exception, $"{nameof(WebSocketServerFrameHandler)} caught exception:");
+            context.CloseAsync();
         }
 
         public override void UserEventTriggered(IChannelHandlerContext context, object evt)

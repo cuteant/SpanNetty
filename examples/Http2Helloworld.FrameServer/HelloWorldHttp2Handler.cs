@@ -1,12 +1,12 @@
 ﻿namespace Http2Helloworld.FrameServer
 {
-    using System;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
+    using System;
 
     /**
      * A simple handler that responds with the message "Hello World!".

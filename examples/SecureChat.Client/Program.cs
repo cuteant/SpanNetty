@@ -3,12 +3,6 @@
 
 namespace SecureChat.Client
 {
-    using System;
-    using System.IO;
-    using System.Net;
-    using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Codecs;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
@@ -16,6 +10,12 @@ namespace SecureChat.Client
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -27,11 +27,13 @@ namespace SecureChat.Client
 
             X509Certificate2 cert = null;
             string targetHost = null;
+
             if (ClientSettings.IsSsl)
             {
                 cert = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();
@@ -65,11 +67,12 @@ namespace SecureChat.Client
 
                     try
                     {
-                        await bootstrapChannel.WriteAndFlushAsync(line + "\r\n");
+                        await bootstrapChannel.WriteAndFlushAsync($"{line}\r\n");
                     }
                     catch
                     {
                     }
+
                     if (string.Equals(line, "bye", StringComparison.OrdinalIgnoreCase))
                     {
                         await bootstrapChannel.CloseAsync();

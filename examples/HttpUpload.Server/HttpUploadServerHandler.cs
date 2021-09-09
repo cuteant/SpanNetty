@@ -1,10 +1,5 @@
 ﻿namespace HttpUpload.Server
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Text;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.Cookies;
@@ -12,6 +7,11 @@
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Text;
+    using System.Threading.Tasks;
 
     public class HttpUploadServerHandler : SimpleChannelInboundHandler2<IHttpObject>
     {
@@ -20,11 +20,8 @@
             new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize); // Disk if size exceed
 
         IHttpRequest _request;
-
         IHttpData _partialContent;
-
         readonly StringBuilder _responseContent = new StringBuilder();
-
         HttpPostRequestDecoder _decoder;
 
         static HttpUploadServerHandler()
@@ -214,13 +211,11 @@
                         _partialContent = (IHttpData)data;
                         if (_partialContent is IFileUpload fileUpload)
                         {
-                            builder.Append("Start FileUpload: ")
-                                .Append(fileUpload.FileName).Append(" ");
+                            builder.Append($"Start FileUpload: {fileUpload.FileName} ");
                         }
                         else
                         {
-                            builder.Append("Start Attribute: ")
-                                .Append(_partialContent.Name).Append(" ");
+                            builder.Append($"Start Attribute: {_partialContent.Name} ");
                         }
                         builder.Append("(DefinedSize: ").Append(_partialContent.DefinedLength).Append(")");
                     }
@@ -250,6 +245,7 @@
             {
                 var attribute = (IAttribute)data;
                 string value;
+
                 try
                 {
                     value = attribute.Value;
@@ -262,6 +258,7 @@
                             + attribute.Name + " Error while reading value: " + e1.Message + "\r\n");
                     return;
                 }
+
                 if (value.Length > 100)
                 {
                     _responseContent.Append("\r\nBODY Attribute: " + attribute.DataType + ": "
@@ -370,7 +367,7 @@
             return future;
         }
 
-        private void WriteMenu(IChannelHandlerContext ctx)
+        private void WriteMenu(IChannelHandlerContext context)
         {
             // print several HTML forms
             // Convert the response content to a ChannelBuffer.
@@ -463,11 +460,11 @@
             }
 
             // Write the response.
-            var future = ctx.Channel.WriteAndFlushAsync(response);
+            var future = context.Channel.WriteAndFlushAsync(response);
             // Close the connection after the write operation is done if necessary.
             if (!keepAlive)
             {
-                future.CloseOnComplete(ctx.Channel);
+                future.CloseOnComplete(context.Channel);
             }
         }
 
