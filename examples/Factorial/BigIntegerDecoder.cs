@@ -24,7 +24,7 @@ namespace Factorial
             if (magicNumber != 'F')
             {
                 input.ResetReaderIndex();
-                throw new Exception("Invalid magic number: " + magicNumber);
+                throw new Exception($"Invalid magic number: {magicNumber}");
             }
 
             int dataLength = input.ReadInt();

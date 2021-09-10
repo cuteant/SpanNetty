@@ -95,10 +95,8 @@
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
-
                     .Handler(new LoggingHandler("LSTN"))
                     //.Handler(new ServerChannelRebindHandler(DoBind))
-
                     .ChildHandler(new Http2ServerInitializer(tlsCertificate));
 
                 bootstrapChannel = await bootstrap.BindAsync(IPAddress.Loopback, port);

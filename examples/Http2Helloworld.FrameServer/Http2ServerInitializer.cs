@@ -99,14 +99,14 @@
 
             public HttpMessageHandler(int maxHttpContentLength) => this.maxHttpContentLength = maxHttpContentLength;
 
-            protected override void ChannelRead0(IChannelHandlerContext context, IHttpMessage msg)
+            protected override void ChannelRead0(IChannelHandlerContext context, IHttpMessage message)
             {
                 // If this handler is hit then no upgrade has been attempted and the client is just talking HTTP.
-                s_logger.LogInformation("Directly talking: " + msg.ProtocolVersion + " (no upgrade was attempted)");
+                s_logger.LogInformation($"Directly talking: {message.ProtocolVersion} (no upgrade was attempted)");
                 IChannelPipeline pipeline = context.Pipeline;
-                pipeline.AddAfter(context.Name, null, new Http2Helloworld.Server.HelloWorldHttp1Handler("Direct. No Upgrade Attempted."));
+                pipeline.AddAfter(context.Name, null, new Server.HelloWorldHttp1Handler("Direct. No Upgrade Attempted."));
                 pipeline.Replace(this, null, new HttpObjectAggregator(this.maxHttpContentLength));
-                context.FireChannelRead(ReferenceCountUtil.Retain(msg));
+                context.FireChannelRead(ReferenceCountUtil.Retain(message));
             }
         }
 

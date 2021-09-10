@@ -25,12 +25,12 @@ namespace Factorial.Client
             SendNumbers();
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext context, BigInteger msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, BigInteger message)
         {
             _receivedMessages++;
             if (_receivedMessages == ClientSettings.Count)
             {
-                context.CloseAsync().ContinueWith(t => _answer.Add(msg));
+                context.CloseAsync().ContinueWith(t => _answer.Add(message));
             }
         }
 

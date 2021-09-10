@@ -8,7 +8,7 @@ namespace SecureChat.Client
 
     public class SecureChatClientHandler : SimpleChannelInboundHandler<string>
     {
-        protected override void ChannelRead0(IChannelHandlerContext context, string msg) => Console.WriteLine(msg);
+        protected override void ChannelRead0(IChannelHandlerContext context, string message) => Console.WriteLine(message);
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {

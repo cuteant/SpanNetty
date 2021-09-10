@@ -16,31 +16,31 @@ namespace Telnet.Server
             context.WriteAndFlushAsync($"It is {DateTime.Now} now !\r\n");
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext contetx, string msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, string message)
         {
             // Generate and write a response.
             string response;
             bool close = false;
 
-            if (string.IsNullOrEmpty(msg))
+            if (string.IsNullOrEmpty(message))
             {
                 response = "Please type something.\r\n";
             }
-            else if (string.Equals("bye", msg, StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals("bye", message, StringComparison.OrdinalIgnoreCase))
             {
                 response = "Have a good day!\r\n";
                 close = true;
             }
             else
             {
-                response = $"Did you say '{msg}'?\r\n";
+                response = $"Did you say '{message}'?\r\n";
             }
 
-            Task wait_close = contetx.WriteAndFlushAsync(response);
+            Task wait_close = context.WriteAndFlushAsync(response);
             if (close)
             {
                 Task.WaitAll(wait_close);
-                contetx.CloseAsync();
+                context.CloseAsync();
             }
         }
 

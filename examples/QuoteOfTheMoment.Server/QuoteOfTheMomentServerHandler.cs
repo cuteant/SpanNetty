@@ -28,7 +28,7 @@ namespace QuoteOfTheMoment.Server
             return Quotes[quoteId];
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, DatagramPacket packet)
+        protected override void ChannelRead0(IChannelHandlerContext context, DatagramPacket packet)
         {
             Console.WriteLine($"Server Received => {packet}");
 
@@ -45,7 +45,7 @@ namespace QuoteOfTheMoment.Server
 
             byte[] bytes = Encoding.UTF8.GetBytes($"QOTM: {NextQuote()}");
             IByteBuffer buffer = Unpooled.WrappedBuffer(bytes);
-            ctx.WriteAsync(new DatagramPacket(buffer, packet.Sender));
+            context.WriteAsync(new DatagramPacket(buffer, packet.Sender));
         }
 
         public override void ChannelReadComplete(IChannelHandlerContext context) => context.Flush();

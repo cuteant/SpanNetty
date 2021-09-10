@@ -31,6 +31,7 @@ namespace Discard.Client
                 cert = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();

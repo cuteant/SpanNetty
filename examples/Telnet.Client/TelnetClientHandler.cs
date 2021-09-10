@@ -13,9 +13,9 @@ namespace Telnet.Client
     {
         public override bool IsSharable => true;
 
-        protected override void ChannelRead0(IChannelHandlerContext context, string msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, string message)
         {
-            Console.WriteLine(msg);
+            Console.WriteLine(message);
         }
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)

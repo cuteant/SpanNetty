@@ -55,7 +55,7 @@ namespace HttpUpload.Client
             var uriFile = new Uri(postFile);
 
             bool useLibuv = ClientSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type : {(useLibuv ? "Libuv" : "Socket")}");
 
             IEventLoopGroup group;
             if (useLibuv)
@@ -74,12 +74,14 @@ namespace HttpUpload.Client
                 cert = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();
                 bootstrap
                     .Group(group)
                     .Option(ChannelOption.TcpNodelay, true);
+
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpChannel>();

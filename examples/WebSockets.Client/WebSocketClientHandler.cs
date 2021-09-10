@@ -44,14 +44,14 @@ namespace WebSockets.Client
             s_logger.LogInformation("WebSocket Client disconnected!");
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext context, object msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, object message)
         {
             IChannel channel = context.Channel;
             if (!_handshaker.IsHandshakeComplete)
             {
                 try
                 {
-                    _handshaker.FinishHandshake(channel, (IFullHttpResponse)msg);
+                    _handshaker.FinishHandshake(channel, (IFullHttpResponse)message);
                     s_logger.LogInformation("WebSocket Client connected!");
                     _handshakeFuture.TryComplete();
                 }
@@ -63,22 +63,22 @@ namespace WebSockets.Client
                 return;
             }
 
-            if (msg is IFullHttpResponse response)
+            if (message is IFullHttpResponse response)
             {
                 throw new InvalidOperationException(
                         "Unexpected FullHttpResponse (getStatus=" + response.Status +
                                 ", content=" + response.Content.ToString(Encoding.UTF8) + ')');
             }
 
-            if (msg is TextWebSocketFrame textFrame)
+            if (message is TextWebSocketFrame textFrame)
             {
                 s_logger.LogInformation($"WebSocket Client received message: {textFrame.Text()}");
             }
-            else if (msg is PongWebSocketFrame)
+            else if (message is PongWebSocketFrame)
             {
                 s_logger.LogInformation("WebSocket Client received pong");
             }
-            else if (msg is CloseWebSocketFrame)
+            else if (message is CloseWebSocketFrame)
             {
                 s_logger.LogInformation("WebSocket Client received closing");
             }

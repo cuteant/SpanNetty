@@ -27,19 +27,19 @@
             context.CloseAsync();
         }
 
-        public override void ChannelRead(IChannelHandlerContext context, object msg)
+        public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            if (msg is IHttp2HeadersFrame headersFrame)
+            if (message is IHttp2HeadersFrame headersFrame)
             {
                 OnHeadersRead(context, headersFrame);
             }
-            else if (msg is IHttp2DataFrame dataFrame)
+            else if (message is IHttp2DataFrame dataFrame)
             {
                 OnDataRead(context, dataFrame);
             }
             else
             {
-                base.ChannelRead(context, msg);
+                base.ChannelRead(context, message);
             }
         }
 
@@ -81,12 +81,12 @@
         /**
          * Sends a "Hello World" DATA frame to the client.
          */
-        private static void SendResponse(IChannelHandlerContext ctx, IByteBuffer payload)
+        private static void SendResponse(IChannelHandlerContext context, IByteBuffer payload)
         {
             // Send a frame for the response status
             IHttp2Headers headers = new DefaultHttp2Headers() { Status = HttpResponseStatus.OK.CodeAsText };
-            ctx.WriteAsync(new DefaultHttp2HeadersFrame(headers));
-            ctx.WriteAsync(new DefaultHttp2DataFrame(payload, true));
+            context.WriteAsync(new DefaultHttp2HeadersFrame(headers));
+            context.WriteAsync(new DefaultHttp2DataFrame(payload, true));
         }
     }
 }

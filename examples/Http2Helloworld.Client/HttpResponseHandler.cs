@@ -75,23 +75,23 @@
             }
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext context, IFullHttpResponse msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, IFullHttpResponse message)
         {
-            if (!msg.Headers.TryGetInt(HttpConversionUtil.ExtensionHeaderNames.StreamId, out var streamId))
+            if (!message.Headers.TryGetInt(HttpConversionUtil.ExtensionHeaderNames.StreamId, out var streamId))
             {
-                s_logger.LogError("HttpResponseHandler unexpected message received: " + msg);
+                s_logger.LogError($"HttpResponseHandler unexpected message received: {message}");
                 return;
             }
 
 
             if (!this.streamidPromiseMap.TryGetValue(streamId, out var entry))
             {
-                s_logger.LogError("Message received for unknown stream id " + streamId);
+                s_logger.LogError($"Message received for unknown stream id {streamId}");
             }
             else
             {
                 // Do stuff with the message (for now just print it)
-                var content = msg.Content;
+                var content = message.Content;
                 if (content.IsReadable())
                 {
                     int contentLength = content.ReadableBytes;

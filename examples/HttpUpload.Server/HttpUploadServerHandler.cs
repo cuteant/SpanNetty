@@ -43,9 +43,9 @@
             }
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, IHttpObject msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, IHttpObject message)
         {
-            if (msg is IHttpRequest request)
+            if (message is IHttpRequest request)
             {
                 s_logger.LogTrace("=========The Request Header========");
                 s_logger.LogDebug(request.ToString());
@@ -55,22 +55,22 @@
                 if (!uriPath.StartsWith("/form"))
                 {
                     // Write Menu
-                    WriteMenu(ctx);
+                    WriteMenu(context);
                     return;
                 }
                 _responseContent.Clear();
                 _responseContent.Append("WELCOME TO THE WILD WILD WEB SERVER\r\n");
                 _responseContent.Append("===================================\r\n");
 
-                _responseContent.Append("VERSION: " + request.ProtocolVersion.Text + "\r\n");
+                _responseContent.Append($"VERSION: {request.ProtocolVersion.Text}\r\n");
 
-                _responseContent.Append("REQUEST_URI: " + request.Uri + "\r\n\r\n");
+                _responseContent.Append($"REQUEST_URI: {request.Uri}\r\n\r\n");
                 _responseContent.Append("\r\n\r\n");
 
                 // new getMethod
                 foreach (var entry in request.Headers)
                 {
-                    _responseContent.Append("HEADER: " + entry.Key + '=' + entry.Value + "\r\n");
+                    _responseContent.Append($"HEADER: {entry.Key}={entry.Value}\r\n");
                 }
                 _responseContent.Append("\r\n\r\n");
 
@@ -87,7 +87,7 @@
                 }
                 foreach (var cookie in cookies)
                 {
-                    _responseContent.Append("COOKIE: " + cookie + "\r\n");
+                    _responseContent.Append($"COOKIE: {cookie}\r\n");
                 }
                 _responseContent.Append("\r\n\r\n");
 
@@ -97,7 +97,7 @@
                 {
                     foreach (var attrVal in attr.Value)
                     {
-                        _responseContent.Append("URI: " + attr.Key + '=' + attrVal + "\r\n");
+                        _responseContent.Append($"URI: {attr.Key}={attrVal}\r\n");
                     }
                 }
                 _responseContent.Append("\r\n\r\n");
@@ -119,13 +119,13 @@
                 {
                     s_logger.LogError(e1.ToString());
                     _responseContent.Append(e1.Message);
-                    WriteResponseAsync(ctx.Channel, true);
+                    WriteResponseAsync(context.Channel, true);
                     return;
                 }
 
                 var readingChunks = HttpUtil.IsTransferEncodingChunked(request);
-                _responseContent.Append("Is Chunked: " + readingChunks + "\r\n");
-                _responseContent.Append("IsMultipart: " + _decoder.IsMultipart + "\r\n");
+                _responseContent.Append($"Is Chunked: {readingChunks}\r\n");
+                _responseContent.Append($"IsMultipart: {_decoder.IsMultipart}\r\n");
                 if (readingChunks)
                 {
                     // Chunk version
@@ -137,7 +137,7 @@
             // if not it handles the form get
             if (_decoder != null)
             {
-                if (msg is IHttpContent chunk) // New chunk is received
+                if (message is IHttpContent chunk) // New chunk is received
                 {
                     try
                     {
@@ -147,7 +147,7 @@
                     {
                         s_logger.LogError(e1.ToString());
                         _responseContent.Append(e1.Message);
-                        WriteResponseAsync(ctx.Channel, true);
+                        WriteResponseAsync(context.Channel, true);
                         return;
                     }
                     _responseContent.Append('o');
@@ -157,7 +157,7 @@
                     // example of reading only if at the end
                     if (chunk is ILastHttpContent)
                     {
-                        WriteResponseAsync(ctx.Channel);
+                        WriteResponseAsync(context.Channel);
 
                         Reset();
                     }
@@ -165,7 +165,7 @@
             }
             else
             {
-                WriteResponseAsync(ctx.Channel);
+                WriteResponseAsync(context.Channel);
             }
         }
 
@@ -261,19 +261,16 @@
 
                 if (value.Length > 100)
                 {
-                    _responseContent.Append("\r\nBODY Attribute: " + attribute.DataType + ": "
-                            + attribute.Name + " data too long\r\n");
+                    _responseContent.Append($"\r\nBODY Attribute: {attribute.DataType}: {attribute.Name} data too long\r\n");
                 }
                 else
                 {
-                    _responseContent.Append("\r\nBODY Attribute: " + attribute.DataType + ": "
-                            + attribute + "\r\n");
+                    _responseContent.Append($"\r\nBODY Attribute: {attribute.DataType}: {attribute}\r\n");
                 }
             }
             else
             {
-                _responseContent.Append("\r\nBODY FileUpload: " + data.DataType + ": " + data
-                        + "\r\n");
+                _responseContent.Append($"\r\nBODY FileUpload: {data.DataType}: {data}\r\n");
                 if (data.DataType == HttpDataType.FileUpload)
                 {
                     var fileUpload = (IFileUpload)data;
@@ -295,7 +292,7 @@
                         }
                         else
                         {
-                            _responseContent.Append("\tFile too long to be printed out:" + fileUpload.Length + "\r\n");
+                            _responseContent.Append($"\tFile too long to be printed out:{fileUpload.Length}\r\n");
                         }
                         // fileUpload.isInMemory();// tells if the file is in Memory
                         // or on File

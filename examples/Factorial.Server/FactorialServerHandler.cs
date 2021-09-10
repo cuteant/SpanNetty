@@ -12,10 +12,10 @@ namespace Factorial.Server
         BigInteger _lastMultiplier = new BigInteger(1);
         BigInteger _factorial = new BigInteger(1);
 
-        protected override void ChannelRead0(IChannelHandlerContext context, BigInteger msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, BigInteger message)
         {
-            _lastMultiplier = msg;
-            _factorial *= msg;
+            _lastMultiplier = message;
+            _factorial *= message;
             context.WriteAndFlushAsync(_factorial);
         }
 

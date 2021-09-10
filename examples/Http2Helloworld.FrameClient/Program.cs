@@ -105,9 +105,9 @@
                     Console.WriteLine("Finished HTTP/2 request, will close the connection.");
                     Console.ReadKey();
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    Console.WriteLine(ex.ToString());
+                    Console.WriteLine($"{exception}");
                     Console.WriteLine("Press any key to exit");
                     Console.ReadKey();
                 }

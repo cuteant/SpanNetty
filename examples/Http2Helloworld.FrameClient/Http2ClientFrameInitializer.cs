@@ -46,7 +46,7 @@
 
         sealed class SimpleChannelInboundHandler0 : SimpleChannelInboundHandler<object>
         {
-            protected override void ChannelRead0(IChannelHandlerContext context, object msg)
+            protected override void ChannelRead0(IChannelHandlerContext context, object message)
             {
                 // NOOP (this is the handler for 'inbound' streams, which is not relevant in this example)
             }
