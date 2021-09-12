@@ -926,7 +926,8 @@ namespace DotNetty.Buffers
             switch (_componentCount)
             {
                 case 1:
-                    return ref _components[0].Buffer.GetPinnableMemoryAddress();
+                    ComponentEntry c = _components[0];
+                    return ref Unsafe.Add(ref c.Buffer.GetPinnableMemoryAddress(), c.Adjustment);
                 default:
                     throw ThrowHelper.GetNotSupportedException();
             }
@@ -937,7 +938,13 @@ namespace DotNetty.Buffers
             switch (_componentCount)
             {
                 case 1:
-                    return _components[0].Buffer.AddressOfPinnedMemory();
+                    ComponentEntry c = _components[0];
+                    IntPtr ptr = c.Buffer.AddressOfPinnedMemory();
+                    if (ptr == IntPtr.Zero)
+                    {
+                        return ptr;
+                    }
+                    return ptr + c.Adjustment;
                 default:
                     throw ThrowHelper.GetNotSupportedException();
             }
