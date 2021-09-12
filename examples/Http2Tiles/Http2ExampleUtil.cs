@@ -1,9 +1,8 @@
 ﻿namespace Http2Tiles
 {
-    using System;
-    using System.IO;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
+    using System.IO;
 
     /// <summary>
     /// Utility methods used by the example client and server.
@@ -14,11 +13,6 @@
         /// Response header sent in response to the http-&gt;http2 cleartext upgrade request.
         /// </summary>
         public const string UPGRADE_RESPONSE_HEADER = "http-to-http2-upgrade";
-
-        /// <summary>
-        /// Size of the block to be read from the input stream.
-        /// </summary>
-        const int BLOCK_SIZE = 1024;
 
         /// <summary>
         /// Returns the integer value of a string or the default value, if the string is either null or empty.
@@ -36,19 +30,23 @@
 
         public static IByteBuffer ToByteBuffer(Stream input)
         {
-            var ms = new MemoryStream();
+            using var ms = new MemoryStream();
             input.CopyTo(ms);
             return Unpooled.WrappedBuffer(ms.ToArray());
         }
 
         public static string FirstValue(QueryStringDecoder query, string key)
         {
-            if (null == query) { return null; }
+            if (null == query)
+            {
+                return null;
+            }
 
             if (!query.Parameters.TryGetValue(key, out var values))
             {
                 return null;
             }
+
             return values[0];
         }
     }

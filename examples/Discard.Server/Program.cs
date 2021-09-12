@@ -3,16 +3,16 @@
 
 namespace Discard.Server
 {
-    using System;
-    using System.IO;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
+    using System;
+    using System.IO;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -27,6 +27,7 @@ namespace Discard.Server
             {
                 tlsCertificate = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
             }
+
             try
             {
                 var bootstrap = new ServerBootstrap();

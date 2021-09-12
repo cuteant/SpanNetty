@@ -3,16 +3,16 @@
 
 namespace QuoteOfTheMoment.Client
 {
-    using System;
-    using System.Net;
-    using System.Text;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Handlers.Logging;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
+    using System;
+    using System.Net;
+    using System.Text;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// A UDP broadcast client that asks for a quote of the moment (QOTM) to {@link QuoteOfTheMomentServer}.

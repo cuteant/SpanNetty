@@ -1,10 +1,10 @@
 ﻿namespace Http2Helloworld.FrameClient
 {
-    using System;
-    using System.Threading;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Transport.Channels;
+    using System;
+    using System.Threading;
 
     /// <summary>
     /// Process <see cref="IFullHttpResponse"/> translated from HTTP/2 frames
@@ -18,16 +18,16 @@
             _latch = new CountdownEvent(1);
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, IHttp2StreamFrame msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, IHttp2StreamFrame message)
         {
-            Console.WriteLine("Received HTTP/2 'stream' frame: " + msg);
+            Console.WriteLine($"Received HTTP/2 'stream' frame: {message}");
 
             // isEndStream() is not from a common interface, so we currently must check both
-            if (msg is IHttp2DataFrame dataFrame && dataFrame.IsEndStream)
+            if (message is IHttp2DataFrame dataFrame && dataFrame.IsEndStream)
             {
                 _latch.Signal();
             }
-            else if (msg is IHttp2HeadersFrame headersFrame && headersFrame.IsEndStream)
+            else if (message is IHttp2HeadersFrame headersFrame && headersFrame.IsEndStream)
             {
                 _latch.Signal();
             }

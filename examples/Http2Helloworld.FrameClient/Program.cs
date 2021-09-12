@@ -1,10 +1,5 @@
 ﻿namespace Http2Helloworld.FrameClient
 {
-    using System;
-    using System.IO;
-    using System.Net;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Common.Utilities;
@@ -13,6 +8,11 @@
     using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv;
     using Examples.Common;
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// An HTTP2 client that allows you to send HTTP2 frames to a server using HTTP1-style approaches
@@ -31,7 +31,7 @@
             ExampleHelper.SetConsoleLogger();
 
             bool useLibuv = ClientSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type : {(useLibuv ? "Libuv" : "Socket")}");
 
             IEventLoopGroup group;
             if (useLibuv)
@@ -50,6 +50,7 @@
                 cert = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();
@@ -57,6 +58,7 @@
                     .Group(group)
                     .Option(ChannelOption.TcpNodelay, true)
                     .Option(ChannelOption.SoKeepalive, true);
+
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpChannel>();
@@ -72,7 +74,7 @@
 
                 try
                 {
-                    Console.WriteLine("Connected to [" + ClientSettings.Host + ':' + ClientSettings.Port + ']');
+                    Console.WriteLine($"Connected to [{ClientSettings.Host}:{ClientSettings.Port}");
 
                     Http2ClientStreamFrameResponseHandler streamFrameResponseHandler =
                            new Http2ClientStreamFrameResponseHandler();
@@ -92,7 +94,7 @@
                     };
                     IHttp2HeadersFrame headersFrame = new DefaultHttp2HeadersFrame(headers);
                     await streamChannel.WriteAndFlushAsync(headersFrame);
-                    Console.WriteLine("Sent HTTP/2 GET request to " + path);
+                    Console.WriteLine($"Sent HTTP/2 GET request to {path}");
 
                     // Wait for the responses (or for the latch to expire), then clean up the connections
                     if (!streamFrameResponseHandler.ResponseSuccessfullyCompleted())
@@ -103,10 +105,10 @@
                     Console.WriteLine("Finished HTTP/2 request, will close the connection.");
                     Console.ReadKey();
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    Console.WriteLine(ex.ToString());
-                    Console.WriteLine("按任意键退出");
+                    Console.WriteLine($"{exception}");
+                    Console.WriteLine("Press any key to exit");
                     Console.ReadKey();
                 }
                 finally

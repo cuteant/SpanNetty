@@ -3,11 +3,11 @@
 
 namespace Echo.Client
 {
-    using System;
-    using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
     using Examples.Common;
+    using System;
+    using System.Text;
 
     /// <summary>
     /// Handler implementation for the echo client.  It initiates the ping-pong
@@ -31,7 +31,7 @@ namespace Echo.Client
         {
             if (message is IByteBuffer byteBuffer)
             {
-                Console.WriteLine("Received from server: " + byteBuffer.ToString(Encoding.UTF8));
+                Console.WriteLine($"Received from server: {byteBuffer.ToString(Encoding.UTF8)}");
             }
             context.WriteAsync(message);
         }
@@ -41,7 +41,7 @@ namespace Echo.Client
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
             // Close the connection when an exception is raised.
-            Console.WriteLine("Exception: " + exception);
+            Console.WriteLine($"{exception}");
             context.CloseAsync();
         }
     }

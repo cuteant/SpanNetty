@@ -1,13 +1,12 @@
 ﻿namespace Http2Helloworld.Server
 {
-    using System;
-    using System.Text;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
+    using System;
+    using System.Text;
 
     /// <summary>
     /// HTTP handler that responds with a "Hello World"
@@ -25,17 +24,17 @@
             this.establishApproach = establishApproach ?? throw new ArgumentNullException(nameof(establishApproach));
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpRequest req)
+        protected override void ChannelRead0(IChannelHandlerContext context, IFullHttpRequest request)
         {
-            if (HttpUtil.Is100ContinueExpected(req))
+            if (HttpUtil.Is100ContinueExpected(request))
             {
-                ctx.WriteAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue, Unpooled.Empty));
+                context.WriteAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue, Unpooled.Empty));
             }
-            var keepAlive = HttpUtil.IsKeepAlive(req);
+            var keepAlive = HttpUtil.IsKeepAlive(request);
 
-            var content = ctx.Allocator.Buffer();
+            var content = context.Allocator.Buffer();
             content.WriteBytes(RESPONSE_BYTES.Duplicate());
-            ByteBufferUtil.WriteAscii(content, " - via " + req.ProtocolVersion + " (" + this.establishApproach + ")");
+            ByteBufferUtil.WriteAscii(content, " - via " + request.ProtocolVersion + " (" + this.establishApproach + ")");
 
             IFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, content);
             response.Headers.Set(HttpHeaderNames.ContentType, "text/plain; charset=UTF-8");
@@ -43,17 +42,17 @@
 
             if (keepAlive)
             {
-                if (req.ProtocolVersion.Equals(HttpVersion.Http10))
+                if (request.ProtocolVersion.Equals(HttpVersion.Http10))
                 {
                     response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
                 }
-                ctx.WriteAsync(response);
+                context.WriteAsync(response);
             }
             else
             {
                 // Tell the client we're going to close the connection.
                 response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);
-                ctx.WriteAsync(response).CloseOnComplete(ctx.Channel);
+                context.WriteAsync(response).CloseOnComplete(context.Channel);
             }
         }
 
@@ -64,7 +63,7 @@
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            s_logger.LogError(exception.ToString());
+            s_logger.LogError($"{exception}");
             context.CloseAsync();
         }
     }

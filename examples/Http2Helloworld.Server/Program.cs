@@ -1,21 +1,19 @@
 ﻿namespace Http2Helloworld.Server
 {
+    using DotNetty.Common;
+    using DotNetty.Handlers.Logging;
+    using DotNetty.Transport.Bootstrapping;
+    using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Sockets;
+    using DotNetty.Transport.Libuv;
+    using Examples.Common;
     using System;
     using System.IO;
     using System.Net;
     using System.Runtime;
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
-    using System.Threading;
     using System.Threading.Tasks;
-    using DotNetty.Common;
-    using DotNetty.Handlers;
-    using DotNetty.Handlers.Logging;
-    using DotNetty.Transport.Bootstrapping;
-    using DotNetty.Transport.Channels;
-    using DotNetty.Transport.Channels.Sockets;
-    using Examples.Common;
-    using DotNetty.Transport.Libuv;
 
     /// <summary>
     /// An HTTP/2 Server that responds to requests with a Hello World. Once started, you can test the
@@ -38,7 +36,7 @@
                 + $"\nProcessor Count : {Environment.ProcessorCount}\n");
 
             bool useLibuv = ServerSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type : {(useLibuv ? "Libuv" : "Socket")}");
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -68,6 +66,7 @@
             {
                 tlsCertificate = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
             }
+
             try
             {
                 int port = ServerSettings.Port;
@@ -94,10 +93,8 @@
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
-
                     .Handler(new LoggingHandler("LSTN"))
                     //.Handler(new ServerChannelRebindHandler(DoBind))
-
                     .ChildHandler(new Http2ServerInitializer(tlsCertificate));
 
                 bootstrapChannel = await bootstrap.BindAsync(IPAddress.Loopback, port);
@@ -114,7 +111,7 @@
                 Console.WriteLine("Open your HTTP/2-enabled web browser and navigate to " +
                         (ServerSettings.IsSsl ? "https" : "http") + "://127.0.0.1:" + ServerSettings.Port + '/');
 
-                Console.WriteLine("按任意键退出");
+                Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
 
                 await bootstrapChannel.CloseAsync();

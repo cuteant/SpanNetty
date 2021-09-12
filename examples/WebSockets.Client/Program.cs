@@ -3,12 +3,6 @@
 
 namespace WebSockets.Client
 {
-    using System;
-    using System.IO;
-    using System.Net;
-    using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.WebSockets;
@@ -21,6 +15,11 @@ namespace WebSockets.Client
     using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv;
     using Examples.Common;
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -42,7 +41,7 @@ namespace WebSockets.Client
             ExampleHelper.SetConsoleLogger();
 
             bool useLibuv = ClientSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type : {(useLibuv ? "Libuv" : "Socket")}");
 
             IEventLoopGroup group;
             if (useLibuv)
@@ -61,6 +60,7 @@ namespace WebSockets.Client
                 cert = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();
@@ -116,11 +116,12 @@ namespace WebSockets.Client
 
                 try
                 {
-                    IChannel ch = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
+                    IChannel channel = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
                     await handler.HandshakeCompletion;
 
                     Console.WriteLine("WebSocket handshake completed.\n");
                     Console.WriteLine("\t[bye]:Quit \n\t [ping]:Send ping frame\n\t Enter any text and Enter: Send text frame");
+
                     while (true)
                     {
                         string msg = Console.ReadLine();
@@ -133,16 +134,16 @@ namespace WebSockets.Client
                         switch (msg)
                         {
                             case "bye":
-                                await ch.WriteAndFlushAsync(new CloseWebSocketFrame());
+                                await channel.WriteAndFlushAsync(new CloseWebSocketFrame());
                                 goto CloseLable;
 
                             case "ping":
                                 var ping = new PingWebSocketFrame(Unpooled.WrappedBuffer(new byte[] { 8, 1, 8, 1 }));
-                                await ch.WriteAndFlushAsync(ping);
+                                await channel.WriteAndFlushAsync(ping);
                                 break;
 
                             case "this is a test":
-                                await ch.WriteAndFlushManyAsync(
+                                await channel.WriteAndFlushManyAsync(
                                     new TextWebSocketFrame(false, "this "),
                                     new ContinuationWebSocketFrame(false, "is "),
                                     new ContinuationWebSocketFrame(false, "a "),
@@ -151,24 +152,24 @@ namespace WebSockets.Client
                                 break;
 
                             case "this is a error":
-                                await ch.WriteAndFlushAsync(new TextWebSocketFrame(false, "this "));
-                                await ch.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "is "));
-                                await ch.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "a "));
-                                await ch.WriteAndFlushAsync(new TextWebSocketFrame(true, "error"));
+                                await channel.WriteAndFlushAsync(new TextWebSocketFrame(false, "this "));
+                                await channel.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "is "));
+                                await channel.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "a "));
+                                await channel.WriteAndFlushAsync(new TextWebSocketFrame(true, "error"));
                                 break;
 
                             default:
-                                await ch.WriteAndFlushAsync(new TextWebSocketFrame(msg));
+                                await channel.WriteAndFlushAsync(new TextWebSocketFrame(msg));
                                 break;
                         }
                     }
                     CloseLable:
-                    await ch.CloseAsync();
+                    await channel.CloseAsync();
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    Console.WriteLine(ex.ToString());
-                    Console.WriteLine("按任意键退出");
+                    Console.WriteLine($"{exception}");
+                    Console.WriteLine("Press any key to exit");
                     Console.ReadKey();
                 }
             }

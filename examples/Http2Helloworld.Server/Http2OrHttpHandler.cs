@@ -1,11 +1,11 @@
 ﻿#if NETCOREAPP_2_0_GREATER
 namespace Http2Helloworld.Server
 {
-    using System;
-    using System.Net.Security;
     using DotNetty.Codecs.Http;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
+    using System;
+    using System.Net.Security;
 
     public class Http2OrHttpHandler : ApplicationProtocolNegotiationHandler
     {
@@ -16,23 +16,23 @@ namespace Http2Helloworld.Server
         {
         }
 
-        protected override void ConfigurePipeline(IChannelHandlerContext ctx, SslApplicationProtocol protocol)
+        protected override void ConfigurePipeline(IChannelHandlerContext context, SslApplicationProtocol protocol)
         {
             if (SslApplicationProtocol.Http2.Equals(protocol))
             {
-                ctx.Pipeline.AddLast(new HelloWorldHttp2HandlerBuilder().Build());
+                context.Pipeline.AddLast(new HelloWorldHttp2HandlerBuilder().Build());
                 return;
             }
 
             if (SslApplicationProtocol.Http11.Equals(protocol))
             {
-                ctx.Pipeline.AddLast(new HttpServerCodec(),
+                context.Pipeline.AddLast(new HttpServerCodec(),
                                      new HttpObjectAggregator(MAX_CONTENT_LENGTH),
                                      new HelloWorldHttp1Handler("ALPN Negotiation"));
                 return;
             }
 
-            throw new InvalidOperationException("unknown protocol: " + protocol);
+            throw new InvalidOperationException($"Unknown protocol: {protocol}");
         }
     }
 }

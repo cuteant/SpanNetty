@@ -1,17 +1,17 @@
 ﻿namespace Http2Helloworld.Client
 {
+    using DotNetty.Codecs.Http;
+    using DotNetty.Codecs.Http2;
+    using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal.Logging;
+    using DotNetty.Common.Utilities;
+    using DotNetty.Transport.Channels;
+    using Microsoft.Extensions.Logging;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Text;
     using System.Threading.Tasks;
-    using DotNetty.Codecs.Http;
-    using DotNetty.Codecs.Http2;
-    using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Utilities;
-    using DotNetty.Common.Internal.Logging;
-    using DotNetty.Transport.Channels;
-    using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// Process <see cref="IFullHttpResponse"/> translated from HTTP/2 frames
@@ -41,22 +41,29 @@
             var keys = this.streamidPromiseMap.Keys;
             foreach (var key in keys)
             {
-                if (!this.streamidPromiseMap.TryGetValue(key, out var entry)) { continue; }
+                if (!this.streamidPromiseMap.TryGetValue(key, out var entry))
+                {
+                    continue;
+                }
+
                 var writeFuture = entry.Key;
                 if (!await TaskUtil.WaitAsync(writeFuture, timeout))
                 {
                     throw new InvalidOperationException($"Timed out waiting to write for stream id: {key}");
                 }
+
                 if (!writeFuture.IsSuccess())
                 {
                     var cause = writeFuture.Exception.InnerException;
                     throw new Http2RuntimeException(cause.Message, cause);
                 }
+
                 var promise = entry.Value;
                 if (!await TaskUtil.WaitAsync(promise.Task, timeout))
                 {
                     throw new InvalidOperationException($"Timed out waiting for response on stream id {key}");
                 }
+
                 if (!promise.IsSuccess)
                 {
                     var cause = promise.Task.Exception.InnerException;
@@ -68,23 +75,23 @@
             }
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpResponse msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, IFullHttpResponse message)
         {
-            if (!msg.Headers.TryGetInt(HttpConversionUtil.ExtensionHeaderNames.StreamId, out var streamId))
+            if (!message.Headers.TryGetInt(HttpConversionUtil.ExtensionHeaderNames.StreamId, out var streamId))
             {
-                s_logger.LogError("HttpResponseHandler unexpected message received: " + msg);
+                s_logger.LogError($"HttpResponseHandler unexpected message received: {message}");
                 return;
             }
 
 
             if (!this.streamidPromiseMap.TryGetValue(streamId, out var entry))
             {
-                s_logger.LogError("Message received for unknown stream id " + streamId);
+                s_logger.LogError($"Message received for unknown stream id {streamId}");
             }
             else
             {
                 // Do stuff with the message (for now just print it)
-                var content = msg.Content;
+                var content = message.Content;
                 if (content.IsReadable())
                 {
                     int contentLength = content.ReadableBytes;
