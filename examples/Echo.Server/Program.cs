@@ -3,9 +3,6 @@
 
 namespace Echo.Server
 {
-    using System;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Codecs;
     using DotNetty.Common;
     using DotNetty.Handlers.Logging;
@@ -15,6 +12,9 @@ namespace Echo.Server
     using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv;
     using Examples.Common;
+    using System;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -37,12 +37,15 @@ namespace Echo.Server
                 bossGroup = new MultithreadEventLoopGroup(1);
                 workerGroup = new MultithreadEventLoopGroup();
             }
+
             X509Certificate2 tlsCertificate = null;
             if (ServerSettings.IsSsl)
             {
                 tlsCertificate = new X509Certificate2("dotnetty.com.pfx", "password");
             }
-            EchoServerHandler serverHandler = new EchoServerHandler();
+
+            var serverHandler = new EchoServerHandler();
+
             try
             {
                 var bootstrap = new ServerBootstrap();

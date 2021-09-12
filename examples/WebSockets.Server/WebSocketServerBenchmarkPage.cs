@@ -3,8 +3,8 @@
 
 namespace WebSockets.Server
 {
-    using System.Text;
     using DotNetty.Buffers;
+    using System.Text;
 
     static class WebSocketServerBenchmarkPage
     {

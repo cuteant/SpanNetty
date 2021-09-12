@@ -1,8 +1,8 @@
 ﻿namespace Http2Tiles
 {
+    using DotNetty.Buffers;
     using System;
     using System.Collections.Generic;
-    using DotNetty.Buffers;
 
     public sealed class ImageCache
     {
@@ -39,7 +39,7 @@
 
         public static string Name(int x, int y)
         {
-            return "tile-" + y + "-" + x + ".jpeg";
+            return $"tile-{y}-{x}.jpeg";
         }
     }
 }

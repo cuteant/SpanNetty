@@ -3,8 +3,8 @@
 
 namespace Discard.Server
 {
-    using System;
     using DotNetty.Transport.Channels;
+    using System;
 
     /// <summary>
     /// Handles a server-side channel.
@@ -16,11 +16,11 @@ namespace Discard.Server
             // discard
         }
 
-        public override void ExceptionCaught(IChannelHandlerContext ctx, Exception e)
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
             // Close the connection when an exception is raised.
-            Console.WriteLine("{0}", e.ToString());
-            ctx.CloseAsync();
+            Console.WriteLine($"{exception}");
+            context.CloseAsync();
         }
     }
 }

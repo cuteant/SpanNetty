@@ -1,10 +1,6 @@
 ﻿
 namespace Http2Tiles
 {
-    using System.Net;
-    using System.Runtime.InteropServices;
-    using System.Threading.Tasks;
-    using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Handlers.Logging;
     using DotNetty.Transport.Bootstrapping;
@@ -12,6 +8,9 @@ namespace Http2Tiles
     using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv;
     using Examples.Common;
+    using System.Net;
+    using System.Runtime.InteropServices;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Demonstrates an http server using Netty to display a bunch of images, simulate
@@ -56,9 +55,7 @@ namespace Http2Tiles
             bootstrap
                 .Option(ChannelOption.SoBacklog, 1024)
                 //.Option(ChannelOption.Allocator, UnpooledByteBufferAllocator.Default)
-
                 .Handler(new LoggingHandler("LSTN"))
-
                 .ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
                 {
                     ch.Pipeline.AddLast(new HttpRequestDecoder(),

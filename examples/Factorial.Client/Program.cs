@@ -3,18 +3,18 @@
 
 namespace Factorial.Client
 {
-    using System;
-    using System.IO;
-    using System.Net;
-    using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -31,6 +31,7 @@ namespace Factorial.Client
                 cert = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();
@@ -59,7 +60,7 @@ namespace Factorial.Client
                 var handler = (FactorialClientHandler)bootstrapChannel.Pipeline.Last();
 
                 // Print out the answer.
-                Console.WriteLine("Factorial of {0} is: {1}", ClientSettings.Count.ToString(), handler.GetFactorial().ToString());
+                Console.WriteLine($"Factorial of {ClientSettings.Count} is: {handler.GetFactorial()}");
 
                 Console.ReadLine();
 

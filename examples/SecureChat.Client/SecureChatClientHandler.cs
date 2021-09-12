@@ -3,18 +3,18 @@
 
 namespace SecureChat.Client
 {
-    using System;
     using DotNetty.Transport.Channels;
+    using System;
 
     public class SecureChatClientHandler : SimpleChannelInboundHandler<string>
     {
-        protected override void ChannelRead0(IChannelHandlerContext contex, string msg) => Console.WriteLine(msg);
+        protected override void ChannelRead0(IChannelHandlerContext context, string message) => Console.WriteLine(message);
 
-        public override void ExceptionCaught(IChannelHandlerContext contex, Exception e)
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
             Console.WriteLine(DateTime.Now.Millisecond);
-            Console.WriteLine(e.StackTrace);
-            contex.CloseAsync();
+            Console.WriteLine($"{exception}");
+            context.CloseAsync();
         }
     }
 }

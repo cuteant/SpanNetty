@@ -3,6 +3,14 @@
 
 namespace HttpUpload.Server
 {
+    using DotNetty.Codecs.Http;
+    using DotNetty.Common;
+    using DotNetty.Handlers.Tls;
+    using DotNetty.Transport.Bootstrapping;
+    using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Sockets;
+    using DotNetty.Transport.Libuv;
+    using Examples.Common;
     using System;
     using System.IO;
     using System.Net;
@@ -10,16 +18,6 @@ namespace HttpUpload.Server
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
-    using DotNetty.Codecs.Http;
-    using DotNetty.Common;
-    using DotNetty.Handlers.Logging;
-    using DotNetty.Handlers.Timeout;
-    using DotNetty.Handlers.Tls;
-    using DotNetty.Transport.Bootstrapping;
-    using DotNetty.Transport.Channels;
-    using DotNetty.Transport.Channels.Sockets;
-    using DotNetty.Transport.Libuv;
-    using Examples.Common;
 
     class Program
     {
@@ -38,7 +36,7 @@ namespace HttpUpload.Server
                 + $"\nProcessor Count : {Environment.ProcessorCount}\n");
 
             bool useLibuv = ServerSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type :{(useLibuv ? "Libuv" : "Socket")}");
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -68,6 +66,7 @@ namespace HttpUpload.Server
             {
                 tlsCertificate = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
             }
+
             try
             {
                 var bootstrap = new ServerBootstrap();

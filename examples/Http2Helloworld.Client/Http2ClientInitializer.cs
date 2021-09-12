@@ -1,17 +1,17 @@
 ﻿namespace Http2Helloworld.Client
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
+    using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
-    using DotNetty.Common.Internal.Logging;
     using Microsoft.Extensions.Logging;
-    using DotNetty.Buffers;
+    using System;
+    using System.Collections.Generic;
     using System.Net;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
 
     /// <summary>
     /// Configures the client pipeline to support HTTP/2 frames.
@@ -51,8 +51,10 @@
                 FrameLogger = Logger,
                 Connection = connection
             }.Build();
+
             _responseHandler = new HttpResponseHandler();
             _settingsHandler = new Http2SettingsHandler(channel.NewPromise());
+
             if (_cert != null)
             {
                 ConfigureSsl(channel);
@@ -75,10 +77,10 @@
         /// <summary>
         /// Configure the pipeline for TLS NPN negotiation to HTTP/2.
         /// </summary>
-        /// <param name="ch"></param>
-        void ConfigureSsl(IChannel ch)
+        /// <param name="channel"></param>
+        void ConfigureSsl(IChannel channel)
         {
-            var pipeline = ch.Pipeline;
+            var pipeline = channel.Pipeline;
             var tlsSettings = new ClientTlsSettings(_targetHost)
             {
                 ApplicationProtocols = new List<SslApplicationProtocol>(new[]
@@ -87,6 +89,7 @@
                     SslApplicationProtocol.Http11
                 })
             }.AllowAnyServerCertificate();
+
             pipeline.AddLast("tls", new TlsHandler(tlsSettings));
 
             // We must wait for the handshake to finish and the protocol to be negotiated before configuring
@@ -104,31 +107,32 @@
                 _self = self;
             }
 
-            protected override void ConfigurePipeline(IChannelHandlerContext ctx, SslApplicationProtocol protocol)
+            protected override void ConfigurePipeline(IChannelHandlerContext context, SslApplicationProtocol protocol)
             {
                 if (SslApplicationProtocol.Http2.Equals(protocol))
                 {
-                    var p = ctx.Pipeline;
+                    var p = context.Pipeline;
                     p.AddLast(_self._connectionHandler);
                     _self.ConfigureEndOfPipeline(p);
                     return;
                 }
-                ctx.CloseAsync();
-                throw new InvalidOperationException("unknown protocol: " + protocol);
+
+                context.CloseAsync();
+                throw new InvalidOperationException($"Unknown protocol: {protocol}");
             }
         }
 
         /// <summary>
         /// Configure the pipeline for a cleartext upgrade from HTTP to HTTP/2.
         /// </summary>
-        /// <param name="ch"></param>
-        void ConfigureClearText(IChannel ch)
+        /// <param name="channel"></param>
+        void ConfigureClearText(IChannel channel)
         {
             HttpClientCodec sourceCodec = new HttpClientCodec();
             Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(_connectionHandler);
             HttpClientUpgradeHandler upgradeHandler = new HttpClientUpgradeHandler(sourceCodec, upgradeCodec, 65536);
 
-            ch.Pipeline.AddLast(sourceCodec,
+            channel.Pipeline.AddLast(sourceCodec,
                                 upgradeHandler,
                                 new UpgradeRequestHandler(this),
                                 new UserEventLogger());
@@ -143,13 +147,13 @@
 
             public UpgradeRequestHandler(Http2ClientInitializer self) => _self = self;
 
-            public override void ChannelActive(IChannelHandlerContext ctx)
+            public override void ChannelActive(IChannelHandlerContext context)
             {
                 DefaultFullHttpRequest upgradeRequest =
                         new DefaultFullHttpRequest(DotNetty.Codecs.Http.HttpVersion.Http11, HttpMethod.Get, "/", Unpooled.Empty);
 
                 // Set HOST header as the remote peer may require it.
-                var remote = (IPEndPoint)ctx.Channel.RemoteAddress;
+                var remote = (IPEndPoint)context.Channel.RemoteAddress;
                 //String hostString = remote.getHostString();
                 //if (hostString == null)
                 //{
@@ -157,14 +161,14 @@
                 //}
                 upgradeRequest.Headers.Set(HttpHeaderNames.Host, _self._targetHost + ':' + remote.Port);
 
-                ctx.WriteAndFlushAsync(upgradeRequest);
+                context.WriteAndFlushAsync(upgradeRequest);
 
-                ctx.FireChannelActive();
+                context.FireChannelActive();
 
                 // Done with this handler, remove it from the pipeline.
-                ctx.Pipeline.Remove(this);
+                context.Pipeline.Remove(this);
 
-                _self.ConfigureEndOfPipeline(ctx.Pipeline);
+                _self.ConfigureEndOfPipeline(context.Pipeline);
             }
         }
 

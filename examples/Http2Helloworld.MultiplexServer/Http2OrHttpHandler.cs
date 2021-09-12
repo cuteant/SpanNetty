@@ -1,12 +1,12 @@
 ﻿#if NETCOREAPP_2_0_GREATER
 namespace Http2Helloworld.MultiplexServer
 {
-    using System;
-    using System.Net.Security;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
+    using System;
+    using System.Net.Security;
 
     public class Http2OrHttpHandler : ApplicationProtocolNegotiationHandler
     {
@@ -17,24 +17,24 @@ namespace Http2Helloworld.MultiplexServer
         {
         }
 
-        protected override void ConfigurePipeline(IChannelHandlerContext ctx, SslApplicationProtocol protocol)
+        protected override void ConfigurePipeline(IChannelHandlerContext context, SslApplicationProtocol protocol)
         {
             if (SslApplicationProtocol.Http2.Equals(protocol))
             {
-                ctx.Pipeline.AddLast(Http2FrameCodecBuilder.ForServer().Build());
-                ctx.Pipeline.AddLast(new Http2MultiplexHandler(new HelloWorldHttp2Handler()));
+                context.Pipeline.AddLast(Http2FrameCodecBuilder.ForServer().Build());
+                context.Pipeline.AddLast(new Http2MultiplexHandler(new HelloWorldHttp2Handler()));
                 return;
             }
 
             if (SslApplicationProtocol.Http11.Equals(protocol))
             {
-                ctx.Pipeline.AddLast(new HttpServerCodec(),
+                context.Pipeline.AddLast(new HttpServerCodec(),
                                      new HttpObjectAggregator(MAX_CONTENT_LENGTH),
-                                     new Http2Helloworld.Server.HelloWorldHttp1Handler("ALPN Negotiation"));
+                                     new Server.HelloWorldHttp1Handler("ALPN Negotiation"));
                 return;
             }
 
-            throw new InvalidOperationException("unknown protocol: " + protocol);
+            throw new InvalidOperationException($"Unknown protocol: {protocol}");
         }
     }
 }
