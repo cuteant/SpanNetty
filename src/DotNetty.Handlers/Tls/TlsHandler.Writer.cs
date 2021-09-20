@@ -38,6 +38,8 @@ namespace DotNetty.Handlers.Tls
 
     partial class TlsHandler
     {
+        static readonly byte[] ZeroBuf = new byte[0];
+        
         private IPromise _lastContextWritePromise;
         private volatile int v_wrapDataSize = TlsUtils.MAX_PLAINTEXT_LENGTH;
 
@@ -169,6 +171,14 @@ namespace DotNetty.Handlers.Tls
                         }
                         _lastContextWritePromise = promise;
                         _ = buf.ReadBytes(_sslStream, readableBytes); // this leads to FinishWrap being called 0+ times
+                        if (buf.IsReadable())
+                        {
+                            _ = buf.ReadBytes(_sslStream, readableBytes); // this leads to FinishWrap being called 0+ times
+                        }
+                        else if (promise != null)
+                        {
+                            FinishWrap(ZeroBuf, 0, 0, promise);
+                        }
                     }
                     catch (Exception exc)
                     {
