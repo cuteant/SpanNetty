@@ -1,6 +1,9 @@
 ﻿namespace DotNetty.Buffers.Tests
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.InteropServices;
     using Xunit;
 
     public class LongLongHashMapTest
@@ -37,6 +40,13 @@
                 map.Remove(value);
                 Assert.Equal(-1, map.Get(value));
             }
+        }
+
+        [Fact]
+        public void RandomOperations()
+        {
+            var times = 100;
+            var list = new List<long>();
         }
     }
 }
