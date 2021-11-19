@@ -112,7 +112,7 @@ namespace DotNetty.Buffers
 
             public IByteBuffer Duplicate()
             {
-                return SrcBuffer.Duplicate();
+                return SrcBuffer.Duplicate().SetIndex(SrcIdx(Offset), SrcIdx(EndOffset));
             }
 
             public void Free()
