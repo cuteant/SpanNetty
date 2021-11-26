@@ -153,7 +153,7 @@ namespace WebSockets.Server
                     + $"://127.0.0.1:{port}/");
                 Console.WriteLine("Listening on "
                     + $"{(ServerSettings.IsSsl ? "wss" : "ws")}"
-                    + $"://127.0.0.1:{port}/websocket");
+                    + $"://127.0.0.1:{port}{websocketPath}");
                 Console.ReadLine();
 
                 await bootstrapChannel.CloseAsync();
