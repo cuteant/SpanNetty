@@ -32,22 +32,32 @@ namespace DotNetty.Common.Utilities
     /// </summary>
     public sealed class SafeRandom
     {
-        private static readonly RandomNumberGenerator s_globalCryptoProvider = RandomNumberGenerator.Create();
+        private static readonly RandomNumberGenerator s_globalCryptoProvider;
+
+        public static readonly SafeRandom Instance;
+
+        static SafeRandom()
+        {
+            s_globalCryptoProvider = RandomNumberGenerator.Create();
+            Instance = new();
+        }
 
         [ThreadStatic]
-        private static Random random;
+        private static Random s_random;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Random GetRandom()
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private static Random GetRandom() => s_random ?? EnsureRandomCreated();
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static Random EnsureRandomCreated()
         {
-            if (random == null)
+            if (s_random == null)
             {
                 byte[] buffer = new byte[4];
                 s_globalCryptoProvider.GetBytes(buffer);
-                random = new Random(BitConverter.ToInt32(buffer, 0));
+                s_random = new Random(BitConverter.ToInt32(buffer, 0));
             }
-
-            return random;
+            return s_random;
         }
 
         public int Next()
@@ -73,6 +83,25 @@ namespace DotNetty.Common.Utilities
         public double NextDouble()
         {
             return GetRandom().NextDouble();
+        }
+
+        public bool NextBoolean()
+        {
+            const int c_maxValue = 2;
+            return 0u >= (uint)GetRandom().Next(c_maxValue);
+        }
+
+        public long NextLong()
+        {
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
+            Span<byte> buffer = stackalloc byte[8];
+            GetRandom().NextBytes(buffer);
+            return BitConverter.ToInt64(buffer);
+#else
+            var buffer = new byte[8];
+            GetRandom().NextBytes(buffer);
+            return BitConverter.ToInt64(buffer, 0);
+#endif
         }
     }
 }

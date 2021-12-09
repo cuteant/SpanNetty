@@ -26,81 +26,130 @@
 namespace DotNetty.Buffers
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using DotNetty.Common.Internal;
-    using DotNetty.Common.Utilities;
 
     /// <summary>
-    ///     Description of algorithm for PageRun/PoolSubpage allocation from PoolChunk
-    ///     Notation: The following terms are important to understand the code
-    ///     > page  - a page is the smallest unit of memory chunk that can be allocated
-    ///     > chunk - a chunk is a collection of pages
-    ///     > in this code chunkSize = 2^{maxOrder} /// pageSize
-    ///     To begin we allocate a byte array of size = chunkSize
-    ///     Whenever a ByteBuf of given size needs to be created we search for the first position
-    ///     in the byte array that has enough empty space to accommodate the requested size and
-    ///     return a (long) handle that encodes this offset information, (this memory segment is then
-    ///     marked as reserved so it is always used by exactly one ByteBuf and no more)
-    ///     For simplicity all sizes are normalized according to PoolArena#normalizeCapacity method
-    ///     This ensures that when we request for memory segments of size >= pageSize the normalizedCapacity
-    ///     equals the next nearest power of 2
-    ///     To search for the first offset in chunk that has at least requested size available we construct a
-    ///     complete balanced binary tree and store it in an array (just like heaps) - memoryMap
-    ///     The tree looks like this (the size of each node being mentioned in the parenthesis)
-    ///     depth=0        1 node (chunkSize)
-    ///     depth=1        2 nodes (chunkSize/2)
-    ///     ..
-    ///     ..
-    ///     depth=d        2^d nodes (chunkSize/2^d)
-    ///     ..
-    ///     depth=maxOrder 2^maxOrder nodes (chunkSize/2^{maxOrder} = pageSize)
-    ///     depth=maxOrder is the last level and the leafs consist of pages
-    ///     With this tree available searching in chunkArray translates like this:
-    ///     To allocate a memory segment of size chunkSize/2^k we search for the first node (from left) at height k
-    ///     which is unused
-    ///     Algorithm:
-    ///     ----------
-    ///     Encode the tree in memoryMap with the notation
-    ///     memoryMap[id] = x => in the subtree rooted at id, the first node that is free to be allocated
-    ///     is at depth x (counted from depth=0) i.e., at depths [depth_of_id, x), there is no node that is free
-    ///     As we allocate and free nodes, we update values stored in memoryMap so that the property is maintained
-    ///     Initialization -
-    ///     In the beginning we construct the memoryMap array by storing the depth of a node at each node
-    ///     i.e., memoryMap[id] = depth_of_id
-    ///     Observations:
-    ///     -------------
-    ///     1) memoryMap[id] = depth_of_id  => it is free / unallocated
-    ///     2) memoryMap[id] > depth_of_id  => at least one of its child nodes is allocated, so we cannot allocate it, but
-    ///     some of its children can still be allocated based on their availability
-    ///     3) memoryMap[id] = maxOrder + 1 => the node is fully allocated and thus none of its children can be allocated, it
-    ///     is thus marked as unusable
-    ///     Algorithm: [allocateNode(d) => we want to find the first node (from left) at height h that can be allocated]
-    ///     ----------
-    ///     1) start at root (i.e., depth = 0 or id = 1)
-    ///     2) if memoryMap[1] > d => cannot be allocated from this chunk
-    ///     3) if left node value &lt;= h; we can allocate from left subtree so move to left and repeat until found
-    ///     4) else try in right subtree
-    ///     Algorithm: [allocateRun(size)]
-    ///     ----------
-    ///     1) Compute d = log_2(chunkSize/size)
-    ///     2) Return allocateNode(d)
-    ///     Algorithm: [allocateSubpage(size)]
-    ///     ----------
-    ///     1) use allocateNode(maxOrder) to find an empty (i.e., unused) leaf (i.e., page)
-    ///     2) use this handle to construct the PoolSubpage object or if it already exists just call init(normCapacity)
-    ///     note that this PoolSubpage object is added to subpagesPool in the PoolArena when we init() it
-    ///     Note:
-    ///     -----
-    ///     In the implementation for improving cache coherence,
-    ///     we store 2 pieces of information depth_of_id and x as two byte values in memoryMap and depthMap respectively
+    /// Description of algorithm for PageRun/PoolSubpage allocation from PoolChunk
     ///
-    ///     memoryMap[id] = depth_of_id is defined above
-    ///     depthMap[id] = x  indicates that the first node which is free to be allocated is at depth x(from root)
+    /// Notation: The following terms are important to understand the code
+    /// > page  - a page is the smallest unit of memory chunk that can be allocated
+    /// > run   - a run is a collection of pages
+    /// > chunk - a chunk is a collection of runs
+    /// > in this code chunkSize = maxPages / pageSize
+    ///
+    /// To begin we allocate a byte array of size = chunkSize
+    /// Whenever a ByteBuf of given size needs to be created we search for the first position
+    /// in the byte array that has enough empty space to accommodate the requested size and
+    /// return a (long) handle that encodes this offset information, (this memory segment is then
+    /// marked as reserved so it is always used by exactly one ByteBuf and no more)
+    ///
+    /// For simplicity all sizes are normalized according to <see cref="SizeClasses.Size2SizeIdx(int)"/> method.
+    /// This ensures that when we request for memory segments of size > pageSize the normalizedCapacity
+    /// equals the next nearest size in <see cref="SizeClasses"/>.
+    ///
+    ///
+    ///  A chunk has the following layout:
+    ///
+    ///     /-----------------\
+    ///     | run             |
+    ///     |                 |
+    ///     |                 |
+    ///     |-----------------|
+    ///     | run             |
+    ///     |                 |
+    ///     |-----------------|
+    ///     | unalloctated    |
+    ///     | (freed)         |
+    ///     |                 |
+    ///     |-----------------|
+    ///     | subpage         |
+    ///     |-----------------|
+    ///     | unallocated     |
+    ///     | (freed)         |
+    ///     | ...             |
+    ///     | ...             |
+    ///     | ...             |
+    ///     |                 |
+    ///     |                 |
+    ///     |                 |
+    ///     \-----------------/
+    ///
+    ///
+    /// handle:
+    /// -------
+    /// a handle is a long number, the bit layout of a run looks like:
+    ///
+    /// oooooooo ooooooos ssssssss ssssssue bbbbbbbb bbbbbbbb bbbbbbbb bbbbbbbb
+    ///
+    /// o: runOffset (page offset in the chunk), 15bit
+    /// s: size (number of pages) of this run, 15bit
+    /// u: isUsed?, 1bit
+    /// e: isSubpage?, 1bit
+    /// b: bitmapIdx of subpage, zero if it's not subpage, 32bit
+    ///
+    /// runsAvailMap:
+    /// ------
+    /// a map which manages all runs (used and not in used).
+    /// For each run, the first runOffset and last runOffset are stored in runsAvailMap.
+    /// key: runOffset
+    /// value: handle
+    ///
+    /// runsAvail:
+    /// ----------
+    /// an array of <see cref="LongPriorityQueue"/>.
+    /// Each queue manages same size of runs.
+    /// Runs are sorted by offset, so that we always allocate runs with smaller offset.
+    ///
+    ///
+    /// Algorithm:
+    /// ----------
+    ///
+    ///   As we allocate runs, we update values stored in runsAvailMap and runsAvail so that the property is maintained.
+    ///
+    /// Initialization -
+    ///  In the beginning we store the initial run which is the whole chunk.
+    ///  The initial run:
+    ///  runOffset = 0
+    ///  size = chunkSize
+    ///  isUsed = no
+    ///  isSubpage = no
+    ///  bitmapIdx = 0
+    ///
+    ///
+    /// Algorithm: [allocateRun(size)]
+    /// ----------
+    /// 1) find the first avail run using in runsAvails according to size
+    /// 2) if pages of run is larger than request pages then split it, and save the tailing run
+    ///    for later using
+    ///
+    /// Algorithm: [allocateSubpage(size)]
+    /// ----------
+    /// 1) find a not full subpage according to size.
+    ///    if it already exists just return, otherwise allocate a new PoolSubpage and call init()
+    ///    note that this subpage object is added to subpagesPool in the PoolArena when we init() it
+    /// 2) call subpage.allocate()
+    ///
+    /// Algorithm: [free(handle, length, nioBuffer)]
+    /// ----------
+    /// 1) if it is a subpage, return the slab back into this subpage
+    /// 2) if the subpage is not used or it is a run, then start free this run
+    /// 3) merge continuous avail runs
+    /// 4) save the merged run
     /// </summary>
-    sealed class PoolChunk<T> : IPoolChunkMetric
+    internal sealed class PoolChunk<T> : IPoolChunkMetric
     {
-        const int IntegerSizeMinusOne = IntegerExtensions.SizeInBits - 1;
+        private const int SIZE_BIT_LENGTH = 15;
+        private const int INUSED_BIT_LENGTH = 1;
+        private const int SUBPAGE_BIT_LENGTH = 1;
+        private const int BITMAP_IDX_BIT_LENGTH = 32;
+
+        internal const int IS_SUBPAGE_SHIFT = BITMAP_IDX_BIT_LENGTH;
+        internal const int IS_USED_SHIFT = SUBPAGE_BIT_LENGTH + IS_SUBPAGE_SHIFT;
+        internal const int SIZE_SHIFT = INUSED_BIT_LENGTH + IS_USED_SHIFT;
+        internal const int RUN_OFFSET_SHIFT = SIZE_BIT_LENGTH + SIZE_SHIFT;
 
         internal readonly PoolArena<T> Arena;
         internal readonly T Memory;
@@ -108,19 +157,18 @@ namespace DotNetty.Buffers
         internal readonly int Offset;
         internal readonly IntPtr NativePointer;
 
-        private readonly sbyte[] _memoryMap;
-        private readonly sbyte[] _depthMap;
+        /// <summary>store the first page and last page of each avail run</summary>
+        private LongLongHashMap _runsAvailMap;
+
+        /// <summary>manage all avail runs</summary>
+        private LongPriorityQueue[] _runsAvail;
+
+        /// <summary>manage all subpages in this chunk</summary>
         private readonly PoolSubpage<T>[] _subpages;
-        /** Used to determine if the requested capacity is equal to or greater than pageSize. */
-        private readonly int _subpageOverflowMask;
+
         private readonly int _pageSize;
         private readonly int _pageShifts;
-        private readonly int _maxOrder;
         private readonly int _chunkSize;
-        private readonly int _log2ChunkSize;
-        private readonly int _maxSubpageAllocs;
-        /** Used to mark memory as unusable */
-        private readonly sbyte _unusable;
 
         internal int _freeBytes;
 
@@ -131,49 +179,29 @@ namespace DotNetty.Buffers
         // TODO: Test if adding padding helps under contention
         //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;
 
-        internal PoolChunk(PoolArena<T> arena, T memory, int pageSize, int maxOrder, int pageShifts, int chunkSize, int offset, IntPtr pointer)
+        internal PoolChunk(PoolArena<T> arena, T memory, int pageSize, int pageShifts, int chunkSize, int maxPageIdx, int offset, IntPtr pointer)
         {
-            if (maxOrder >= 30) { ThrowHelper.ThrowArgumentException_CheckMaxOrder30(maxOrder); }
-
             Unpooled = false;
             Arena = arena;
             Memory = memory;
             _pageSize = pageSize;
             _pageShifts = pageShifts;
-            _maxOrder = maxOrder;
             _chunkSize = chunkSize;
             Offset = offset;
             NativePointer = pointer;
-            _unusable = (sbyte)(maxOrder + 1);
-            _log2ChunkSize = Log2(chunkSize);
-            _subpageOverflowMask = ~(pageSize - 1);
             _freeBytes = chunkSize;
 
-            Debug.Assert(maxOrder < 30, "maxOrder should be < 30, but is: " + maxOrder);
-            _maxSubpageAllocs = 1 << maxOrder;
+            _runsAvail = NewRunsAvailqueueArray(maxPageIdx);
+            _runsAvailMap = new LongLongHashMap(LongPriorityQueue.NO_VALUE);
+            _subpages = new PoolSubpage<T>[chunkSize >> pageShifts];
 
-            // Generate the memory map.
-            _memoryMap = new sbyte[_maxSubpageAllocs << 1];
-            _depthMap = new sbyte[_memoryMap.Length];
-            int memoryMapIndex = 1;
-            for (int d = 0; d <= maxOrder; ++d)
-            {
-                // move down the tree one level at a time
-                int depth = 1 << d;
-                for (int p = 0; p < depth; ++p)
-                {
-                    // in each level traverse left to right and set value to the depth of subtree
-                    _memoryMap[memoryMapIndex] = (sbyte)d;
-                    _depthMap[memoryMapIndex] = (sbyte)d;
-                    memoryMapIndex++;
-                }
-            }
-
-            _subpages = NewSubpageArray(_maxSubpageAllocs);
+            //insert initial run, offset = 0, pages = chunkSize / pageSize
+            int pages = chunkSize >> pageShifts;
+            long initHandle = (long)pages << SIZE_SHIFT;
+            InsertAvailRun(0, pages, initHandle);
         }
 
-        /** Creates a special chunk that is not pooled. */
-
+        /// <summary>Creates a special chunk that is not pooled.</summary>
         internal PoolChunk(PoolArena<T> arena, T memory, int size, int offset, IntPtr pointer)
         {
             Unpooled = true;
@@ -181,20 +209,76 @@ namespace DotNetty.Buffers
             Memory = memory;
             Offset = offset;
             NativePointer = pointer;
-            _memoryMap = null;
-            _depthMap = null;
-            _subpages = null;
-            _subpageOverflowMask = 0;
             _pageSize = 0;
             _pageShifts = 0;
-            _maxOrder = 0;
-            _unusable = (sbyte)(_maxOrder + 1);
+            _runsAvailMap = null;
+            _runsAvail = null;
+            _subpages = null;
             _chunkSize = size;
-            _log2ChunkSize = Log2(_chunkSize);
-            _maxSubpageAllocs = 0;
         }
 
-        PoolSubpage<T>[] NewSubpageArray(int size) => new PoolSubpage<T>[size];
+        private static LongPriorityQueue[] NewRunsAvailqueueArray(int size)
+        {
+            var queueArray = new LongPriorityQueue[size];
+            for (int i = 0; i < queueArray.Length; i++)
+            {
+                queueArray[i] = new LongPriorityQueue();
+            }
+            return queueArray;
+        }
+
+        private void InsertAvailRun(int runOffset, int pages, long handle)
+        {
+            int pageIdxFloor = Arena.Pages2PageIdxFloor(pages);
+            var queue = _runsAvail[pageIdxFloor];
+            queue.Offer(handle);
+
+            // insert first page of run
+            InsertAvailRun0(runOffset, handle);
+            if (pages > 1)
+            {
+                // insert last page of run
+                InsertAvailRun0(LastPage(runOffset, pages), handle);
+            }
+        }
+
+        private void InsertAvailRun0(int runOffset, long handle)
+        {
+            var pre = _runsAvailMap.Put(runOffset, handle);
+            Debug.Assert(pre == LongPriorityQueue.NO_VALUE);
+        }
+
+        private void RemoveAvailRun(long handle)
+        {
+            int pageIdxFloor = Arena.Pages2PageIdxFloor(RunPages(handle));
+            var queue = _runsAvail[pageIdxFloor];
+            RemoveAvailRun(queue, handle);
+        }
+
+        private void RemoveAvailRun(LongPriorityQueue queue, long handle)
+        {
+            queue.Remove(handle);
+
+            int runOffset = RunOffset(handle);
+            int pages = RunPages(handle);
+            // remove first page of run
+            _runsAvailMap.Remove(runOffset);
+            if (pages > 1)
+            {
+                // remove last page of run
+                _runsAvailMap.Remove(LastPage(runOffset, pages));
+            }
+        }
+
+        private static int LastPage(int runOffset, int pages)
+        {
+            return runOffset + pages - 1;
+        }
+
+        private long GetAvailRunByOffset(int runOffset)
+        {
+            return _runsAvailMap.Get(runOffset);
+        }
 
         public int Usage
         {
@@ -210,7 +294,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        int GetUsage(int freeBytes)
+        private int GetUsage(int freeBytes)
         {
             if (0u >= (uint)freeBytes)
             {
@@ -226,273 +310,324 @@ namespace DotNetty.Buffers
             return 100 - freePercentage;
         }
 
-
-        internal bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, int normCapacity, PoolThreadCache<T> threadCache)
+        internal bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, int sizeIdx, PoolThreadCache<T> cache)
         {
             long handle;
-            if ((normCapacity & _subpageOverflowMask) != 0)
+            if (sizeIdx <= Arena._smallMaxSizeIdx)
             {
-                // >= pageSize
-                handle = AllocateRun(normCapacity);
+                // small
+                handle = AllocateSubpage(sizeIdx);
+                if (handle < 0L)
+                {
+                    return false;
+                }
+                Debug.Assert(IsSubpage(handle));
             }
             else
             {
-                handle = AllocateSubpage(normCapacity);
+                // normal
+                // runSize must be multiple of pageSize
+                int runSize = Arena.SizeIdx2Size(sizeIdx);
+                handle = AllocateRun(runSize);
+                if (handle < 0L)
+                {
+                    return false;
+                }
             }
-            if (handle < 0) { return false; }
 
-            InitBuf(buf, handle, reqCapacity, threadCache);
-
+            InitBuf(buf, handle, reqCapacity, cache);
             return true;
         }
 
-        /**
-         * Update method used by allocate
-         * This is triggered only when a successor is allocated and all its predecessors
-         * need to update their state
-         * The minimal depth at which subtree rooted at id has some free space
-         *
-         * @param id id
-         */
-
-        void UpdateParentsAlloc(int id)
+        private long AllocateRun(int runSize)
         {
-            while (id > 1)
+            int pages = runSize >> _pageShifts;
+            int pageIdx = Arena.Pages2PageIdx(pages);
+
+            lock (_runsAvail)
             {
-                int parentId = id.RightUShift(1);
-                sbyte val1 = Value(id);
-                sbyte val2 = Value(id ^ 1);
-                sbyte val = val1 < val2 ? val1 : val2;
-                SetValue(parentId, val);
-                id = parentId;
-            }
-        }
-
-        /**
-         * Update method used by free
-         * This needs to handle the special case when both children are completely free
-         * in which case parent be directly allocated on request of size = child-size * 2
-         *
-         * @param id id
-         */
-
-        void UpdateParentsFree(int id)
-        {
-            int logChild = Depth(id) + 1;
-            while (id > 1)
-            {
-                int parentId = id.RightUShift(1);
-                sbyte val1 = Value(id);
-                sbyte val2 = Value(id ^ 1);
-                logChild -= 1; // in first iteration equals log, subsequently reduce 1 from logChild as we traverse up
-
-                if (val1 == logChild && val2 == logChild)
+                // find first queue which has at least one big enough run
+                int queueIdx = RunFirstBestFit(pageIdx);
+                if (queueIdx == -1)
                 {
-                    SetValue(parentId, (sbyte)(logChild - 1));
-                }
-                else
-                {
-                    sbyte val = val1 < val2 ? val1 : val2;
-                    SetValue(parentId, val);
+                    return -1;
                 }
 
-                id = parentId;
+                // get run with min offset in this queue
+                var queue = _runsAvail[queueIdx];
+
+                long handle = queue.Poll();
+
+                Debug.Assert(handle != LongPriorityQueue.NO_VALUE && !IsUsed(handle), "invalid handle: " + handle);
+
+                RemoveAvailRun(queue, handle);
+
+                if (handle != -1)
+                {
+                    handle = SplitLargeRun(handle, pages);
+                }
+
+                _freeBytes -= RunSize(_pageShifts, handle);
+                return handle;
             }
         }
 
-        /**
-         * Algorithm to allocate an index in memoryMap when we query for a free node
-         * at depth d
-         *
-         * @param d depth
-         * @return index in memoryMap
-         */
-
-        int AllocateNode(int d)
+        private int CalculateRunSize(int sizeIdx)
         {
-            int id = 1;
-            int initial = -(1 << d); // has last d bits = 0 and rest all = 1
-            sbyte val = Value(id);
-            if (val > d)
+            int maxElements = 1 << _pageShifts - SizeClasses.LOG2_QUANTUM;
+            int runSize = 0;
+            int nElements;
+
+            int elemSize = Arena.SizeIdx2Size(sizeIdx);
+
+            // find lowest common multiple of pageSize and elemSize
+            do
             {
-                // unusable
-                return -1;
+                runSize += _pageSize;
+                nElements = runSize / elemSize;
+            } while (nElements < maxElements && runSize != nElements * elemSize);
+
+            while (nElements > maxElements)
+            {
+                runSize -= _pageSize;
+                nElements = runSize / elemSize;
             }
-            while (val < d || 0u >= (uint)(id & initial))
+
+            Debug.Assert(nElements > 0);
+            Debug.Assert(runSize <= _chunkSize);
+            Debug.Assert(runSize >= elemSize);
+
+            return runSize;
+        }
+
+        private int RunFirstBestFit(int pageIdx)
+        {
+            if (_freeBytes == _chunkSize)
             {
-                // id & initial == 1 << d for all ids at depth d, for < d it is 0
-                id <<= 1;
-                val = Value(id);
-                if (val > d)
+                return Arena._nPSizes - 1;
+            }
+            for (int i = pageIdx; i < Arena._nPSizes; i++)
+            {
+                var queue = _runsAvail[i];
+                if (queue is object && !queue.IsEmpty())
                 {
-                    id ^= 1;
-                    val = Value(id);
+                    return i;
                 }
             }
-            sbyte value = Value(id);
-            Debug.Assert(value == d && (id & initial) == 1 << d, $"val = {value}, id & initial = {id & initial}, d = {d}");
-            SetValue(id, _unusable); // mark as unusable
-            UpdateParentsAlloc(id);
-            return id;
+            return -1;
         }
 
-        /**
-         * Allocate a run of pages (>=1)
-         *
-         * @param normCapacity normalized capacity
-         * @return index in memoryMap
-         */
-
-        long AllocateRun(int normCapacity)
+        private long SplitLargeRun(long handle, int needPages)
         {
-            int d = _maxOrder - (Log2(normCapacity) - _pageShifts);
-            int id = AllocateNode(d);
-            if (id < 0)
+            Debug.Assert(needPages > 0);
+
+            int totalPages = RunPages(handle);
+            Debug.Assert(needPages <= totalPages);
+
+            int remPages = totalPages - needPages;
+
+            if (remPages > 0)
             {
-                return id;
+                int runOffset = RunOffset(handle);
+
+                // keep track of trailing unused pages for later use
+                int availOffset = runOffset + needPages;
+                long availRun = ToRunHandle(availOffset, remPages, 0);
+                InsertAvailRun(availOffset, remPages, availRun);
+
+                // not avail
+                return ToRunHandle(runOffset, needPages, 1);
             }
-            _freeBytes -= RunLength(id);
-            return id;
+
+            //mark it as used
+            handle |= 1L << IS_USED_SHIFT;
+            return handle;
         }
 
-        /**
-         * Create/ initialize a new PoolSubpage of normCapacity
-         * Any PoolSubpage created/ initialized here is added to subpage pool in the PoolArena that owns this PoolChunk
-         *
-         * @param normCapacity normalized capacity
-         * @return index in memoryMap
-         */
-
-        long AllocateSubpage(int normCapacity)
+        /// <summary>
+        /// Create / initialize a new PoolSubpage of normCapacity. Any PoolSubpage created / initialized here is added to
+        /// subpage pool in the PoolArena that owns this PoolChunk
+        /// </summary>
+        /// <param name="sizeIdx">sizeIdx of normalized size</param>
+        /// <returns>index in memoryMap</returns>
+        private long AllocateSubpage(int sizeIdx)
         {
             // Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.
             // This is need as we may add it back and so alter the linked-list structure.
-            PoolSubpage<T> head = Arena.FindSubpagePoolHead(normCapacity);
+            PoolSubpage<T> head = Arena.FindSubpagePoolHead(sizeIdx);
             lock (head)
             {
-                int d = _maxOrder; // subpages are only be allocated from pages i.e., leaves
-                int id = AllocateNode(d);
-                if (id < 0)
+                // allocate a new run
+                int runSize = CalculateRunSize(sizeIdx);
+                // runSize must be multiples of pageSize
+                long runHandle = AllocateRun(runSize);
+                if (runHandle < 0L)
                 {
-                    return id;
+                    return -1;
                 }
 
-                PoolSubpage<T>[] subpages = _subpages;
-                int pageSize = _pageSize;
+                int runOffset = RunOffset(runHandle);
+                Debug.Assert(_subpages[runOffset] is null);
+                int elemSize = Arena.SizeIdx2Size(sizeIdx);
 
-                _freeBytes -= pageSize;
+                PoolSubpage<T> subpage = new(head, this, _pageShifts, runOffset,
+                                   RunSize(_pageShifts, runHandle), elemSize);
 
-                int subpageIdx = SubpageIdx(id);
-                PoolSubpage<T> subpage = subpages[subpageIdx];
-                if (subpage is null)
-                {
-                    subpage = new PoolSubpage<T>(head, this, id, RunOffset(id), pageSize, normCapacity);
-                    subpages[subpageIdx] = subpage;
-                }
-                else
-                {
-                    subpage.Init(head, normCapacity);
-                }
-
+                _subpages[runOffset] = subpage;
                 return subpage.Allocate();
             }
         }
 
-        /**
-         * Free a subpage or a run of pages
-         * When a subpage is freed from PoolSubpage, it might be added back to subpage pool of the owning PoolArena
-         * If the subpage pool in PoolArena has at least one other PoolSubpage of given elemSize, we can
-         * completely free the owning Page so it is available for subsequent allocations
-         *
-         * @param handle handle to free
-         */
-
-        internal void Free(long handle)
+        /// <summary>
+        /// Free a subpage or a run of pages When a subpage is freed from PoolSubpage, it might be added back to subpage pool
+        /// of the owning PoolArena. If the subpage pool in PoolArena has at least one other PoolSubpage of given elemSize,
+        /// we can completely free the owning Page so it is available for subsequent allocations
+        /// </summary>
+        /// <param name="handle">handle to free</param>
+        /// <param name="normCapacity"></param>
+        internal void Free(long handle, int normCapacity)
         {
-            int memoryMapIdx = MemoryMapIdx(handle);
-            int bitmapIdx = BitmapIdx(handle);
-
-            if (bitmapIdx != 0)
+            if (IsSubpage(handle))
             {
-                // free a subpage
-                PoolSubpage<T> subpage = _subpages[SubpageIdx(memoryMapIdx)];
+                int sizeIdx = Arena.Size2SizeIdx(normCapacity);
+                PoolSubpage<T> head = Arena.FindSubpagePoolHead(sizeIdx);
+
+                int sIdx = RunOffset(handle);
+                PoolSubpage<T> subpage = _subpages[sIdx];
                 Debug.Assert(subpage is object && subpage.DoNotDestroy);
 
                 // Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.
                 // This is need as we may add it back and so alter the linked-list structure.
-                PoolSubpage<T> head = Arena.FindSubpagePoolHead(subpage.ElemSize);
                 lock (head)
                 {
-                    if (subpage.Free(head, bitmapIdx & 0x3FFFFFFF))
+                    if (subpage.Free(head, BitmapIdx(handle)))
                     {
+                        //the subpage is still used, do not free it
                         return;
                     }
+                    Debug.Assert(!subpage.DoNotDestroy);
+                    // Null out slot in the array as it was freed and we should not use it anymore.
+                    _subpages[sIdx] = null;
                 }
             }
-            _freeBytes += RunLength(memoryMapIdx);
-            SetValue(memoryMapIdx, Depth(memoryMapIdx));
-            UpdateParentsFree(memoryMapIdx);
+
+            // start free run
+            int pages = RunPages(handle);
+
+            lock (_runsAvail)
+            {
+                // collapse continuous runs, successfully collapsed runs
+                // will be removed from runsAvail and runsAvailMap
+                long finalRun = CollapseRuns(handle);
+
+                // set run as not used
+                finalRun &= ~(1L << IS_USED_SHIFT);
+                // if it is a subpage, set it to run
+                finalRun &= ~(1L << IS_SUBPAGE_SHIFT);
+
+                InsertAvailRun(RunOffset(finalRun), RunPages(finalRun), finalRun);
+                _freeBytes += pages << _pageShifts;
+            }
+        }
+
+        private long CollapseRuns(long handle)
+        {
+            return CollapseNext(CollapsePast(handle));
+        }
+
+        private long CollapsePast(long handle)
+        {
+            for (; ; )
+            {
+                int runOffset = RunOffset(handle);
+                int runPages = RunPages(handle);
+
+                var pastRun = GetAvailRunByOffset(runOffset - 1);
+                if (0ul >= (ulong)(LongPriorityQueue.NO_VALUE - pastRun))
+                {
+                    return handle;
+                }
+
+                int pastOffset = RunOffset(pastRun);
+                int pastPages = RunPages(pastRun);
+
+                // is continuous
+                if (pastRun != handle && pastOffset + pastPages == runOffset)
+                {
+                    // remove past run
+                    RemoveAvailRun(pastRun);
+                    handle = ToRunHandle(pastOffset, pastPages + runPages, 0);
+                }
+                else
+                {
+                    return handle;
+                }
+            }
+        }
+
+        private long CollapseNext(long handle)
+        {
+            for (; ; )
+            {
+                int runOffset = RunOffset(handle);
+                int runPages = RunPages(handle);
+
+                var nextRun = GetAvailRunByOffset(runOffset + runPages);
+                if (0ul >= (ulong)(LongPriorityQueue.NO_VALUE - nextRun))
+                {
+                    return handle;
+                }
+
+                int nextOffset = RunOffset(nextRun);
+                int nextPages = RunPages(nextRun);
+
+                // is continuous
+                if (nextRun != handle && runOffset + runPages == nextOffset)
+                {
+                    // remove next run
+                    RemoveAvailRun(nextRun);
+                    handle = ToRunHandle(runOffset, runPages + nextPages, 0);
+                }
+                else
+                {
+                    return handle;
+                }
+            }
+        }
+
+        private static long ToRunHandle(int runOffset, int runPages, int inUsed)
+        {
+            return (long)runOffset << RUN_OFFSET_SHIFT
+                   | (long)runPages << SIZE_SHIFT
+                   | (long)inUsed << IS_USED_SHIFT;
         }
 
         internal void InitBuf(PooledByteBuffer<T> buf, long handle, int reqCapacity, PoolThreadCache<T> threadCache)
         {
-            int memoryMapIdx = MemoryMapIdx(handle);
-            int bitmapIdx = BitmapIdx(handle);
-            if (0u >= (uint)bitmapIdx)
+            if (IsRun(handle))
             {
-                sbyte val = Value(memoryMapIdx);
-                Debug.Assert(val == _unusable, val.ToString());
-                buf.Init(this, handle, RunOffset(memoryMapIdx) + Offset, reqCapacity, RunLength(memoryMapIdx), threadCache);
+                buf.Init(this, handle, RunOffset(handle) << _pageShifts,
+                         reqCapacity, RunSize(_pageShifts, handle), Arena.Parent.ThreadCache<T>());
             }
             else
             {
-                InitBufWithSubpage(buf, handle, bitmapIdx, reqCapacity, threadCache);
+                InitBufWithSubpage(buf, handle, reqCapacity, threadCache);
             }
         }
 
-        internal void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int reqCapacity, PoolThreadCache<T> threadCache) =>
-            InitBufWithSubpage(buf, handle, BitmapIdx(handle), reqCapacity, threadCache);
-
-        void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int bitmapIdx, int reqCapacity, PoolThreadCache<T> threadCache)
+        internal void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int reqCapacity, PoolThreadCache<T> threadCache)
         {
-            Debug.Assert(bitmapIdx != 0);
+            int runOffset = RunOffset(handle);
+            int bitmapIdx = BitmapIdx(handle);
 
-            int memoryMapIdx = MemoryMapIdx(handle);
+            PoolSubpage<T> s = _subpages[runOffset];
+            Debug.Assert(s.DoNotDestroy);
+            Debug.Assert(reqCapacity <= s.ElemSize);
 
-            PoolSubpage<T> subpage = _subpages[SubpageIdx(memoryMapIdx)];
-            Debug.Assert(subpage.DoNotDestroy);
-            Debug.Assert(reqCapacity <= subpage.ElemSize);
-
-            buf.Init(
-                this, handle,
-                RunOffset(memoryMapIdx) + (bitmapIdx & 0x3FFFFFFF) * subpage.ElemSize + Offset,
-                reqCapacity, subpage.ElemSize, threadCache);
+            buf.Init(this, handle,
+                     (runOffset << _pageShifts) + bitmapIdx * s.ElemSize + Offset,
+                     reqCapacity, s.ElemSize, threadCache);
         }
-
-        sbyte Value(int id) => _memoryMap[id];
-
-        void SetValue(int id, sbyte val) => _memoryMap[id] = val;
-
-        sbyte Depth(int id) => _depthMap[id];
-
-        // compute the (0-based, with lsb = 0) position of highest set bit i.e, log2
-        static int Log2(int val) => IntegerSizeMinusOne - val.NumberOfLeadingZeros();
-
-        /// represents the size in #bytes supported by node 'id' in the tree
-        int RunLength(int id) => 1 << _log2ChunkSize - Depth(id);
-
-        int RunOffset(int id)
-        {
-            // represents the 0-based offset in #bytes from start of the byte-array chunk
-            int shift = id ^ 1 << Depth(id);
-            return shift * RunLength(id);
-        }
-
-        int SubpageIdx(int memoryMapIdx) => memoryMapIdx ^ _maxSubpageAllocs; // remove highest set bit, to get offset
-
-        static int MemoryMapIdx(long handle) => (int)handle;
-
-        static int BitmapIdx(long handle) => (int)handle.RightUShift(IntegerExtensions.SizeInBits);
 
         public int ChunkSize => _chunkSize;
 
@@ -524,5 +659,40 @@ namespace DotNetty.Buffers
         }
 
         internal void Destroy() => Arena.DestroyChunk(this);
+
+        internal static int RunOffset(long handle)
+        {
+            return (int)(handle >> RUN_OFFSET_SHIFT);
+        }
+
+        internal static int RunSize(int pageShifts, long handle)
+        {
+            return RunPages(handle) << pageShifts;
+        }
+
+        internal static int RunPages(long handle)
+        {
+            return (int)(handle >> SIZE_SHIFT & 0x7fff);
+        }
+
+        private static bool IsUsed(long handle)
+        {
+            return (handle >> IS_USED_SHIFT & 1L) == 1L;
+        }
+
+        private static bool IsRun(long handle)
+        {
+            return !IsSubpage(handle);
+        }
+
+        internal static bool IsSubpage(long handle)
+        {
+            return (handle >> IS_SUBPAGE_SHIFT & 1L) == 1L;
+        }
+
+        private static int BitmapIdx(long handle)
+        {
+            return (int)handle;
+        }
     }
 }

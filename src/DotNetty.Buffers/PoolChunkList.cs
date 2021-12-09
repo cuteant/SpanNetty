@@ -33,7 +33,7 @@ namespace DotNetty.Buffers
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
-    sealed class PoolChunkList<T> : IPoolChunkListMetric
+    internal sealed class PoolChunkList<T> : IPoolChunkListMetric
     {
         private readonly PoolArena<T> _arena;
         private readonly PoolChunkList<T> _nextList;
@@ -44,7 +44,7 @@ namespace DotNetty.Buffers
         private readonly int _freeMinThreshold;
         private readonly int _freeMaxThreshold;
 
-        // This is only update once when create the linked like list of PoolChunkList in PoolArena constructor.
+        /// <summary>This is only update once when create the linked like list of PoolChunkList in PoolArena constructor.</summary>
         private PoolChunkList<T> _prevList;
 
         // TODO: Test if adding padding helps under contention
@@ -106,9 +106,11 @@ namespace DotNetty.Buffers
             return freeThreshold;
         }
 
-        /// Calculates the maximum capacity of a buffer that will ever be possible to allocate out of the {@link PoolChunk}s
-        /// that belong to the {@link PoolChunkList} with the given {@code minUsage} and {@code maxUsage} settings.
-        static int CalculateMaxCapacity(int minUsage, int chunkSize)
+        /// <summary>
+        /// Calculates the maximum capacity of a buffer that will ever be possible to allocate out of the <see cref="PoolChunk{T}"/>s
+        /// that belong to the <see cref="PoolChunkList{T}"/> with the given <c>minUsage</c> and <c>maxUsage</c> settings.
+        /// </summary>
+        private static int CalculateMaxCapacity(int minUsage, int chunkSize)
         {
             minUsage = MinUsage0(minUsage);
 
@@ -132,8 +134,9 @@ namespace DotNetty.Buffers
             _prevList = list;
         }
 
-        internal bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, int normCapacity, PoolThreadCache<T> threadCache)
+        internal bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, int sizeIdx, PoolThreadCache<T> threadCache)
         {
+            int normCapacity = _arena.SizeIdx2Size(sizeIdx);
             if (_head is null || normCapacity > _maxCapacity)
             {
                 // Either this PoolChunkList is empty or the requested capacity is larger then the capacity which can
@@ -143,7 +146,7 @@ namespace DotNetty.Buffers
 
             for (PoolChunk<T> cur = _head; cur is object; cur = cur.Next)
             {
-                if (cur.Allocate(buf, reqCapacity, normCapacity, threadCache))
+                if (cur.Allocate(buf, reqCapacity, sizeIdx, threadCache))
                 {
                     if (cur._freeBytes <= _freeMinThreshold)
                     {
@@ -156,9 +159,9 @@ namespace DotNetty.Buffers
             return false;
         }
 
-        internal bool Free(PoolChunk<T> chunk, long handle)
+        internal bool Free(PoolChunk<T> chunk, long handle, int normCapacity)
         {
-            chunk.Free(handle);
+            chunk.Free(handle, normCapacity);
             if (chunk._freeBytes > _freeMaxThreshold)
             {
                 Remove(chunk);
@@ -168,7 +171,7 @@ namespace DotNetty.Buffers
             return true;
         }
 
-        bool Move(PoolChunk<T> chunk)
+        private bool Move(PoolChunk<T> chunk)
         {
             Debug.Assert(chunk.Usage < _maxUsage);
 
@@ -183,9 +186,10 @@ namespace DotNetty.Buffers
             return true;
         }
 
-        /// Moves the {@link PoolChunk} down the {@link PoolChunkList} linked-list so it will end up in the right
-        /// {@link PoolChunkList} that has the correct minUsage / maxUsage in respect to {@link PoolChunk#usage()}.
-        bool Move0(PoolChunk<T> chunk)
+        /// <summary>Moves the <see cref="PoolChunk{T}"/> down the <see cref="PoolChunkList{T}"/> linked-list so it will end up in the right
+        /// <see cref="PoolChunkList{T}"/> that has the correct minUsage / maxUsage in respect to <see cref="PoolChunk{T}.Usage"/>.</summary>
+        /// <param name="chunk"></param>
+        private bool Move0(PoolChunk<T> chunk)
         {
             if (_prevList is null)
             {
@@ -207,8 +211,9 @@ namespace DotNetty.Buffers
             Add0(chunk);
         }
 
-        /// Adds the {@link PoolChunk} to this {@link PoolChunkList}.
-        void Add0(PoolChunk<T> chunk)
+        /// <summary>Adds the <see cref="PoolChunk{T}"/> to this <see cref="PoolChunkList{T}"/>.</summary>
+        /// <param name="chunk"></param>
+        private void Add0(PoolChunk<T> chunk)
         {
             chunk.Parent = this;
             if (_head is null)
@@ -226,7 +231,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        void Remove(PoolChunk<T> cur)
+        private void Remove(PoolChunk<T> cur)
         {
             if (cur == _head)
             {
@@ -247,11 +252,13 @@ namespace DotNetty.Buffers
             }
         }
 
+        /// <inheritdoc />
         public int MinUsage => MinUsage0(_minUsage);
 
+        /// <inheritdoc />
         public int MaxUsage => Math.Min(_maxUsage, 100);
 
-        static int MinUsage0(int value) => Math.Max(1, value);
+        private static int MinUsage0(int value) => Math.Max(1, value);
 
         public IEnumerator<IPoolChunkMetric> GetEnumerator()
         {

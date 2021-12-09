@@ -29,10 +29,10 @@ namespace DotNetty.Buffers
 
     public interface IPoolChunkListMetric : IEnumerable<IPoolChunkMetric>
     {
-        /// Return the minum usage of the chunk list before which chunks are promoted to the previous list.
+        /// <summary>Return the minum usage of the chunk list before which chunks are promoted to the previous list.</summary>
         int MinUsage { get; }
 
-        /// Return the minum usage of the chunk list after which chunks are promoted to the next list.
+        /// <summary>Return the minum usage of the chunk list after which chunks are promoted to the next list.</summary>
         int MaxUsage { get; }
     }
 }

@@ -25,10 +25,12 @@
 
 namespace DotNetty.Buffers
 {
+    using System;
     using System.Collections.Generic;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
+    /// <summary>Exposed metric for <see cref="PooledByteBufferAllocator"/>.</summary>
     public sealed class PooledByteBufferAllocatorMetric : IByteBufferAllocatorMetric
     {
         readonly PooledByteBufferAllocator _allocator;
@@ -38,22 +40,32 @@ namespace DotNetty.Buffers
             _allocator = allocator;
         }
 
+        /// <summary>Return a <see cref="IReadOnlyList{T}"/> of all heap <see cref="IPoolArenaMetric"/>s that are provided by this pool.</summary>
         public IReadOnlyList<IPoolArenaMetric> HeapArenas() => _allocator.HeapArenas();
 
+        /// <summary>Return a <see cref="IReadOnlyList{T}"/> of all direct <see cref="IPoolArenaMetric"/>s that are provided by this pool.</summary>
         public IReadOnlyList<IPoolArenaMetric> DirectArenas() => _allocator.DirectArenas();
 
+        /// <summary>Return the size of the tiny cache.</summary>
+        [Obsolete("Tiny caches have been merged into small caches.")]
         public int TinyCacheSize => _allocator.TinyCacheSize;
 
+        /// <summary>Return the size of the small cache.</summary>
         public int SmallCacheSize => _allocator.SmallCacheSize;
 
+        /// <summary>Return the size of the normal cache.</summary>
         public int NormalCacheSize => _allocator.NormalCacheSize;
 
+        /// <summary>Return the chunk size for an arena.</summary>
         public int ChunkSize => _allocator.ChunkSize;
 
+        /// <inheritdoc />
         public long UsedHeapMemory => _allocator.UsedHeapMemory;
 
+        /// <inheritdoc />
         public long UsedDirectMemory => _allocator.UsedDirectMemory;
 
+        /// <summary>Return the number of thread local caches used by this <see cref="PooledByteBufferAllocator"/>.</summary>
         public int NumThreadLocalCaches()
         {
             int total = 0;
@@ -86,7 +98,6 @@ namespace DotNetty.Buffers
                 .Append("; usedDirectMemory: ").Append(UsedDirectMemory)
                 .Append("; numHeapArenas: ").Append(HeapArenas().Count)
                 .Append("; numDirectArenas: ").Append(DirectArenas().Count)
-                .Append("; tinyCacheSize: ").Append(TinyCacheSize)
                 .Append("; smallCacheSize: ").Append(SmallCacheSize)
                 .Append("; normalCacheSize: ").Append(NormalCacheSize)
                 .Append("; numThreadLocalCaches: ").Append(NumThreadLocalCaches())

@@ -36,26 +36,17 @@ namespace DotNetty.Buffers
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
-    enum SizeClass
+    internal enum SizeClass
     {
-        Tiny,
         Small,
         Normal
     }
 
-    abstract class PoolArena<T> : IPoolArenaMetric
+    internal abstract class PoolArena<T> : SizeClasses, IPoolArenaMetric
     {
-        internal const int NumTinySubpagePools = 512 >> 4;
-
         internal readonly PooledByteBufferAllocator Parent;
 
-        private readonly int _maxOrder;
-        internal readonly int PageSize;
-        internal readonly int PageShifts;
-        internal readonly int ChunkSize;
-        internal readonly int SubpageOverflowMask;
         internal readonly int NumSmallSubpagePools;
-        private readonly PoolSubpage<T>[] _tinySubpagePools;
         private readonly PoolSubpage<T>[] _smallSubpagePools;
 
         private readonly PoolChunkList<T> _q050;
@@ -71,13 +62,10 @@ namespace DotNetty.Buffers
         private long _allocationsNormal;
 
         // We need to use the LongCounter here as this is not guarded via synchronized block.
-        private long _allocationsTiny;
-
         private long _allocationsSmall;
         private long _allocationsHuge;
         private long _activeBytesHuge;
 
-        private long _deallocationsTiny;
         private long _deallocationsSmall;
         private long _deallocationsNormal;
 
@@ -90,30 +78,16 @@ namespace DotNetty.Buffers
         // TODO: Test if adding padding helps under contention
         //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;
 
-        protected PoolArena(
-            PooledByteBufferAllocator parent,
-            int pageSize,
-            int maxOrder,
-            int pageShifts,
-            int chunkSize)
+        protected PoolArena(PooledByteBufferAllocator parent, int pageSize, int pageShifts, int chunkSize)
+            : base(pageSize, pageShifts, chunkSize, 0)
         {
             Parent = parent;
-            PageSize = pageSize;
-            _maxOrder = maxOrder;
-            PageShifts = pageShifts;
-            ChunkSize = chunkSize;
-            SubpageOverflowMask = ~(pageSize - 1);
-            _tinySubpagePools = NewSubpagePoolArray(NumTinySubpagePools);
-            for (int i = 0; i < _tinySubpagePools.Length; i++)
-            {
-                _tinySubpagePools[i] = NewSubpagePoolHead(pageSize);
-            }
 
-            NumSmallSubpagePools = pageShifts - 9;
+            NumSmallSubpagePools = _nSubpages;
             _smallSubpagePools = NewSubpagePoolArray(NumSmallSubpagePools);
             for (int i = 0; i < _smallSubpagePools.Length; i++)
             {
-                _smallSubpagePools[i] = NewSubpagePoolHead(pageSize);
+                _smallSubpagePools[i] = NewSubpagePoolHead();
             }
 
             _q100 = new PoolChunkList<T>(this, null, 100, int.MaxValue, chunkSize);
@@ -140,15 +114,15 @@ namespace DotNetty.Buffers
             _chunkListMetrics = metrics;
         }
 
-        PoolSubpage<T> NewSubpagePoolHead(int pageSize)
+        private PoolSubpage<T> NewSubpagePoolHead()
         {
-            var head = new PoolSubpage<T>(pageSize);
+            var head = new PoolSubpage<T>();
             head.Prev = head;
             head.Next = head;
             return head;
         }
 
-        PoolSubpage<T>[] NewSubpagePoolArray(int size) => new PoolSubpage<T>[size];
+        private PoolSubpage<T>[] NewSubpagePoolArray(int size) => new PoolSubpage<T>[size];
 
         internal abstract bool IsDirect { get; }
 
@@ -159,137 +133,103 @@ namespace DotNetty.Buffers
             return buf;
         }
 
-        internal static int TinyIdx(int normCapacity) => normCapacity.RightUShift(4);
-
-        internal static int SmallIdx(int normCapacity)
+        private void Allocate(PoolThreadCache<T> cache, PooledByteBuffer<T> buf, int reqCapacity)
         {
-            int tableIdx = 0;
-            int i = normCapacity.RightUShift(10);
-            while (i != 0)
+            int sizeIdx = Size2SizeIdx(reqCapacity);
+
+            if (sizeIdx <= _smallMaxSizeIdx)
             {
-                i = i.RightUShift(1);
-                tableIdx++;
+                TCacheAllocateSmall(cache, buf, reqCapacity, sizeIdx);
             }
-            return tableIdx;
-        }
-
-        // capacity < pageSize
-        internal bool IsTinyOrSmall(int normCapacity) => 0u >= (uint)(normCapacity & SubpageOverflowMask);
-
-        // normCapacity < 512
-        internal static bool IsTiny(int normCapacity) => 0u >= (uint)(normCapacity & 0xFFFFFE00);
-
-        void Allocate(PoolThreadCache<T> cache, PooledByteBuffer<T> buf, int reqCapacity)
-        {
-            int normCapacity = NormalizeCapacity(reqCapacity);
-            if (IsTinyOrSmall(normCapacity))
+            else if (sizeIdx < _nSizes)
             {
-                // capacity < pageSize
-                int tableIdx;
-                PoolSubpage<T>[] table;
-                bool tiny = IsTiny(normCapacity);
-                if (tiny)
-                {
-                    // < 512
-                    if (cache.AllocateTiny(this, buf, reqCapacity, normCapacity))
-                    {
-                        // was able to allocate out of the cache so move on
-                        return;
-                    }
-                    tableIdx = TinyIdx(normCapacity);
-                    table = _tinySubpagePools;
-                }
-                else
-                {
-                    if (cache.AllocateSmall(this, buf, reqCapacity, normCapacity))
-                    {
-                        // was able to allocate out of the cache so move on
-                        return;
-                    }
-                    tableIdx = SmallIdx(normCapacity);
-                    table = _smallSubpagePools;
-                }
-
-                PoolSubpage<T> head = table[tableIdx];
-
-                //
-                //  Synchronize on the head. This is needed as {@link PoolSubpage#allocate()} and
-                // {@link PoolSubpage#free(int)} may modify the doubly linked list as well.
-                // 
-                lock (head)
-                {
-                    PoolSubpage<T> s = head.Next;
-                    if (s != head)
-                    {
-                        Debug.Assert(s.DoNotDestroy && s.ElemSize == normCapacity);
-                        long handle = s.Allocate();
-                        Debug.Assert(handle >= 0);
-                        s.Chunk.InitBufWithSubpage(buf, handle, reqCapacity, cache);
-                        IncTinySmallAllocation(tiny);
-                        return;
-                    }
-                }
-
-                lock (this)
-                {
-                    AllocateNormal(buf, reqCapacity, normCapacity, cache);
-                }
-
-                IncTinySmallAllocation(tiny);
-                return;
-            }
-            if (normCapacity <= ChunkSize)
-            {
-                if (cache.AllocateNormal(this, buf, reqCapacity, normCapacity))
-                {
-                    // was able to allocate out of the cache so move on
-                    return;
-                }
-
-                lock (this)
-                {
-                    AllocateNormal(buf, reqCapacity, normCapacity, cache);
-                    _allocationsNormal++;
-                }
+                TCacheAllocateNormal(cache, buf, reqCapacity, sizeIdx);
             }
             else
             {
+                //int normCapacity = directMemoryCacheAlignment > 0
+                //        ? NormalizeSize(reqCapacity) : reqCapacity;
+                int normCapacity = reqCapacity;
                 // Huge allocations are never served via the cache so just call allocateHuge
-                AllocateHuge(buf, reqCapacity);
+                AllocateHuge(buf, normCapacity);
             }
         }
 
-        void AllocateNormal(PooledByteBuffer<T> buf, int reqCapacity, int normCapacity, PoolThreadCache<T> threadCache)
+        private void TCacheAllocateSmall(PoolThreadCache<T> cache, PooledByteBuffer<T> buf, int reqCapacity, int sizeIdx)
         {
-            if (_q050.Allocate(buf, reqCapacity, normCapacity, threadCache) ||
-                _q025.Allocate(buf, reqCapacity, normCapacity, threadCache) ||
-                _q000.Allocate(buf, reqCapacity, normCapacity, threadCache) ||
-                _qInit.Allocate(buf, reqCapacity, normCapacity, threadCache) ||
-                _q075.Allocate(buf, reqCapacity, normCapacity, threadCache))
+            if (cache.AllocateSmall(this, buf, reqCapacity, sizeIdx))
+            {
+                // was able to allocate out of the cache so move on
+                return;
+            }
+
+            // Synchronize on the head. This is needed as {@link PoolChunk#allocateSubpage(int)} and
+            // {@link PoolChunk#free(long)} may modify the doubly linked list as well.
+            PoolSubpage<T> head = _smallSubpagePools[sizeIdx];
+            bool needsNormalAllocation;
+            lock (head)
+            {
+                PoolSubpage<T> s = head.Next;
+                needsNormalAllocation = s == head;
+                if (!needsNormalAllocation)
+                {
+                    Debug.Assert(s.DoNotDestroy && s.ElemSize == SizeIdx2Size(sizeIdx));
+                    long handle = s.Allocate();
+                    Debug.Assert(handle >= 0);
+                    s.Chunk.InitBufWithSubpage(buf, handle, reqCapacity, cache);
+                }
+            }
+
+            if (needsNormalAllocation)
+            {
+                lock (this)
+                {
+                    AllocateNormal(buf, reqCapacity, sizeIdx, cache);
+                }
+            }
+
+            IncSmallAllocation();
+        }
+
+        private void TCacheAllocateNormal(PoolThreadCache<T> cache, PooledByteBuffer<T> buf, int reqCapacity, int sizeIdx)
+        {
+            if (cache.AllocateNormal(this, buf, reqCapacity, sizeIdx))
+            {
+                // was able to allocate out of the cache so move on
+                return;
+            }
+            lock (this)
+            {
+                AllocateNormal(buf, reqCapacity, sizeIdx, cache);
+                ++_allocationsNormal;
+            }
+        }
+
+        // Method must be called inside synchronized(this) { ... } block
+        private void AllocateNormal(PooledByteBuffer<T> buf, int reqCapacity, int sizeIdx, PoolThreadCache<T> threadCache)
+        {
+            if (_q050.Allocate(buf, reqCapacity, sizeIdx, threadCache) ||
+                _q025.Allocate(buf, reqCapacity, sizeIdx, threadCache) ||
+                _q000.Allocate(buf, reqCapacity, sizeIdx, threadCache) ||
+                _qInit.Allocate(buf, reqCapacity, sizeIdx, threadCache) ||
+                _q075.Allocate(buf, reqCapacity, sizeIdx, threadCache))
             {
                 return;
             }
 
             // Add a new chunk.
-            PoolChunk<T> c = NewChunk(PageSize, _maxOrder, PageShifts, ChunkSize);
-            bool success = c.Allocate(buf, reqCapacity, normCapacity, threadCache);
+            PoolChunk<T> c = NewChunk(PageSize, _nPSizes, PageShifts, ChunkSize);
+            bool success = c.Allocate(buf, reqCapacity, sizeIdx, threadCache);
             Debug.Assert(success);
             _qInit.Add(c);
         }
 
-        void IncTinySmallAllocation(bool tiny)
+        private void IncSmallAllocation()
         {
-            if (tiny)
-            {
-                _ = Interlocked.Increment(ref _allocationsTiny);
-            }
-            else
-            {
-                _ = Interlocked.Increment(ref _allocationsSmall);
-            }
+            Interlocked.Increment(ref _allocationsSmall);
         }
 
-        void AllocateHuge(PooledByteBuffer<T> buf, int reqCapacity)
+        private void AllocateHuge(PooledByteBuffer<T> buf, int reqCapacity)
         {
             PoolChunk<T> chunk = NewUnpooledChunk(reqCapacity);
             _ = Interlocked.Add(ref _activeBytesHuge, chunk.ChunkSize);
@@ -308,28 +248,23 @@ namespace DotNetty.Buffers
             }
             else
             {
-                SizeClass sizeClass = SizeClass(normCapacity);
+                SizeClass sizeClass = SizeClass(handle);
                 if (cache is object && cache.Add(this, chunk, handle, normCapacity, sizeClass))
                 {
                     // cached so not free it.
                     return;
                 }
 
-                FreeChunk(chunk, handle, sizeClass, false);
+                FreeChunk(chunk, handle, normCapacity, sizeClass, false);
             }
         }
 
-        SizeClass SizeClass(int normCapacity)
+        private SizeClass SizeClass(long handle)
         {
-            if (!IsTinyOrSmall(normCapacity))
-            {
-                return Buffers.SizeClass.Normal;
-            }
-
-            return IsTiny(normCapacity) ? Buffers.SizeClass.Tiny : Buffers.SizeClass.Small;
+            return PoolChunk<T>.IsSubpage(handle) ? Buffers.SizeClass.Small : Buffers.SizeClass.Normal;
         }
 
-        internal void FreeChunk(PoolChunk<T> chunk, long handle, SizeClass sizeClass, bool finalizer)
+        internal void FreeChunk(PoolChunk<T> chunk, long handle, int normCapacity, SizeClass sizeClass, bool finalizer)
         {
             bool destroyChunk;
             lock (this)
@@ -344,14 +279,11 @@ namespace DotNetty.Buffers
                         case Buffers.SizeClass.Small:
                             ++_deallocationsSmall;
                             break;
-                        case Buffers.SizeClass.Tiny:
-                            ++_deallocationsTiny;
-                            break;
                         default:
                             ThrowHelper.ThrowArgumentOutOfRangeException(); break;
                     }
                 }
-                destroyChunk = !chunk.Parent.Free(chunk, handle);
+                destroyChunk = !chunk.Parent.Free(chunk, handle, normCapacity);
             }
             if (destroyChunk)
             {
@@ -360,64 +292,9 @@ namespace DotNetty.Buffers
             }
         }
 
-        internal PoolSubpage<T> FindSubpagePoolHead(int elemSize)
+        internal PoolSubpage<T> FindSubpagePoolHead(int sizeIdx)
         {
-            int tableIdx;
-            PoolSubpage<T>[] table;
-            if (IsTiny(elemSize))
-            {
-                // < 512
-                tableIdx = TinyIdx(elemSize);
-                table = _tinySubpagePools;
-            }
-            else
-            {
-                tableIdx = SmallIdx(elemSize);
-                table = _smallSubpagePools;
-            }
-
-            return table[tableIdx];
-        }
-
-        internal int NormalizeCapacity(int reqCapacity)
-        {
-            uint ureqCapacity = (uint)reqCapacity;
-            if (ureqCapacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(reqCapacity, ExceptionArgument.reqCapacity); }
-
-            if (ureqCapacity >= (uint)ChunkSize)
-            {
-                return reqCapacity;
-            }
-
-            if (!IsTiny(reqCapacity))
-            {
-                // >= 512
-                // Doubled
-
-                int normalizedCapacity = reqCapacity;
-                normalizedCapacity--;
-                normalizedCapacity |= normalizedCapacity.RightUShift(1);
-                normalizedCapacity |= normalizedCapacity.RightUShift(2);
-                normalizedCapacity |= normalizedCapacity.RightUShift(4);
-                normalizedCapacity |= normalizedCapacity.RightUShift(8);
-                normalizedCapacity |= normalizedCapacity.RightUShift(16);
-                normalizedCapacity++;
-
-                if (normalizedCapacity < 0)
-                {
-                    normalizedCapacity = normalizedCapacity.RightUShift(1);
-                }
-
-                return normalizedCapacity;
-            }
-
-            // Quantum-spaced
-            if (0u >= (uint)(reqCapacity & 15))
-            {
-                return reqCapacity;
-            }
-
-            return (reqCapacity & ~15) + 16;
+            return _smallSubpagePools[sizeIdx];
         }
 
         internal void Reallocate(PooledByteBuffer<T> buf, int newCapacity, bool freeOldMemory)
@@ -462,19 +339,19 @@ namespace DotNetty.Buffers
 
         public int NumThreadCaches => Volatile.Read(ref _numThreadCaches);
 
-        public int NumTinySubpages => _tinySubpagePools.Length;
+        public int NumTinySubpages => 0;
 
         public int NumSmallSubpages => _smallSubpagePools.Length;
 
         public int NumChunkLists => _chunkListMetrics.Count;
 
-        public IReadOnlyList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(_tinySubpagePools);
+        public IReadOnlyList<IPoolSubpageMetric> TinySubpages => EmptyArray<IPoolSubpageMetric>.Instance;
 
         public IReadOnlyList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(_smallSubpagePools);
 
         public IReadOnlyList<IPoolChunkListMetric> ChunkLists => _chunkListMetrics;
 
-        static List<IPoolSubpageMetric> SubPageMetricList(PoolSubpage<T>[] pages)
+        private static List<IPoolSubpageMetric> SubPageMetricList(PoolSubpage<T>[] pages)
         {
             var metrics = new List<IPoolSubpageMetric>();
             foreach (PoolSubpage<T> head in pages)
@@ -507,11 +384,11 @@ namespace DotNetty.Buffers
                     allocsNormal = _allocationsNormal;
                 }
 
-                return NumTinyAllocations + NumSmallAllocations + allocsNormal + NumHugeAllocations;
+                return NumSmallAllocations + allocsNormal + NumHugeAllocations;
             }
         }
 
-        public long NumTinyAllocations => Volatile.Read(ref _allocationsTiny);
+        public long NumTinyAllocations => 0;
 
         public long NumSmallAllocations => Volatile.Read(ref _allocationsSmall);
 
@@ -533,23 +410,14 @@ namespace DotNetty.Buffers
                 long deallocs;
                 lock (this)
                 {
-                    deallocs = _deallocationsTiny + _deallocationsSmall + _deallocationsNormal;
+                    deallocs = _deallocationsSmall + _deallocationsNormal;
                 }
 
                 return deallocs + NumHugeDeallocations;
             }
         }
 
-        public long NumTinyDeallocations
-        {
-            get
-            {
-                lock (this)
-                {
-                    return _deallocationsTiny;
-                }
-            }
-        }
+        public long NumTinyDeallocations => 0L;
 
         public long NumSmallDeallocations
         {
@@ -581,17 +449,16 @@ namespace DotNetty.Buffers
         {
             get
             {
-                long val = NumTinyAllocations + NumSmallAllocations + NumHugeAllocations
-                    - NumHugeDeallocations;
+                long val = NumSmallAllocations + NumHugeAllocations - NumHugeDeallocations;
                 lock (this)
                 {
-                    val += _allocationsNormal - (_deallocationsTiny + _deallocationsSmall + _deallocationsNormal);
+                    val += _allocationsNormal - (_deallocationsSmall + _deallocationsNormal);
                 }
                 return Math.Max(val, 0);
             }
         }
 
-        public long NumActiveTinyAllocations => Math.Max(NumTinyAllocations - NumTinyDeallocations, 0);
+        public long NumActiveTinyAllocations => 0L;
 
         public long NumActiveSmallAllocations => Math.Max(NumSmallAllocations - NumSmallDeallocations, 0);
 
@@ -630,7 +497,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        protected abstract PoolChunk<T> NewChunk(int pageSize, int maxOrder, int pageShifts, int chunkSize);
+        protected abstract PoolChunk<T> NewChunk(int pageSize, int maxPageIdx, int pageShifts, int chunkSize);
 
         protected abstract PoolChunk<T> NewUnpooledChunk(int capacity);
 
@@ -669,9 +536,6 @@ namespace DotNetty.Buffers
                     .Append(StringUtil.Newline)
                     .Append(_q100)
                     .Append(StringUtil.Newline)
-                    .Append("tiny subpages:");
-                AppendPoolSubPages(buf, _tinySubpagePools);
-                _ = buf.Append(StringUtil.Newline)
                     .Append("small subpages:");
                 AppendPoolSubPages(buf, _smallSubpagePools);
                 _ = buf.Append(StringUtil.Newline);
@@ -680,7 +544,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        static void AppendPoolSubPages(StringBuilder buf, PoolSubpage<T>[] subpages)
+        private static void AppendPoolSubPages(StringBuilder buf, PoolSubpage<T>[] subpages)
         {
             for (int i = 0; i < subpages.Length; i++)
             {
@@ -709,11 +573,10 @@ namespace DotNetty.Buffers
         ~PoolArena()
         {
             DestroyPoolSubPages(_smallSubpagePools);
-            DestroyPoolSubPages(_tinySubpagePools);
             DestroyPoolChunkLists(_qInit, _q000, _q025, _q050, _q075, _q100);
         }
 
-        static void DestroyPoolSubPages(PoolSubpage<T>[] pages)
+        private static void DestroyPoolSubPages(PoolSubpage<T>[] pages)
         {
             for (int i = 0; i < pages.Length; i++)
             {
@@ -721,7 +584,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        void DestroyPoolChunkLists(params PoolChunkList<T>[] chunkLists)
+        private void DestroyPoolChunkLists(params PoolChunkList<T>[] chunkLists)
         {
             for (int i = 0; i < chunkLists.Length; i++)
             {
@@ -730,19 +593,19 @@ namespace DotNetty.Buffers
         }
     }
 
-    sealed class HeapArena : PoolArena<byte[]>
+    internal sealed class HeapArena : PoolArena<byte[]>
     {
-        public HeapArena(PooledByteBufferAllocator parent, int pageSize, int maxOrder, int pageShifts, int chunkSize)
-            : base(parent, pageSize, maxOrder, pageShifts, chunkSize)
+        public HeapArena(PooledByteBufferAllocator parent, int pageSize, int pageShifts, int chunkSize)
+            : base(parent, pageSize, pageShifts, chunkSize)
         {
         }
 
-        static byte[] NewByteArray(int size) => new byte[size];
+        private static byte[] NewByteArray(int size) => new byte[size];
 
         internal override bool IsDirect => false;
 
-        protected override PoolChunk<byte[]> NewChunk(int pageSize, int maxOrder, int pageShifts, int chunkSize) =>
-            new PoolChunk<byte[]>(this, NewByteArray(chunkSize), pageSize, maxOrder, pageShifts, chunkSize, 0, IntPtr.Zero);
+        protected override PoolChunk<byte[]> NewChunk(int pageSize, int maxPageIdx, int pageShifts, int chunkSize) =>
+            new PoolChunk<byte[]>(this, NewByteArray(chunkSize), pageSize, pageShifts, chunkSize, maxPageIdx, 0, IntPtr.Zero);
 
         protected override PoolChunk<byte[]> NewUnpooledChunk(int capacity) =>
             new PoolChunk<byte[]>(this, NewByteArray(capacity), capacity, 0, IntPtr.Zero);
@@ -766,25 +629,25 @@ namespace DotNetty.Buffers
     // 1、IByteBuffer直接操作数组性能更高，参考 System.IO.Pipelines 和 System.Buffers 的内部实现
     // 2、IByetBuffer实现 IReferenceCounted 接口，IMemoryOwner的管理会更加混乱
     // 3、现在 IByteBuffer 已经实现了 IBufferWriter<byte> 接口
-    sealed class DirectArena : PoolArena<byte[]>
+    internal sealed class DirectArena : PoolArena<byte[]>
     {
         private readonly List<MemoryChunk> _memoryChunks;
 
-        public DirectArena(PooledByteBufferAllocator parent, int pageSize, int maxOrder, int pageShifts, int chunkSize)
-            : base(parent, pageSize, maxOrder, pageShifts, chunkSize)
+        public DirectArena(PooledByteBufferAllocator parent, int pageSize, int pageShifts, int chunkSize)
+            : base(parent, pageSize, pageShifts, chunkSize)
         {
             _memoryChunks = new List<MemoryChunk>();
         }
 
-        static MemoryChunk NewMemoryChunk(int size) => new MemoryChunk(size);
+        private static MemoryChunk NewMemoryChunk(int size) => new MemoryChunk(size);
 
         internal override bool IsDirect => true;
 
-        protected override PoolChunk<byte[]> NewChunk(int pageSize, int maxOrder, int pageShifts, int chunkSize)
+        protected override PoolChunk<byte[]> NewChunk(int pageSize, int maxPageIdx, int pageShifts, int chunkSize)
         {
             MemoryChunk memoryChunk = NewMemoryChunk(chunkSize);
             _memoryChunks.Add(memoryChunk);
-            var chunk = new PoolChunk<byte[]>(this, memoryChunk.Bytes, pageSize, maxOrder, pageShifts, chunkSize, 0, memoryChunk.NativePointer);
+            var chunk = new PoolChunk<byte[]>(this, memoryChunk.Bytes, pageSize, pageShifts, chunkSize, maxPageIdx, 0, memoryChunk.NativePointer);
             return chunk;
         }
 
@@ -816,7 +679,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        sealed class MemoryChunk : IDisposable
+        private sealed class MemoryChunk : IDisposable
         {
             internal byte[] Bytes;
             private GCHandle _handle;
@@ -829,7 +692,7 @@ namespace DotNetty.Buffers
                 NativePointer = _handle.AddrOfPinnedObject();
             }
 
-            void Release()
+            private void Release()
             {
                 if (_handle.IsAllocated)
                 {
@@ -858,7 +721,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        sealed class OwnedPinnedBlock : MemoryManager<byte>, IPoolMemoryOwner<byte>
+        private sealed class OwnedPinnedBlock : MemoryManager<byte>, IPoolMemoryOwner<byte>
         {
             private byte[] _array;
             private IntPtr _origin;

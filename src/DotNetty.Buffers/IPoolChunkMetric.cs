@@ -27,13 +27,13 @@ namespace DotNetty.Buffers
 {
     public interface IPoolChunkMetric
     {
-        /// Return the percentage of the current usage of the chunk.
+        /// <summary>Return the percentage of the current usage of the chunk.</summary>
         int Usage { get; }
 
-        /// Return the size of the chunk in bytes, this is the maximum of bytes that can be served out of the chunk.
+        /// <summary>Return the size of the chunk in bytes, this is the maximum of bytes that can be served out of the chunk.</summary>
         int ChunkSize { get; }
 
-        /// Return the number of free bytes in the chunk.
+        /// <summary>Return the number of free bytes in the chunk.</summary>
         int FreeBytes { get; }
     }
 }

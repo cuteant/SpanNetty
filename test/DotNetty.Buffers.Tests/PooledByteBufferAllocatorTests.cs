@@ -79,10 +79,10 @@ namespace DotNetty.Buffers.Tests
         //}
 
         [Fact]
-        public void ArenaMetricsNoCache() => ArenaMetrics0(new PooledByteBufferAllocator(true, 2, 2, 8192, 11, 0, 0, 0), 100, 0, 100, 100);
+        public void ArenaMetricsNoCache() => ArenaMetrics0(new PooledByteBufferAllocator(true, 2, 2, 8192, 11, 0, 0), 100, 0, 100, 100);
 
         [Fact]
-        public void ArenaMetricsCache() => ArenaMetrics0(new PooledByteBufferAllocator(true, 2, 2, 8192, 11, 1000, 1000, 1000), 100, 1, 1, 0);
+        public void ArenaMetricsCache() => ArenaMetrics0(new PooledByteBufferAllocator(true, 2, 2, 8192, 11, 1000, 1000), 100, 1, 1, 0);
 
         static void ArenaMetrics0(PooledByteBufferAllocator allocator, int num, int expectedActive, int expectedAlloc, int expectedDealloc)
         {
@@ -140,7 +140,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void SmallSubpageMetric()
         {
-            var allocator = new PooledByteBufferAllocator(true, 1, 1, 8192, 11, 0, 0, 0);
+            var allocator = new PooledByteBufferAllocator(true, 1, 1, 8192, 11, 0, 0);
             IByteBuffer buffer = allocator.HeapBuffer(500);
             try
             {
@@ -155,33 +155,15 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void TinySubpageMetric()
-        {
-            var allocator = new PooledByteBufferAllocator(true, 1, 1, 8192, 11, 0, 0, 0);
-            IByteBuffer buffer = allocator.HeapBuffer(1);
-            try
-            {
-                IPoolArenaMetric metric = allocator.Metric.HeapArenas()[0];
-                IPoolSubpageMetric subpageMetric = metric.TinySubpages[0];
-                Assert.Equal(1, subpageMetric.MaxNumElements - subpageMetric.NumAvailable);
-            }
-            finally
-            {
-                buffer.Release();
-            }
-        }
-
-        [Fact]
         public void AllocNotNull()
         {
-            var allocator = new PooledByteBufferAllocator(true, 1, 1, 8192, 11, 0, 0, 0);
+            var allocator = new PooledByteBufferAllocator(true, 1, 1, 8192, 11, 0, 0);
             // Huge allocation
             AllocNotNull0(allocator, allocator.Metric.ChunkSize + 1);
             // Normal allocation
             AllocNotNull0(allocator, 1024);
             // Small allocation
             AllocNotNull0(allocator, 512);
-            // Tiny allocation
             AllocNotNull0(allocator, 1);
         }
 
@@ -197,7 +179,7 @@ namespace DotNetty.Buffers.Tests
         public void FreePoolChunk()
         {
             const int ChunkSize = 16 * 1024 * 1024;
-            var allocator = new PooledByteBufferAllocator(true, 1, 0, 8192, 11, 0, 0, 0);
+            var allocator = new PooledByteBufferAllocator(true, 1, 0, 8192, 11, 0, 0);
             IByteBuffer buffer = allocator.HeapBuffer(ChunkSize);
             var arenas = allocator.Metric.HeapArenas();
             Assert.Equal(1, arenas.Count);
@@ -221,6 +203,94 @@ namespace DotNetty.Buffers.Tests
             Assert.False(lists[3].GetEnumerator().MoveNext());
             Assert.False(lists[4].GetEnumerator().MoveNext());
             Assert.False(lists[5].GetEnumerator().MoveNext());
+        }
+
+        [Fact]
+        public void Collapse()
+        {
+            int pageSize = 8192;
+            //no cache
+            IByteBufferAllocator allocator = new PooledByteBufferAllocator(true, 1, 1, 8192, 11, 0, 0);
+
+            var b1 = allocator.Buffer(pageSize * 4);
+            var b2 = allocator.Buffer(pageSize * 5);
+            var b3 = allocator.Buffer(pageSize * 6);
+
+            b2.Release();
+            b3.Release();
+
+            var b4 = allocator.Buffer(pageSize * 10);
+
+            var b = UnwrapIfNeeded(b4);
+
+            //b2 and b3 are collapsed, b4 should start at offset 4
+            Assert.Equal(4, PoolChunk<byte[]>.RunOffset(b.Handle));
+            Assert.Equal(10, PoolChunk<byte[]>.RunPages(b.Handle));
+
+            b1.Release();
+            b4.Release();
+
+            //all ByteBuf are collapsed, b5 should start at offset 0
+            var b5 = allocator.Buffer(pageSize * 20);
+            b = UnwrapIfNeeded(b5);
+
+            Assert.Equal(0, PoolChunk<byte[]>.RunOffset(b.Handle));
+            Assert.Equal(20, PoolChunk<byte[]>.RunPages(b.Handle));
+
+            b5.Release();
+        }
+
+        [Fact]
+        public void AllocateSmallOffset()
+        {
+            int pageSize = 8192;
+            var allocator = new PooledByteBufferAllocator(true, 1, 1, 8192, 11, 0, 0);
+
+            int size = pageSize * 5;
+
+            IByteBuffer[] bufs = new IByteBuffer[10];
+            for (int i = 0; i < 10; i++)
+            {
+                bufs[i] = allocator.Buffer(size);
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                bufs[i].Release();
+            }
+
+            //make sure we always allocate runs with small offset
+            for (int i = 0; i < 5; i++)
+            {
+                IByteBuffer buf = allocator.Buffer(size);
+                var unwrapedBuf = UnwrapIfNeeded(buf);
+                Assert.Equal(PoolChunk<byte[]>.RunOffset(unwrapedBuf.Handle), i * 5);
+                bufs[i] = buf;
+            }
+
+            //release at reverse order
+            for (int i = 10 - 1; i >= 5; i--)
+            {
+                bufs[i].Release();
+            }
+
+            for (int i = 5; i < 10; i++)
+            {
+                IByteBuffer buf = allocator.Buffer(size);
+                var unwrapedBuf = UnwrapIfNeeded(buf);
+                Assert.Equal(PoolChunk<byte[]>.RunOffset(unwrapedBuf.Handle), i * 5);
+                bufs[i] = buf;
+            }
+
+            for (int i = 0; i < 10; i++)
+            {
+                bufs[i].Release();
+            }
+        }
+
+        private static PooledByteBuffer<byte[]> UnwrapIfNeeded(IByteBuffer buf)
+        {
+            return (PooledByteBuffer<byte[]>)(buf is PooledByteBuffer<byte[]> ? buf : buf.Unwrap());
         }
     }
 }
