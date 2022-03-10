@@ -98,7 +98,7 @@
 
     <SystemTextEncodingCodePages3PackageVersion>4.7.1</SystemTextEncodingCodePages3PackageVersion>
     <SystemTextJson3PackageVersion>4.7.2</SystemTextJson3PackageVersion>
-    <SystemTextEncodingsWeb3PackageVersion>4.7.1</SystemTextEncodingsWeb3PackageVersion>
+    <SystemTextEncodingsWeb3PackageVersion>4.7.2</SystemTextEncodingsWeb3PackageVersion>
     <SystemThreadingChannels3PackageVersion>4.7.1</SystemThreadingChannels3PackageVersion>
     <SystemThreadingTasksDataflow3PackageVersion>4.11.1</SystemThreadingTasksDataflow3PackageVersion>
     <SystemThreadingTasksExtensions3PackageVersion>4.5.4</SystemThreadingTasksExtensions3PackageVersion>

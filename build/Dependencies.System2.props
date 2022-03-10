@@ -95,7 +95,7 @@
 
     <SystemTextEncodingCodePages2PackageVersion>4.5.0</SystemTextEncodingCodePages2PackageVersion>
     <SystemTextJson2PackageVersion>4.7.1</SystemTextJson2PackageVersion>
-    <SystemTextEncodingsWeb2PackageVersion>4.6.0</SystemTextEncodingsWeb2PackageVersion>
+    <SystemTextEncodingsWeb2PackageVersion>4.7.2</SystemTextEncodingsWeb2PackageVersion>
     <SystemThreadingChannels2PackageVersion>4.5.0</SystemThreadingChannels2PackageVersion>
     <SystemThreadingTasksDataflow2PackageVersion>4.9.0</SystemThreadingTasksDataflow2PackageVersion>
     <SystemThreadingTasksExtensions2PackageVersion>4.5.3</SystemThreadingTasksExtensions2PackageVersion>
