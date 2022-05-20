@@ -170,7 +170,6 @@ namespace DotNetty.Handlers.Tls
                             composite.Release();
                         }
                         _lastContextWritePromise = promise;
-                        _ = buf.ReadBytes(_sslStream, readableBytes); // this leads to FinishWrap being called 0+ times
                         if (buf.IsReadable())
                         {
                             _ = buf.ReadBytes(_sslStream, readableBytes); // this leads to FinishWrap being called 0+ times
