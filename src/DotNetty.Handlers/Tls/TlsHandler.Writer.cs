@@ -27,6 +27,7 @@ namespace DotNetty.Handlers.Tls
     using System.Runtime.CompilerServices;
     using System.Runtime.ExceptionServices;
     using System.Net.Security;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
@@ -172,7 +173,13 @@ namespace DotNetty.Handlers.Tls
                         _lastContextWritePromise = promise;
                         if (buf.IsReadable())
                         {
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
+                            var data = buf.GetReadableMemory();
+                            _ = LinkOutcome(_sslStream.WriteAsync(data, CancellationToken.None), promise); // this leads to FinishWrap being called 0+ times
+                            buf.AdvanceReader(readableBytes);
+#else
                             _ = buf.ReadBytes(_sslStream, readableBytes); // this leads to FinishWrap being called 0+ times
+#endif
                         }
                         else if (promise != null)
                         {
@@ -266,6 +273,21 @@ namespace DotNetty.Handlers.Tls
             this.ReadIfNeeded(capturedContext);
             return future;
         }
+        
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
+        private static async ValueTask LinkOutcome(ValueTask valueTask, IPromise promise)
+        {
+            try
+            {
+                await valueTask;
+                promise.TryComplete();
+            }
+            catch (Exception ex)
+            {
+                promise.TrySetException(ex);
+            }
+        }
+#endif
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static InvalidOperationException NewPendingWritesNullException()

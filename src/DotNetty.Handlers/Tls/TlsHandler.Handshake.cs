@@ -213,12 +213,12 @@ namespace DotNetty.Handlers.Tls
                 Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
                 self.State = (oldState | TlsHandlerState.FailedAuthentication) & ~TlsHandlerState.Authenticating;
                 var taskExc = task.Exception;
-                var cause = taskExc.Unwrap();
+                var cause = task.IsFaulted ? taskExc.Unwrap() : s_taskCanceledException;
                 try
                 {
                     if (task.IsFaulted ? self._handshakePromise.TrySetException(taskExc) : self._handshakePromise.TrySetCanceled())
                     {
-                        TlsUtils.NotifyHandshakeFailure(capturedContext, task.IsFaulted ? cause : s_taskCanceledException, true);
+                        TlsUtils.NotifyHandshakeFailure(capturedContext, cause, true);
                     }
                 }
                 finally
