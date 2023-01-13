@@ -4,12 +4,13 @@ trigger:
   branches:
     include:
       - main
+      - apimgateway
       - release/*
 
 pr:
   autoCancel: true # indicates whether additional pushes to a PR should cancel in-progress runs for the same PR. Defaults to true
   branches:
-    include: [ main, release/* ] # branch names which will trigger a build
+    include: [ main, apimgateway, release/* ] # branch names which will trigger a build
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
