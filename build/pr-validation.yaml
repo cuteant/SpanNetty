@@ -3,14 +3,13 @@
 trigger:
   branches:
     include:
-      - future
-      - master
+      - main
       - release/*
 
 pr:
   autoCancel: true # indicates whether additional pushes to a PR should cancel in-progress runs for the same PR. Defaults to true
   branches:
-    include: [ future, master, release/* ] # branch names which will trigger a build
+    include: [ main, release/* ] # branch names which will trigger a build
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
