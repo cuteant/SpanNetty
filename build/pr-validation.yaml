@@ -19,7 +19,7 @@ jobs:
   - job: WindowsBuild
     displayName: Windows Build
     pool:
-      vmImage: windows-2019
+      vmImage: windows-2022
       demands: Cmd
     steps:
       - checkout: self  # self represents the repo where the initial Pipelines YAML file was found
@@ -53,7 +53,17 @@ jobs:
   - template: azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_windows'
-      displayName: '.NET Core Unit Tests (Windows)'
+      displayName: '.NET Core Unit Tests (Windows VS2022)'
+      vmImage: 'windows-2022'
+      scriptFileName: build.cmd
+      scriptArgs: RunTests incremental
+      outputDirectory: 'TestResults'
+      artifactName: 'net_core_tests_windows-$(Build.BuildId)'
+
+  - template: azure-pipeline.template.yaml
+    parameters:
+      name: 'net_core_tests_windows'
+      displayName: '.NET Core Unit Tests (Windows VS2019)'
       vmImage: 'windows-2019'
       scriptFileName: build.cmd
       scriptArgs: RunTests incremental
@@ -62,9 +72,9 @@ jobs:
 
   - template: azure-pipeline.template.yaml
     parameters:
-      name: 'net_core_tests_ubuntu_16'
-      displayName: '.NET Core Unit Tests (Ubuntu-16)'
-      vmImage: 'ubuntu-16.04'
+      name: 'net_core_tests_ubuntu_20'
+      displayName: '.NET Core Unit Tests (Ubuntu-20)'
+      vmImage: 'ubuntu-20.04'
       scriptFileName: './build.sh'
       scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
@@ -79,23 +89,3 @@ jobs:
       scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_ubuntu_18-$(Build.BuildId)'
-
-  - template: azure-pipeline.template.yaml
-    parameters:
-      name: 'net_core_tests_mac_1014'
-      displayName: '.NET Core Unit Tests (MacOS-10.14)'
-      vmImage: 'macOS-10.14'
-      scriptFileName: './build.sh'
-      scriptArgs: RunTests incremental
-      outputDirectory: 'TestResults'
-      artifactName: 'net_core_tests_mac_1014-$(Build.BuildId)'
-
-  - template: azure-pipeline.template.yaml
-    parameters:
-      name: 'net_core_tests_mac_1015'
-      displayName: '.NET Core Unit Tests (MacOS-10.15)'
-      vmImage: 'macOS-10.15'
-      scriptFileName: './build.sh'
-      scriptArgs: RunTests incremental
-      outputDirectory: 'TestResults'
-      artifactName: 'net_core_tests_mac_1015-$(Build.BuildId)'
