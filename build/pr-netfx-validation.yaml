@@ -19,7 +19,7 @@ jobs:
   - job: WindowsBuild
     displayName: Windows Build
     pool:
-      vmImage: vs2017-win2016
+      vmImage: windows-2022
       demands: Cmd
     steps:
       - checkout: self  # self represents the repo where the initial Pipelines YAML file was found
@@ -59,13 +59,3 @@ jobs:
       scriptArgs: RunTestsNetFx471 incremental
       outputDirectory: 'TestResults'
       artifactName: 'netfx_tests_windows-$(Build.BuildId)'
-
-  - template: azure-pipeline.template.yaml
-    parameters:
-      name: 'netfx_451_tests_windows'
-      displayName: '.NET Framework 451 Unit Tests (Windows)'
-      vmImage: 'vs2017-win2016'
-      scriptFileName: build.cmd
-      scriptArgs: RunTestsNetFx451 incremental
-      outputDirectory: 'TestResults'
-      artifactName: 'netfx_451_tests_windows-$(Build.BuildId)'
