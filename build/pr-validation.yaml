@@ -52,7 +52,7 @@ jobs:
 
   - template: azure-pipeline.template.yaml
     parameters:
-      name: 'net_core_tests_windows'
+      name: 'net_core_tests_windows_2022'
       displayName: '.NET Core Unit Tests (Windows VS2022)'
       vmImage: 'windows-2022'
       scriptFileName: build.cmd
@@ -62,7 +62,7 @@ jobs:
 
   - template: azure-pipeline.template.yaml
     parameters:
-      name: 'net_core_tests_windows'
+      name: 'net_core_tests_windows_2019'
       displayName: '.NET Core Unit Tests (Windows VS2019)'
       vmImage: 'windows-2019'
       scriptFileName: build.cmd
