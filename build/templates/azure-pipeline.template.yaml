@@ -23,7 +23,7 @@ jobs:
           version: 5.0.302
       - template: restore-nuget-packages.yaml
       - task: Bash@3 
-        displayName: Linux / OSX Build
+        displayName: Build (Linux)
         inputs:
           filePath: ${{ parameters.scriptFileName }}
           arguments: ${{ parameters.scriptArgs }}
@@ -31,7 +31,7 @@ jobs:
         condition: in( variables['Agent.OS'], 'Linux', 'Darwin' )
       # Windows
       - task: BatchScript@1
-        displayName: Windows Build
+        displayName: Build (Windows)
         inputs:
           filename: ${{ parameters.scriptFileName }}
           arguments: ${{ parameters.scriptArgs }}

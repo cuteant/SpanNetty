@@ -15,7 +15,10 @@ pr:
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
-jobs:
+stages:
+- stage: windows
+  displayName: Windows
+  jobs:
   - job: WindowsBuild
     displayName: Windows Build
     pool:

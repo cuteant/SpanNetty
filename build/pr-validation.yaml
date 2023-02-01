@@ -15,9 +15,12 @@ pr:
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
-jobs:
+stages:
+- stage: windows
+  displayName: Windows
+  jobs:
   - job: WindowsBuild
-    displayName: Windows Build
+    displayName: Build (Windows 2022)
     pool:
       vmImage: windows-2022
       demands: Cmd
@@ -73,6 +76,10 @@ jobs:
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_windows-$(Build.BuildId)'
 
+- stage: linux
+  displayName: Linux (Ubuntu)
+  dependsOn: []
+  jobs:
   - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_ubuntu_20'
