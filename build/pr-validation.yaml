@@ -47,7 +47,7 @@ stages:
         inputs:
           command: 'custom'
           custom: 'tool install'
-          arguments: 'Incrementalist.Cmd --version 0.4.0 --tool-path tools/incrementalist'
+          arguments: 'Incrementalist --version 0.4.0 --tool-path tools/incrementalist'
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
