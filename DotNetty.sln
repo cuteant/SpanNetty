@@ -73,7 +73,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Protobuf.Te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure-pipelines", "azure-pipelines", "{A8473C9F-08FF-47DE-8C23-D2BAF5EF4E0A}"
 	ProjectSection(SolutionItems) = preProject
-		build\azure-pipeline.template.yaml = build\azure-pipeline.template.yaml
+		build\templates\azure-pipeline.template.yaml = build\templates\azure-pipeline.template.yaml
 		build\pr-netfx-validation.yaml = build\pr-netfx-validation.yaml
 		build\pr-validation.yaml = build\pr-validation.yaml
 	EndProjectSection

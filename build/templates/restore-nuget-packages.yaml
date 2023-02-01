@@ -1,0 +1,11 @@
+steps:
+  - task: NuGetToolInstaller@1
+    displayName: 'Install NuGet'
+  - task: NuGetCommand@2
+    displayName: 'Restore NuGet Pacakges'
+    inputs:
+      command: 'restore'
+      restoreSolution: DotNetty.sln
+      feedsToUse: config
+      nugetConfigPath: NuGet.Config
+      externalFeedCredentials: 'ApimAzureGenevaMonitoringReadPackages, ApimAzureSecurityMonitoringReadPackages'

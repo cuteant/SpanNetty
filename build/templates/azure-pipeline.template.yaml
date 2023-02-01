@@ -17,10 +17,11 @@ jobs:
       vmImage: ${{ parameters.vmImage }}
     steps:
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 5.0.203'
+        displayName: 'Use .NET Core SDK 5.0.302'
         inputs:
           packageType: sdk
-          version: 5.0.203
+          version: 5.0.302
+      - template: restore-nuget-packages.yaml
       - task: Bash@3 
         displayName: Linux / OSX Build
         inputs:

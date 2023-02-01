@@ -33,14 +33,7 @@ jobs:
         inputs:
           packageType: sdk
           version: 5.0.302
-      - task: NuGetCommand@2
-        displayName: 'nuget restore'
-        inputs:
-          command: 'restore'
-          restoreSolution: DotNetty.sln
-          feedsToUse: config
-          nugetConfigPath: NuGet.Config
-          externalFeedCredentials: 'ApimAzureGenevaMonitoringReadPackages, ApimAzureSecurityMonitoringReadPackages'
+      - template: templates/restore-nuget-packages.yaml
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
@@ -60,7 +53,7 @@ jobs:
         displayName: 'If above is partially succeeded, then fail'
         condition: eq(variables['Agent.JobStatus'], 'SucceededWithIssues')
 
-  - template: azure-pipeline.template.yaml
+  - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_windows_2022'
       displayName: '.NET Core Unit Tests (Windows VS2022)'
@@ -70,7 +63,7 @@ jobs:
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_windows-$(Build.BuildId)'
 
-  - template: azure-pipeline.template.yaml
+  - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_windows_2019'
       displayName: '.NET Core Unit Tests (Windows VS2019)'
@@ -80,7 +73,7 @@ jobs:
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_windows-$(Build.BuildId)'
 
-  - template: azure-pipeline.template.yaml
+  - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_ubuntu_20'
       displayName: '.NET Core Unit Tests (Ubuntu-20)'
@@ -90,7 +83,7 @@ jobs:
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_ubuntu_16-$(Build.BuildId)'
 
-  - template: azure-pipeline.template.yaml
+  - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_ubuntu_18'
       displayName: '.NET Core Unit Tests (Ubuntu-18)'
