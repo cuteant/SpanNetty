@@ -20,7 +20,7 @@ stages:
   displayName: Windows
   jobs:
   - job: WindowsBuild
-    displayName: Build (Windows 2022)
+    displayName: Build (Windows VS2022)
     pool:
       vmImage: windows-2022
       demands: Cmd
@@ -32,7 +32,7 @@ stages:
       - task: NuGetToolInstaller@1
         displayName: 'install nuget'
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 5.0.302'
+        displayName: 'Use SDK 5.0.302'
         inputs:
           packageType: sdk
           version: 5.0.302
@@ -59,7 +59,7 @@ stages:
   - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_windows_2022'
-      displayName: '.NET Core Unit Tests (Windows VS2022)'
+      displayName: 'Unit Tests (Windows VS2022)'
       vmImage: 'windows-2022'
       scriptFileName: build.cmd
       scriptArgs: RunTests incremental
@@ -69,7 +69,7 @@ stages:
   - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_windows_2019'
-      displayName: '.NET Core Unit Tests (Windows VS2019)'
+      displayName: 'Unit Tests (Windows VS2019)'
       vmImage: 'windows-2019'
       scriptFileName: build.cmd
       scriptArgs: RunTests incremental
@@ -83,7 +83,7 @@ stages:
   - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_ubuntu_20'
-      displayName: '.NET Core Unit Tests (Ubuntu-20)'
+      displayName: 'Unit Tests (Ubuntu-20)'
       vmImage: 'ubuntu-20.04'
       scriptFileName: './build.sh'
       scriptArgs: RunTests incremental
@@ -93,7 +93,7 @@ stages:
   - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'net_core_tests_ubuntu_22'
-      displayName: '.NET Core Unit Tests (Ubuntu-22)'
+      displayName: 'Unit Tests (Ubuntu-22)'
       vmImage: 'ubuntu-22.04'
       scriptFileName: './build.sh'
       scriptArgs: RunTests incremental
