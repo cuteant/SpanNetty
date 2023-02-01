@@ -92,10 +92,10 @@ stages:
 
   - template: templates/azure-pipeline.template.yaml
     parameters:
-      name: 'net_core_tests_ubuntu_18'
-      displayName: '.NET Core Unit Tests (Ubuntu-18)'
-      vmImage: 'ubuntu-18.04'
+      name: 'net_core_tests_ubuntu_22'
+      displayName: '.NET Core Unit Tests (Ubuntu-22)'
+      vmImage: 'ubuntu-22.04'
       scriptFileName: './build.sh'
       scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
-      artifactName: 'net_core_tests_ubuntu_18-$(Build.BuildId)'
+      artifactName: 'net_core_tests_ubuntu_22-$(Build.BuildId)'
