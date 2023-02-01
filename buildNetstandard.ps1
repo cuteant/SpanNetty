@@ -49,11 +49,6 @@ if (!(Test-Path $ToolPath)) {
 
 # Make sure nuget.exe exists.
 $NugetPath = Join-Path $ToolPath "nuget.exe"
-if (!(Test-Path $NugetPath)) {
-    Write-Host "Downloading NuGet.exe..."
-    [System.Net.ServicePointManager]::SecurityProtocol=[System.Net.SecurityProtocolType]::Tls12
-    (New-Object System.Net.WebClient).DownloadFile($NugetUrl, $NugetPath);
-}
 
 ###########################################################################
 # INSTALL FAKE
