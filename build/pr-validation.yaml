@@ -37,6 +37,10 @@ stages:
           packageType: sdk
           version: 5.0.302
       - template: templates/restore-nuget-packages.yaml
+      - task: NuGetCommand@2
+        inputs:
+          command: 'custom'
+          arguments: 'install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Feed https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
