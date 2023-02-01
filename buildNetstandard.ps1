@@ -44,13 +44,6 @@ if (!(Test-Path $ToolPath)) {
 }
 
 ###########################################################################
-# INSTALL NUGET
-###########################################################################
-
-# Make sure nuget.exe exists.
-$NugetPath = Join-Path $ToolPath "nuget.exe"
-
-###########################################################################
 # INSTALL FAKE
 ###########################################################################
 # Make sure Fake has been installed.
@@ -58,7 +51,7 @@ $NugetPath = Join-Path $ToolPath "nuget.exe"
 $FakeExePath = Join-Path $ToolPath "FAKE/tools/FAKE.exe"
 if (!(Test-Path $FakeExePath)) {
     Write-Host "Installing Fake..."
-    Invoke-Expression "&`"$NugetPath`" install Fake -ExcludeVersion -Version $FakeVersion -OutputDirectory `"$ToolPath`"" | Out-Null;
+    Invoke-Expression "nuget.exe install Fake -ExcludeVersion -Version $FakeVersion -OutputDirectory `"$ToolPath`"" | Out-Null;
     if ($LASTEXITCODE -ne 0) {
         Throw "An error occured while restoring Fake from NuGet."
     }
