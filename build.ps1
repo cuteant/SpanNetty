@@ -30,8 +30,6 @@ Param(
 )
 
 $FakeVersion = "4.63.0"
-$NugetVersion = "5.8.0";
-$NugetUrl = "https://dist.nuget.org/win-x86-commandline/v$NugetVersion/nuget.exe"
 
 $IncrementalistVersion = "0.4.0";
 
@@ -41,18 +39,6 @@ $ToolPath = Join-Path $PSScriptRoot "tools"
 if (!(Test-Path $ToolPath)) {
     Write-Verbose "Creating tools directory..."
     New-Item -Path $ToolPath -Type directory | out-null
-}
-
-###########################################################################
-# INSTALL NUGET
-###########################################################################
-
-# Make sure nuget.exe exists.
-$NugetPath = Join-Path $ToolPath "nuget.exe"
-if (!(Test-Path $NugetPath)) {
-    Write-Host "Downloading NuGet.exe..."
-    [System.Net.ServicePointManager]::SecurityProtocol=[System.Net.SecurityProtocolType]::Tls12
-    (New-Object System.Net.WebClient).DownloadFile($NugetUrl, $NugetPath);
 }
 
 ###########################################################################

@@ -26,11 +26,21 @@ jobs:
         clean: false  # whether to fetch clean each time
         submodules: recursive  # set to 'true' for a single level of submodules or 'recursive' to get submodules of submodules
         persistCredentials: true
+      - task: NuGetToolInstaller@1
+        displayName: 'install nuget'
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 5.0.203'
+        displayName: 'Use .NET Core SDK 5.0.302'
         inputs:
           packageType: sdk
-          version: 5.0.203
+          version: 5.0.302
+      - task: NuGetCommand@2
+        displayName: 'nuget restore'
+        inputs:
+          command: 'restore'
+          restoreSolution: DotNetty.sln
+          feedsToUse: config
+          nugetConfigPath: NuGet.Config
+          externalFeedCredentials: 'ApimAzureGenevaMonitoringReadPackages, ApimAzureSecurityMonitoringReadPackages'
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
