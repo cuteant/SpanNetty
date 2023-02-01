@@ -51,7 +51,7 @@ stages:
       - task: CmdLine@2
         displayName: Install Incrementalist
         inputs:
-          script: 'dotnet tool install -g install Incrementalist.Cmd --version 0.4.0 --tool-path tools/incrementalist --add-source=https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
+          script: 'dotnet tool install -g Incrementalist.Cmd --version 0.4.0 --tool-path tools/incrementalist --add-source=https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
