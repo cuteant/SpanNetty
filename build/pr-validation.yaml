@@ -15,6 +15,10 @@ pr:
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
+variables:
+  NUGET_XMLDOC_MODE: none
+  NUGET_CREDENTIALPROVIDER_SESSIONTOKENCACHE_ENABLED: 'true'
+
 stages:
 - stage: windows
   displayName: Windows
