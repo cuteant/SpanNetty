@@ -31,6 +31,10 @@ stages:
         persistCredentials: true
       - task: NuGetToolInstaller@1
         displayName: 'install nuget'
+      - task: NuGetAuthenticate@1
+        displayName: 'nuget authenticate'
+        inputs:
+          nuGetServiceConnections: 'ApimAzureGenevaMonitoringReadPackages, ApimAzureSecurityMonitoringReadPackages'
       - task: UseDotNet@2
         displayName: 'Use SDK 5.0.302'
         inputs:
@@ -46,7 +50,8 @@ stages:
         displayName: Install Incrementalist
         inputs:
           # https://mattdufeu.co.uk/blog/install-dotnet-global-tool-with-private-nuget-feed/
-          script: 'dotnet tool install Incrementalist.Cmd --version 0.4.0 --tool-path tools/incrementalist --add-source https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json  --ignore-failed-sources'
+          # script: 'dotnet tool install Incrementalist.Cmd --version 0.4.0 --tool-path tools/incrementalist --add-source https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json  --ignore-failed-sources'
+          script: 'dotnet tool install Incrementalist.Cmd --version 0.4.0 --tool-path tools/incrementalist --add-source https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
