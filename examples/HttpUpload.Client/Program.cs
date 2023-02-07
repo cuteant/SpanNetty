@@ -3,6 +3,19 @@
 
 namespace HttpUpload.Client
 {
+    using DotNetty.Codecs;
+    using DotNetty.Codecs.Http;
+    using DotNetty.Codecs.Http.Cookies;
+    using DotNetty.Codecs.Http.Multipart;
+    using DotNetty.Codecs.Http.Utilities;
+    using DotNetty.Common.Utilities;
+    using DotNetty.Handlers.Streams;
+    using DotNetty.Handlers.Tls;
+    using DotNetty.Transport.Bootstrapping;
+    using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Sockets;
+    using DotNetty.Transport.Libuv;
+    using Examples.Common;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -10,22 +23,6 @@ namespace HttpUpload.Client
     using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
-    using DotNetty.Buffers;
-    using DotNetty.Common.Utilities;
-    using DotNetty.Codecs;
-    using DotNetty.Codecs.Http;
-    using DotNetty.Codecs.Http.Multipart;
-    using DotNetty.Codecs.Http.Cookies;
-    using DotNetty.Codecs.Http.Utilities;
-    using DotNetty.Handlers.Logging;
-    using DotNetty.Handlers.Streams;
-    using DotNetty.Handlers.Timeout;
-    using DotNetty.Handlers.Tls;
-    using DotNetty.Transport.Bootstrapping;
-    using DotNetty.Transport.Channels;
-    using DotNetty.Transport.Channels.Sockets;
-    using Examples.Common;
-    using DotNetty.Transport.Libuv;
 
     partial class Program
     {
@@ -58,7 +55,7 @@ namespace HttpUpload.Client
             var uriFile = new Uri(postFile);
 
             bool useLibuv = ClientSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type : {(useLibuv ? "Libuv" : "Socket")}");
 
             IEventLoopGroup group;
             if (useLibuv)
@@ -77,12 +74,14 @@ namespace HttpUpload.Client
                 cert = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();
                 bootstrap
                     .Group(group)
                     .Option(ChannelOption.TcpNodelay, true);
+
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpChannel>();
@@ -144,7 +143,7 @@ namespace HttpUpload.Client
                     await FormpostmultipartAsync(bootstrap, uriFile, factory, headers, bodylist);
                 }
 
-                Console.WriteLine("按任意键退出");
+                Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
             }
             finally

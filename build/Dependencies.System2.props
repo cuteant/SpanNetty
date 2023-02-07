@@ -2,6 +2,7 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- Core packages -->
+    <MicrosoftBclAsyncInterfaces2PackageVersion>1.0.0</MicrosoftBclAsyncInterfaces2PackageVersion>
     <MicrosoftCSharp2PackageVersion>4.5.0</MicrosoftCSharp2PackageVersion>
     <MicrosoftDataSqlClient2PackageVersion>1.0.19239.1</MicrosoftDataSqlClient2PackageVersion>
     <FSharpCore2PackageVersion>4.7.0</FSharpCore2PackageVersion>
@@ -64,6 +65,9 @@
     <SystemIOPipelines2PackageVersion>4.5.3</SystemIOPipelines2PackageVersion>
     <SystemMemory2PackageVersion>4.5.3</SystemMemory2PackageVersion>
     <SystemNetHttp2PackageVersion>4.3.4</SystemNetHttp2PackageVersion>
+    <SystemNetHttpJson2PackageVersion>3.2.0</SystemNetHttpJson2PackageVersion>
+    <SystemNetHttpWinHttpHandler2PackageVersion>4.5.4</SystemNetHttpWinHttpHandler2PackageVersion>
+    <SystemNetWebSocketsWebSocketProtocol2PackageVersion>4.5.3</SystemNetWebSocketsWebSocketProtocol2PackageVersion>
     <SystemNumericsVectors2PackageVersion>4.5.0</SystemNumericsVectors2PackageVersion>
 
     <SystemReflectionDispatchProxy2PackageVersion>4.5.1</SystemReflectionDispatchProxy2PackageVersion>

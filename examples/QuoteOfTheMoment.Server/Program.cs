@@ -3,13 +3,13 @@
 
 namespace QuoteOfTheMoment.Server
 {
-    using System;
-    using System.Threading.Tasks;
     using DotNetty.Handlers.Logging;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
+    using System;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// A UDP server that responds to the QOTM (quote of the moment) request to a {@link QuoteOfTheMomentClient}.

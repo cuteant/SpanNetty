@@ -3,14 +3,13 @@
 
 namespace HttpServer
 {
-    using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
+    using DotNetty.Common;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using System;
-    using System.Threading.Tasks;
-    using DotNetty.Common;
+    using System.Text;
 
     sealed class HelloServerHandler : ChannelHandlerAdapter
     {
@@ -46,13 +45,13 @@ namespace HttpServer
 
         static MessageBody NewMessage() => new MessageBody("Hello, World!");
 
-        public override void ChannelRead(IChannelHandlerContext ctx, object message)
+        public override void ChannelRead(IChannelHandlerContext context, object message)
         {
             if (message is IHttpRequest request)
             {
                 try
                 {
-                    this.Process(ctx, request);
+                    this.Process(context, request);
                 }
                 finally
                 {
@@ -61,33 +60,33 @@ namespace HttpServer
             }
             else
             {
-                ctx.FireChannelRead(message);
+                context.FireChannelRead(message);
             }
         }
 
-        void Process(IChannelHandlerContext ctx, IHttpRequest request)
+        void Process(IChannelHandlerContext context, IHttpRequest request)
         {
             string uri = request.Uri;
             switch (uri)
             {
                 case "/plaintext":
-                    this.WriteResponse(ctx, PlaintextContentBuffer.Duplicate(), TypePlain, PlaintextClheaderValue, HttpUtil.IsKeepAlive(request));
+                    this.WriteResponse(context, PlaintextContentBuffer.Duplicate(), TypePlain, PlaintextClheaderValue, HttpUtil.IsKeepAlive(request));
                     break;
                 case "/json":
                     byte[] json = Encoding.UTF8.GetBytes(NewMessage().ToJsonFormat());
-                    this.WriteResponse(ctx, Unpooled.WrappedBuffer(json), TypeJson, JsonClheaderValue, HttpUtil.IsKeepAlive(request));
+                    this.WriteResponse(context, Unpooled.WrappedBuffer(json), TypeJson, JsonClheaderValue, HttpUtil.IsKeepAlive(request));
                     break;
                 default:
                     var response = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.NotFound, Unpooled.Empty, false);
-                    ctx.WriteAsync(response).CloseOnComplete(ctx.Channel);
+                    context.WriteAsync(response).CloseOnComplete(context.Channel);
                     break;
             }
         }
 
-        void WriteResponse(IChannelHandlerContext ctx, IByteBuffer buf, ICharSequence contentType, ICharSequence contentLength, bool keepAlive)
+        void WriteResponse(IChannelHandlerContext context, IByteBuffer buffer, ICharSequence contentType, ICharSequence contentLength, bool keepAlive)
         {
             // Build the response object.
-            var response = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, buf, false);
+            var response = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, buffer, false);
             HttpHeaders headers = response.Headers;
             headers.Set(ContentTypeEntity, contentType);
             //headers.Set(ServerEntity, ServerName);
@@ -97,11 +96,11 @@ namespace HttpServer
             if (keepAlive)
             {
                 response.Headers.Set(HttpHeaderNames.Connection, KeepAlive);
-                ctx.WriteAsync(response);
+                context.WriteAsync(response);
             }
             else
             {
-                ctx.WriteAsync(response).CloseOnComplete(ctx.Channel);
+                context.WriteAsync(response).CloseOnComplete(context.Channel);
             }
         }
 

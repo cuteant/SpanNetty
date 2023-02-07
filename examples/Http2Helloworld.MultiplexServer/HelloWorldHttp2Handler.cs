@@ -1,12 +1,12 @@
 ﻿namespace Http2Helloworld.MultiplexServer
 {
-    using System;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
+    using System;
 
     /**
      * A simple handler that responds with the message "Hello World!".
@@ -20,26 +20,26 @@
 
         public override bool IsSharable => true;
 
-        public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            base.ExceptionCaught(ctx, cause);
-            s_logger.LogError(cause.ToString());
-            ctx.CloseAsync();
+            base.ExceptionCaught(context, exception);
+            s_logger.LogError($"{exception}");
+            context.CloseAsync();
         }
 
-        public override void ChannelRead(IChannelHandlerContext ctx, object msg)
+        public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            if (msg is IHttp2HeadersFrame headersFrame)
+            if (message is IHttp2HeadersFrame headersFrame)
             {
-                OnHeadersRead(ctx, headersFrame);
+                OnHeadersRead(context, headersFrame);
             }
-            else if (msg is IHttp2DataFrame dataFrame)
+            else if (message is IHttp2DataFrame dataFrame)
             {
-                OnDataRead(ctx, dataFrame);
+                OnDataRead(context, dataFrame);
             }
             else
             {
-                base.ChannelRead(ctx, msg);
+                base.ChannelRead(context, message);
             }
         }
 
@@ -51,11 +51,11 @@
         /**
          * If receive a frame with end-of-stream set, send a pre-canned response.
          */
-        private static void OnDataRead(IChannelHandlerContext ctx, IHttp2DataFrame data)
+        private static void OnDataRead(IChannelHandlerContext context, IHttp2DataFrame data)
         {
             if (data.IsEndStream)
             {
-                SendResponse(ctx, data.Content);
+                SendResponse(context, data.Content);
             }
             else
             {
@@ -67,26 +67,26 @@
         /**
          * If receive a frame with end-of-stream set, send a pre-canned response.
          */
-        private static void OnHeadersRead(IChannelHandlerContext ctx, IHttp2HeadersFrame headers)
+        private static void OnHeadersRead(IChannelHandlerContext context, IHttp2HeadersFrame headers)
         {
             if (headers.IsEndStream)
             {
-                var content = ctx.Allocator.Buffer();
-                content.WriteBytes(Http2Helloworld.Server.HelloWorldHttp1Handler.RESPONSE_BYTES.Duplicate());
+                var content = context.Allocator.Buffer();
+                content.WriteBytes(Server.HelloWorldHttp1Handler.RESPONSE_BYTES.Duplicate());
                 ByteBufferUtil.WriteAscii(content, " - via HTTP/2");
-                SendResponse(ctx, content);
+                SendResponse(context, content);
             }
         }
 
         /**
          * Sends a "Hello World" DATA frame to the client.
          */
-        private static void SendResponse(IChannelHandlerContext ctx, IByteBuffer payload)
+        private static void SendResponse(IChannelHandlerContext context, IByteBuffer payload)
         {
             // Send a frame for the response status
             IHttp2Headers headers = new DefaultHttp2Headers() { Status = HttpResponseStatus.OK.CodeAsText };
-            ctx.WriteAsync(new DefaultHttp2HeadersFrame(headers));
-            ctx.WriteAsync(new DefaultHttp2DataFrame(payload, true));
+            context.WriteAsync(new DefaultHttp2HeadersFrame(headers));
+            context.WriteAsync(new DefaultHttp2DataFrame(payload, true));
         }
     }
 }

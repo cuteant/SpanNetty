@@ -3,24 +3,24 @@
 
 namespace Factorial.Server
 {
+    using DotNetty.Transport.Channels;
     using System;
     using System.Numerics;
-    using DotNetty.Transport.Channels;
 
     public class FactorialServerHandler : SimpleChannelInboundHandler<BigInteger>
     {
         BigInteger _lastMultiplier = new BigInteger(1);
         BigInteger _factorial = new BigInteger(1);
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, BigInteger msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, BigInteger message)
         {
-            _lastMultiplier = msg;
-            _factorial *= msg;
-            ctx.WriteAndFlushAsync(_factorial);
+            _lastMultiplier = message;
+            _factorial *= message;
+            context.WriteAndFlushAsync(_factorial);
         }
 
-        public override void ChannelInactive(IChannelHandlerContext ctx) => Console.WriteLine("Factorial of {0} is: {1}", _lastMultiplier, _factorial);
+        public override void ChannelInactive(IChannelHandlerContext context) => Console.WriteLine($"Factorial of {_lastMultiplier} is: {_factorial}");
 
-        public override void ExceptionCaught(IChannelHandlerContext ctx, Exception e) => ctx.CloseAsync();
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception) => context.CloseAsync();
     }
 }

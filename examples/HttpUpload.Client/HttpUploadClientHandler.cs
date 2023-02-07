@@ -1,12 +1,12 @@
 ﻿namespace HttpUpload.Client
 {
-    using System;
-    using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
+    using System;
+    using System.Text;
 
     /// <summary>
     /// Handler that just dumps the contents of the response from the server
@@ -17,12 +17,12 @@
 
         bool _readingChunks;
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, IHttpObject msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, IHttpObject msg)
         {
             if (msg is IHttpResponse response)
             {
-                s_logger.LogInformation("STATUS: " + response.Status);
-                s_logger.LogInformation("VERSION: " + response.ProtocolVersion);
+                s_logger.LogInformation($"STATUS: {response.Status}");
+                s_logger.LogInformation($"VERSION: {response.ProtocolVersion}");
 
                 if (!response.Headers.IsEmpty)
                 {
@@ -75,3 +75,4 @@
         }
     }
 }
+

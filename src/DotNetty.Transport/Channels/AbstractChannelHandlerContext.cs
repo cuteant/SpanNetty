@@ -116,7 +116,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        [Obsolete("=>IsRemoved")]
+        [Obsolete("Please use IsRemoved instead.")]
         public bool Removed => IsRemoved;
 
         public bool IsRemoved => 0u >= (uint)(Volatile.Read(ref v_handlerState) - HandlerState.RemoveComplete);

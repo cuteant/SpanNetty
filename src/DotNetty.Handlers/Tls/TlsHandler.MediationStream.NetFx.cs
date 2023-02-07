@@ -28,6 +28,7 @@ namespace DotNetty.Handlers.Tls
     using System.Runtime.ExceptionServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
@@ -43,7 +44,7 @@ namespace DotNetty.Handlers.Tls
             private IPromise _writeCompletion;
             private AsyncCallback _writeCallback;
 
-            public void SetSource(byte[] source, int offset)
+            public void SetSource(byte[] source, int offset, IByteBufferAllocator allocator)
             {
                 _input = source;
                 _inputStartOffset = offset;
@@ -51,7 +52,7 @@ namespace DotNetty.Handlers.Tls
                 _inputLength = 0;
             }
 
-            public void ResetSource()
+            public void ResetSource(IByteBufferAllocator allocator)
             {
                 _input = null;
                 _inputLength = 0;
@@ -144,7 +145,7 @@ namespace DotNetty.Handlers.Tls
                 return length;
             }
 
-            public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count, _owner.CapturedContext.NewPromise());
+            public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count, _owner._lastContextWritePromise);
 
             public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
                 => _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());
@@ -225,6 +226,26 @@ namespace DotNetty.Handlers.Tls
                     throw;
                 }
             }
+
+            #region sync result
+
+            private sealed class SynchronousAsyncResult<T> : IAsyncResult
+            {
+                public T Result { get; set; }
+
+                public bool IsCompleted => true;
+
+                public WaitHandle AsyncWaitHandle
+                {
+                    get { throw new InvalidOperationException("Cannot wait on a synchronous result."); }
+                }
+
+                public object AsyncState { get; set; }
+
+                public bool CompletedSynchronously => true;
+            }
+
+            #endregion
         }
     }
 }

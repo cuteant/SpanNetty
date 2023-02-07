@@ -61,6 +61,9 @@ namespace DotNetty.Transport.Channels
 
             public IChannelHandler Handler => _ctx.Handler;
 
+            [Obsolete("Please use IsRemoved instead.")]
+            public bool Removed => IsRemoved;
+
             public bool IsRemoved => _removed || _ctx.IsRemoved;
 
             public IChannelHandlerContext FireChannelRegistered()

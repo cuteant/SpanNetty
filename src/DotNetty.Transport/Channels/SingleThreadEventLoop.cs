@@ -143,22 +143,25 @@ namespace DotNetty.Transport.Channels
 
             Debug.Assert(InEventLoop);
 
-            if (_taskQueue.TryDequeue(out IRunnable task)) { return task; }
+            var taskQueue = _taskQueue;
+            var task = PollTaskFrom(taskQueue);
+            if (task is object) { return task; }
 #if DEBUG
             if (_tailTasks.IsEmpty) { _emptyEvent.Reset(); }
 #else
             _emptyEvent.Reset();
 #endif
-            if (_taskQueue.TryDequeue(out task) || IsShuttingDown) // revisit queue as producer might have put a task in meanwhile
+            task = PollTaskFrom(taskQueue);
+            if (task is object || IsShuttingDown) // revisit queue as producer might have put a task in meanwhile
             {
                 return task;
             }
 
             // revisit queue as producer might have put a task in meanwhile
-            if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
+            if (TryPeekScheduledTask(out IScheduledRunnable nextScheduledTask))
             {
                 var delayNanos = nextScheduledTask.DelayNanos;
-                if ((ulong)delayNanos > 0UL) // delayNanos >= 0
+                if ((ulong)delayNanos > 0UL) // delayNanos 为非负值
                 {
                     var timeout = PreciseTime.ToMilliseconds(delayNanos);
                     _emptyEvent.Wait((int)Math.Min(timeout, MaxDelayMilliseconds));
@@ -167,7 +170,7 @@ namespace DotNetty.Transport.Channels
             else
             {
                 if (!IsShuttingDown) { _emptyEvent.Wait(); }
-                _ = _taskQueue.TryDequeue(out task);
+                task = PollTaskFrom(taskQueue);
             }
             return task;
         }

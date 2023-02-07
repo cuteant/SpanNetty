@@ -35,7 +35,7 @@ let versionFromReleaseNotes =
 
 let versionSuffix = 
     match (getBuildParam "nugetprerelease") with
-    | "future" -> preReleaseVersionSuffix
+    | "main" -> preReleaseVersionSuffix
     | "" -> versionFromReleaseNotes
     | str -> str
     
@@ -93,8 +93,8 @@ let getAffectedProjects =
 Target "ComputeIncrementalChanges" (fun _ ->
     if runIncrementally then
         let targetBranch = match getBuildParam "targetBranch" with
-                            | "" -> "future"
-                            | null -> "future"
+                            | "" -> "main"
+                            | null -> "main"
                             | b -> b
         let incrementalistPath =
                 let incrementalistDir = toolsDir @@ "incrementalist"
@@ -220,18 +220,14 @@ Target "RunTests" (fun _ ->
         let projects = 
             let rawProjects = match (isWindows) with 
                                 | true -> !! "./test/*.Tests.Netstandard/*.Tests.csproj"
-                                          -- "./test/*.Tests.Netstandard/DotNetty.Transport.Tests.csproj"
-                                          -- "./test/*.Tests.Netstandard/DotNetty.Suite.Tests.csproj"
                                 | _ -> !! "./test/*.Tests.Netstandard/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
-                                       -- "./test/*.Tests.Netstandard/DotNetty.Transport.Tests.csproj"
-                                       -- "./test/*.Tests.Netstandard/DotNetty.Suite.Tests.csproj"
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
             let arguments =
                 match (hasTeamCity) with
-                | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetCoreVersion outputTests)
-                | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetCoreVersion outputTests)
+                | true -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none -teamcity" testNetVersion outputTests)
+                | false -> (sprintf "test -c Debug --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s -- RunConfiguration.TargetPlatform=x64 --results-directory \"%s\" -- -parallel none" testNetVersion outputTests)
 
             let result = ExecProcess(fun info ->
                 info.FileName <- "dotnet"

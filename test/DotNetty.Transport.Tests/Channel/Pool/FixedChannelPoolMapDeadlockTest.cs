@@ -77,11 +77,11 @@
             try
             {
                 var result = await TaskUtil.WaitAsync(futureA1, TimeSpan.FromSeconds(1));
-                if (!result || !futureA1.IsSuccess()) { throw new TimeoutException(); }
+                if (!result || futureA1.IsFailure()) { throw new TimeoutException(); }
                 Assert.Same(poolA1, futureA1.Result);
 
                 result = await TaskUtil.WaitAsync(futureB1, TimeSpan.FromSeconds(1));
-                if (!result || !futureB1.IsSuccess()) { throw new TimeoutException(); }
+                if (!result || futureB1.IsFailure()) { throw new TimeoutException(); }
                 Assert.Same(poolB1, futureB1.Result);
             }
             catch (Exception)
@@ -101,11 +101,11 @@
             try
             {
                 var result = await TaskUtil.WaitAsync(futureA2, TimeSpan.FromSeconds(1));
-                if (!result || !futureA2.IsSuccess()) { throw new TimeoutException(); }
+                if (!result || futureA2.IsFailure()) { throw new TimeoutException(); }
                 Assert.Same(poolA1, futureA2.Result);
 
                 result = await TaskUtil.WaitAsync(futureB2, TimeSpan.FromSeconds(1));
-                if (!result || !futureB2.IsSuccess()) { throw new TimeoutException(); }
+                if (!result || futureB2.IsFailure()) { throw new TimeoutException(); }
                 Assert.Same(poolB1, futureB2.Result);
             }
             catch (TimeoutException)
@@ -246,9 +246,9 @@
             try
             {
                 var result = await TaskUtil.WaitAsync(future1, TimeSpan.FromSeconds(1));
-                if (!result || !future1.IsSuccess()) { throw new TimeoutException(); }
+                if (!result || future1.IsFailure()) { throw new TimeoutException(); }
                 result = await TaskUtil.WaitAsync(future2, TimeSpan.FromSeconds(1));
-                if (!result || !future2.IsSuccess()) { throw new TimeoutException(); }
+                if (!result || future2.IsFailure()) { throw new TimeoutException(); }
             }
             catch (TimeoutException)
             {

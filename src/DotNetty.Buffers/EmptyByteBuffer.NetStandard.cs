@@ -33,26 +33,57 @@ namespace DotNetty.Buffers
         public void AdvanceReader(int count) { }
 
         public ReadOnlyMemory<byte> UnreadMemory => ReadOnlyMemory<byte>.Empty;
-        public ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => ReadOnlyMemory<byte>.Empty;
+        public ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
+        {
+            _ = CheckIndex(index, count);
+            return ReadOnlyMemory<byte>.Empty;
+        }
 
         public ReadOnlySpan<byte> UnreadSpan => ReadOnlySpan<byte>.Empty;
-        public ReadOnlySpan<byte> GetReadableSpan(int index, int count) => ReadOnlySpan<byte>.Empty;
+        public ReadOnlySpan<byte> GetReadableSpan(int index, int count)
+        {
+            _ = CheckIndex(index, count);
+            return ReadOnlySpan<byte>.Empty;
+        }
 
         public ReadOnlySequence<byte> UnreadSequence => ReadOnlySequence<byte>.Empty;
-        public ReadOnlySequence<byte> GetSequence(int index, int count) => ReadOnlySequence<byte>.Empty;
+        public ReadOnlySequence<byte> GetSequence(int index, int count)
+        {
+            _ = CheckIndex(index, count);
+            return ReadOnlySequence<byte>.Empty;
+        }
 
         public Memory<byte> FreeMemory => Memory<byte>.Empty;
         public Memory<byte> GetMemory(int sizeHintt = 0) => Memory<byte>.Empty;
-        public Memory<byte> GetMemory(int index, int count) => Memory<byte>.Empty;
+        public Memory<byte> GetMemory(int index, int count)
+        {
+            _ = CheckIndex(index, count);
+            return Memory<byte>.Empty;
+        }
 
-        public void Advance(int count) { }
+        public void Advance(int count)
+        {
+            _ = CheckLength(count);
+        }
 
         public Span<byte> FreeSpan => Span<byte>.Empty;
         public Span<byte> GetSpan(int sizeHintt = 0) => Span<byte>.Empty;
-        public Span<byte> GetSpan(int index, int count) => Span<byte>.Empty;
+        public Span<byte> GetSpan(int index, int count)
+        {
+            _ = CheckIndex(index, count);
+            return Span<byte>.Empty;
+        }
 
-        public int GetBytes(int index, Span<byte> destination) => 0;
-        public int GetBytes(int index, Memory<byte> destination) => 0;
+        public int GetBytes(int index, Span<byte> destination)
+        {
+            _ = CheckIndex(index);
+            return 0;
+        }
+        public int GetBytes(int index, Memory<byte> destination)
+        {
+            _ = CheckIndex(index);
+            return 0;
+        }
 
         public int ReadBytes(Span<byte> destination) => 0;
         public int ReadBytes(Memory<byte> destination) => 0;

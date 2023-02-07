@@ -50,6 +50,8 @@
     <MicrosoftAspNetCoreDiagnosticsElm2PackageVersion>0.2.2</MicrosoftAspNetCoreDiagnosticsElm2PackageVersion>
     <MicrosoftAspNetCoreDiagnosticsHealthChecks2PackageVersion>2.2.0</MicrosoftAspNetCoreDiagnosticsHealthChecks2PackageVersion>
 
+    <MicrosoftAspNetCoreJsonPatch2PackageVersion>2.2.0</MicrosoftAspNetCoreJsonPatch2PackageVersion>
+
     <MicrosoftAspNetCoreHostFiltering2PackageVersion>2.2.0</MicrosoftAspNetCoreHostFiltering2PackageVersion>
     <MicrosoftAspNetCoreHosting2PackageVersion>2.2.7</MicrosoftAspNetCoreHosting2PackageVersion>
     <MicrosoftAspNetCoreHostingAbstractions2PackageVersion>2.2.0</MicrosoftAspNetCoreHostingAbstractions2PackageVersion>
@@ -145,27 +147,6 @@
 
     <MicrosoftAspNetCoreTestHost2PackageVersion>2.2.0</MicrosoftAspNetCoreTestHost2PackageVersion>
     <MicrosoftCodeAnalysisRazor2PackageVersion>2.2.0</MicrosoftCodeAnalysisRazor2PackageVersion>
-
-    <MicrosoftDataSqliteCore2PackageVersion>2.2.6</MicrosoftDataSqliteCore2PackageVersion>
-    <MicrosoftDataSqlite2PackageVersion>2.2.6</MicrosoftDataSqlite2PackageVersion>
-
-    <MicrosoftEntityFrameworkCore2PackageVersion>2.2.6</MicrosoftEntityFrameworkCore2PackageVersion>
-    <MicrosoftEntityFrameworkCoreAbstractions2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreAbstractions2PackageVersion>
-    <MicrosoftEntityFrameworkCoreAnalyzers2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreAnalyzers2PackageVersion>
-    <MicrosoftEntityFrameworkCoreDesign2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreDesign2PackageVersion>
-    <MicrosoftEntityFrameworkCoreInMemory2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreInMemory2PackageVersion>
-    <MicrosoftEntityFrameworkCoreRelational2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreRelational2PackageVersion>
-    <MicrosoftEntityFrameworkCoreSqlite2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreSqlite2PackageVersion>
-    <MicrosoftEntityFrameworkCoreSqliteCore2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreSqliteCore2PackageVersion>
-    <MicrosoftEntityFrameworkCoreSqlServer2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreSqlServer2PackageVersion>
-    <MicrosoftEntityFrameworkCoreTools2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreTools2PackageVersion>
-
-    <MicrosoftExtensionsIdentityCore2PackageVersion>2.2.0</MicrosoftExtensionsIdentityCore2PackageVersion>
-    <MicrosoftExtensionsIdentityStores2PackageVersion>2.2.0</MicrosoftExtensionsIdentityStores2PackageVersion>
-    <MicrosoftExtensionsSecretManagerTools2PackageVersion>2.0.2</MicrosoftExtensionsSecretManagerTools2PackageVersion>
-    <MicrosoftExtensionsWebEncoders2PackageVersion>2.2.0</MicrosoftExtensionsWebEncoders2PackageVersion>
-
-    <MicrosoftNetHttpHeaders2PackageVersion>2.2.0</MicrosoftNetHttpHeaders2PackageVersion>
 
     <MicrosoftAspNetCoreMvcWebApiCompatShim2PackageVersion>2.2.0</MicrosoftAspNetCoreMvcWebApiCompatShim2PackageVersion>
     <MicrosoftAspNetCoreOwin2PackageVersion>2.2.0</MicrosoftAspNetCoreOwin2PackageVersion>

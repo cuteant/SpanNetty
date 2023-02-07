@@ -23,7 +23,7 @@ variables:
 stages:
 - stage: windows
   displayName: Windows
-  jobs:
+jobs:
   - job: WindowsBuild
     displayName: Build (Windows VS2022)
     pool:

@@ -32,12 +32,15 @@ namespace DotNetty.Handlers.Tls
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
+    using DotNetty.Common.Utilities;
 
     partial class TlsHandler
     {
         private sealed partial class MediationStream : Stream
         {
             private readonly TlsHandler _owner;
+            private CompositeByteBuffer _ownedInputBuffer;
             private int _inputOffset;
             private int _inputLength;
             private TaskCompletionSource<int> _readCompletionSource;
@@ -45,6 +48,19 @@ namespace DotNetty.Handlers.Tls
             public MediationStream(TlsHandler owner)
             {
                 _owner = owner;
+            }
+
+            public int TotalReadableBytes
+            {
+                get
+                {
+                    var readableBytes = SourceReadableBytes;
+                    if (_ownedInputBuffer is object)
+                    {
+                        readableBytes += _ownedInputBuffer.ReadableBytes;
+                    }
+                    return readableBytes;
+                }
             }
 
             public int SourceReadableBytes => _inputLength - _inputOffset;
@@ -65,6 +81,8 @@ namespace DotNetty.Handlers.Tls
                         _readCompletionSource = null;
                         _ = p.TrySetResult(0);
                     }
+                    _ownedInputBuffer.SafeRelease();
+                    _ownedInputBuffer = null;
                 }
             }
 
@@ -82,7 +100,7 @@ namespace DotNetty.Handlers.Tls
 
             public override int Read(byte[] buffer, int offset, int count)
             {
-                throw new NotSupportedException();
+                return ReadAsync(buffer, offset, count).GetAwaiter().GetResult();
             }
 
             public override bool CanRead => true;
@@ -100,26 +118,6 @@ namespace DotNetty.Handlers.Tls
             {
                 get { throw new NotSupportedException(); }
                 set { throw new NotSupportedException(); }
-            }
-
-            #endregion
-
-            #region sync result
-
-            private sealed class SynchronousAsyncResult<T> : IAsyncResult
-            {
-                public T Result { get; set; }
-
-                public bool IsCompleted => true;
-
-                public WaitHandle AsyncWaitHandle
-                {
-                    get { throw new InvalidOperationException("Cannot wait on a synchronous result."); }
-                }
-
-                public object AsyncState { get; set; }
-
-                public bool CompletedSynchronously => true;
             }
 
             #endregion

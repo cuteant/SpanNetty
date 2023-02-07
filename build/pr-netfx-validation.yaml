@@ -18,7 +18,7 @@ name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 stages:
 - stage: windows
   displayName: Windows
-  jobs:
+jobs:
   - job: WindowsBuild
     displayName: Build (Windows VS2022)
     pool:

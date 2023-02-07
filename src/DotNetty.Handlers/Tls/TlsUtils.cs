@@ -30,14 +30,20 @@ namespace DotNetty.Handlers.Tls
 {
     using System;
     using DotNetty.Buffers;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     /// Utilities for TLS packets.
     static class TlsUtils
     {
-        const int MAX_PLAINTEXT_LENGTH = 16 * 1024; // 2^14
-        const int MAX_COMPRESSED_LENGTH = MAX_PLAINTEXT_LENGTH + 1024;
-        const int MAX_CIPHERTEXT_LENGTH = MAX_COMPRESSED_LENGTH + 1024;
+        /// <summary>
+        /// <a href="https://tools.ietf.org/html/rfc5246#section-6.2">2^14</a> which is the maximum sized plaintext chunk
+        /// allowed by the TLS RFC.
+        /// </summary>
+        public const int MAX_PLAINTEXT_LENGTH = 16 * 1024; // 2^14
+        private const int MAX_COMPRESSED_LENGTH = MAX_PLAINTEXT_LENGTH + 1024;
+        private const int MAX_CIPHERTEXT_LENGTH = MAX_COMPRESSED_LENGTH + 1024;
+        private const int GMSSL_PROTOCOL_VERSION = 0x101;
 
         // Header (5) + Data (2^14) + Compression (1024) + Encryption (1024) + MAC (20) + Padding (256)
         public const int MAX_ENCRYPTED_PACKET_LENGTH = MAX_CIPHERTEXT_LENGTH + 5 + 20 + 256;
@@ -105,11 +111,11 @@ namespace DotNetty.Handlers.Tls
 
             if (tls)
             {
-                // SSLv3 or TLS - Check ProtocolVersion
+                // SSLv3 or TLS or GMSSLv1.0 or GMSSLv1.1 - Check ProtocolVersion
                 int majorVersion = buffer.GetByte(offset + 1);
-                if (majorVersion == 3)
+                if (majorVersion == 3 || buffer.GetShort(offset + 1) == GMSSL_PROTOCOL_VERSION)
                 {
-                    // SSLv3 or TLS
+                    // SSLv3 or TLS or GMSSLv1.0 or GMSSLv1.1
                     packetLength = buffer.GetUnsignedShort(offset + 3) + SSL_RECORD_HEADER_LENGTH;
                     if ((uint)packetLength <= SSL_RECORD_HEADER_LENGTH)
                     {
@@ -152,12 +158,16 @@ namespace DotNetty.Handlers.Tls
         {
             // We have may haven written some parts of data before an exception was thrown so ensure we always flush.
             // See https://github.com/netty/netty/issues/3900#issuecomment-172481830
-            ctx.Flush();
+            try
+            {
+                ctx.Flush();
+            }
+            catch { }
             if (notify)
             {
                 ctx.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
             }
-            ctx.CloseAsync();
+            ctx.CloseAsync().Ignore();
         }
     }
 }

@@ -3,19 +3,15 @@
 
 namespace WebSockets.Server
 {
-    using System.Diagnostics;
-    using System.Text;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
-    using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using Examples.Common;
     using Microsoft.Extensions.Logging;
+    using System.Diagnostics;
     using static DotNetty.Codecs.Http.HttpResponseStatus;
-    using static DotNetty.Codecs.Http.HttpVersion;
 
     public sealed class WebSocketServerHttpHandler : SimpleChannelInboundHandler2<IFullHttpRequest>
     {
@@ -25,91 +21,91 @@ namespace WebSockets.Server
 
         public WebSocketServerHttpHandler(string websocketPath) => this.websocketPath = websocketPath;
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpRequest req)
+        protected override void ChannelRead0(IChannelHandlerContext context, IFullHttpRequest request)
         {
             // Handle a bad request.
-            if (!req.Result.IsSuccess)
+            if (!request.Result.IsSuccess)
             {
-                SendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.ProtocolVersion, BadRequest, ctx.Allocator.Buffer(0)));
+                SendHttpResponse(context, request, new DefaultFullHttpResponse(request.ProtocolVersion, BadRequest, context.Allocator.Buffer(0)));
                 return;
             }
 
             // Allow only GET methods.
-            if (!HttpMethod.Get.Equals(req.Method))
+            if (!HttpMethod.Get.Equals(request.Method))
             {
-                SendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.ProtocolVersion, Forbidden, ctx.Allocator.Buffer(0)));
+                SendHttpResponse(context, request, new DefaultFullHttpResponse(request.ProtocolVersion, Forbidden, context.Allocator.Buffer(0)));
                 return;
             }
 
             // Send the demo page and favicon.ico
-            switch (req.Uri)
+            switch (request.Uri)
             {
                 case "/benchmark":
                     {
-                        IByteBuffer content = WebSocketServerBenchmarkPage.GetContent(GetWebSocketLocation(req, this.websocketPath));
-                        var res = new DefaultFullHttpResponse(req.ProtocolVersion, OK, content);
+                        IByteBuffer content = WebSocketServerBenchmarkPage.GetContent(GetWebSocketLocation(request, this.websocketPath));
+                        var res = new DefaultFullHttpResponse(request.ProtocolVersion, OK, content);
 
                         res.Headers.Set(HttpHeaderNames.ContentType, "text/html; charset=UTF-8");
                         HttpUtil.SetContentLength(res, content.ReadableBytes);
 
-                        SendHttpResponse(ctx, req, res);
+                        SendHttpResponse(context, request, res);
                         return;
                     }
                 case "/":
                 case "/index.html":
                     {
-                        IByteBuffer content = WebSocketServerIndexPage.GetContent(GetWebSocketLocation(req, this.websocketPath));
-                        var res = new DefaultFullHttpResponse(req.ProtocolVersion, OK, content);
+                        IByteBuffer content = WebSocketServerIndexPage.GetContent(GetWebSocketLocation(request, this.websocketPath));
+                        var res = new DefaultFullHttpResponse(request.ProtocolVersion, OK, content);
 
                         res.Headers.Set(HttpHeaderNames.ContentType, "text/html; charset=UTF-8");
                         HttpUtil.SetContentLength(res, content.ReadableBytes);
 
-                        SendHttpResponse(ctx, req, res);
+                        SendHttpResponse(context, request, res);
                         return;
                     }
                 case "/favicon.ico":
                 default:
                     {
-                        var res = new DefaultFullHttpResponse(req.ProtocolVersion, NotFound, ctx.Allocator.Buffer(0));
-                        SendHttpResponse(ctx, req, res);
+                        var res = new DefaultFullHttpResponse(request.ProtocolVersion, NotFound, context.Allocator.Buffer(0));
+                        SendHttpResponse(context, request, res);
                         return;
                     }
             }
         }
 
-        static void SendHttpResponse(IChannelHandlerContext ctx, IFullHttpRequest req, IFullHttpResponse res)
+        static void SendHttpResponse(IChannelHandlerContext context, IFullHttpRequest request, IFullHttpResponse response)
         {
             // Generate an error page if response getStatus code is not OK (200).
-            HttpResponseStatus responseStatus = res.Status;
+            HttpResponseStatus responseStatus = response.Status;
             if (responseStatus.Code != 200)
             {
-                ByteBufferUtil.WriteUtf8(res.Content, responseStatus.ToString());
-                HttpUtil.SetContentLength(res, res.Content.ReadableBytes);
+                ByteBufferUtil.WriteUtf8(response.Content, responseStatus.ToString());
+                HttpUtil.SetContentLength(response, response.Content.ReadableBytes);
             }
 
             // Send the response and close the connection if necessary.
-            var keepAlive = HttpUtil.IsKeepAlive(req) && responseStatus.Code == 200;
-            HttpUtil.SetKeepAlive(res, keepAlive);
-            var future = ctx.WriteAndFlushAsync(res);
+            var keepAlive = HttpUtil.IsKeepAlive(request) && responseStatus.Code == 200;
+            HttpUtil.SetKeepAlive(response, keepAlive);
+            var future = context.WriteAndFlushAsync(response);
             if (!keepAlive)
             {
-                future.CloseOnComplete(ctx.Channel);
+                future.CloseOnComplete(context.Channel);
             }
         }
 
-        static string GetWebSocketLocation(IFullHttpRequest req, string path)
+        static string GetWebSocketLocation(IFullHttpRequest request, string path)
         {
-            bool result = req.Headers.TryGet(HttpHeaderNames.Host, out ICharSequence value);
+            bool result = request.Headers.TryGet(HttpHeaderNames.Host, out ICharSequence value);
             Debug.Assert(result, "Host header does not exist.");
-            string location = value.ToString() + path;
+            string location = $"{value}{path}";
 
             if (ServerSettings.IsSsl)
             {
-                return "wss://" + location;
+                return $"wss://{location}";
             }
             else
             {
-                return "ws://" + location;
+                return $"ws://{location}";
             }
         }
     }

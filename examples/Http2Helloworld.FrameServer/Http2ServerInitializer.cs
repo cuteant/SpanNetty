@@ -1,9 +1,5 @@
 ﻿namespace Http2Helloworld.FrameServer
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Common.Internal.Logging;
@@ -11,6 +7,10 @@
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
+    using System;
+    using System.Collections.Generic;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
 
     public class Http2ServerInitializer : ChannelInitializer<IChannel>
     {
@@ -51,30 +51,24 @@
         /**
          * Configure the pipeline for TLS NPN negotiation to HTTP/2.
          */
-        void ConfigureSsl(IChannel ch)
+        void ConfigureSsl(IChannel channel)
         {
-            ch.Pipeline.AddLast(new TlsHandler(new ServerTlsSettings(this.tlsCertificate)
-#if NETCOREAPP_2_0_GREATER
+            var tlsSettings = new ServerTlsSettings(this.tlsCertificate)
+            {
+                ApplicationProtocols = new List<SslApplicationProtocol>(new[]
                 {
-                    ApplicationProtocols = new List<SslApplicationProtocol>(new[]
-                        {
-                            SslApplicationProtocol.Http2,
-                            SslApplicationProtocol.Http11
-                        })
-                }
-#endif
-                ));
-#if NETCOREAPP_2_0_GREATER
-            ch.Pipeline.AddLast(new Http2OrHttpHandler());
-#else
-            this.ConfigureClearText(ch);
-#endif
-
+                    SslApplicationProtocol.Http2,
+                    SslApplicationProtocol.Http11
+                })
+            };
+            tlsSettings.AllowAnyClientCertificate();
+            channel.Pipeline.AddLast(new TlsHandler(tlsSettings));
+            channel.Pipeline.AddLast(new Http2OrHttpHandler());
         }
 
-        void ConfigureClearText(IChannel ch)
+        void ConfigureClearText(IChannel channel)
         {
-            IChannelPipeline p = ch.Pipeline;
+            IChannelPipeline p = channel.Pipeline;
             HttpServerCodec sourceCodec = new HttpServerCodec();
 
             p.AddLast(sourceCodec);
@@ -105,14 +99,14 @@
 
             public HttpMessageHandler(int maxHttpContentLength) => this.maxHttpContentLength = maxHttpContentLength;
 
-            protected override void ChannelRead0(IChannelHandlerContext ctx, IHttpMessage msg)
+            protected override void ChannelRead0(IChannelHandlerContext context, IHttpMessage message)
             {
                 // If this handler is hit then no upgrade has been attempted and the client is just talking HTTP.
-                s_logger.LogInformation("Directly talking: " + msg.ProtocolVersion + " (no upgrade was attempted)");
-                IChannelPipeline pipeline = ctx.Pipeline;
-                pipeline.AddAfter(ctx.Name, null, new Http2Helloworld.Server.HelloWorldHttp1Handler("Direct. No Upgrade Attempted."));
+                s_logger.LogInformation($"Directly talking: {message.ProtocolVersion} (no upgrade was attempted)");
+                IChannelPipeline pipeline = context.Pipeline;
+                pipeline.AddAfter(context.Name, null, new Server.HelloWorldHttp1Handler("Direct. No Upgrade Attempted."));
                 pipeline.Replace(this, null, new HttpObjectAggregator(this.maxHttpContentLength));
-                ctx.FireChannelRead(ReferenceCountUtil.Retain(msg));
+                context.FireChannelRead(ReferenceCountUtil.Retain(message));
             }
         }
 
@@ -123,7 +117,7 @@
         {
             public override void UserEventTriggered(IChannelHandlerContext context, object evt)
             {
-                s_logger.LogInformation("User Event Triggered: " + evt);
+                s_logger.LogInformation($"User Event Triggered: {evt}");
                 context.FireUserEventTriggered(evt);
             }
         }

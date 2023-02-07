@@ -1,12 +1,12 @@
 ﻿#if NETCOREAPP_2_0_GREATER
 namespace Http2Tiles
 {
-    using System;
-    using System.Net.Security;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
+    using System;
+    using System.Net.Security;
 
     public class Http2OrHttpHandler : ApplicationProtocolNegotiationHandler
     {
@@ -17,24 +17,24 @@ namespace Http2Tiles
         {
         }
 
-        protected override void ConfigurePipeline(IChannelHandlerContext ctx, SslApplicationProtocol protocol)
+        protected override void ConfigurePipeline(IChannelHandlerContext context, SslApplicationProtocol protocol)
         {
             if (SslApplicationProtocol.Http2.Equals(protocol))
             {
-                ConfigureHttp2(ctx);
+                ConfigureHttp2(context);
                 return;
             }
 
             if (SslApplicationProtocol.Http11.Equals(protocol))
             {
-                ConfigureHttp1(ctx);
+                ConfigureHttp1(context);
                 return;
             }
 
-            throw new InvalidOperationException("unknown protocol: " + protocol);
+            throw new InvalidOperationException($"Unknown protocol: {protocol}");
         }
 
-        private static void ConfigureHttp2(IChannelHandlerContext ctx)
+        private static void ConfigureHttp2(IChannelHandlerContext context)
         {
             var connection = new DefaultHttp2Connection(true);
             InboundHttp2ToHttpAdapter listener = new InboundHttp2ToHttpAdapterBuilder(connection)
@@ -44,19 +44,19 @@ namespace Http2Tiles
                 MaxContentLength = MAX_CONTENT_LENGTH
             }.Build();
 
-            ctx.Pipeline.AddLast(new HttpToHttp2ConnectionHandlerBuilder()
+            context.Pipeline.AddLast(new HttpToHttp2ConnectionHandlerBuilder()
             {
                 FrameListener = listener,
                 // FrameLogger = TilesHttp2ToHttpHandler.logger,
                 Connection = connection
             }.Build());
 
-            ctx.Pipeline.AddLast(new Http2RequestHandler());
+            context.Pipeline.AddLast(new Http2RequestHandler());
         }
 
-        private static void ConfigureHttp1(IChannelHandlerContext ctx)
+        private static void ConfigureHttp1(IChannelHandlerContext context)
         {
-            ctx.Pipeline.AddLast(new HttpServerCodec(),
+            context.Pipeline.AddLast(new HttpServerCodec(),
                                  new HttpObjectAggregator(MAX_CONTENT_LENGTH),
                                  new FallbackRequestHandler());
         }

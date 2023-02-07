@@ -676,13 +676,11 @@ namespace DotNetty.Codecs
 
         public int ReadBytes(Span<byte> destination)
         {
-            CheckReadableBytes(destination.Length);
             return _buffer.ReadBytes(destination);
         }
 
         public int ReadBytes(Memory<byte> destination)
         {
-            CheckReadableBytes(destination.Length);
             return _buffer.ReadBytes(destination);
         }
 

@@ -121,7 +121,7 @@ namespace System.Memory.Tests.BufferReader
                 new byte[] { 3, 3, 4, 4, 5, 5, 6, 6 }
             });
 
-            ByteBufferReader reader = new ByteBufferReader(bytes);
+            ByteBufferReader baseReader = new ByteBufferReader(bytes);
             for (byte i = 0; i < bytes.Length / 2 - 1; i++)
             {
                 byte[] expected = new byte[i * 2 + 1];
@@ -131,7 +131,12 @@ namespace System.Memory.Tests.BufferReader
                 }
                 expected[i * 2] = i;
                 ReadOnlySpan<byte> searchFor = new byte[] { i, (byte)(i + 1) };
-                ByteBufferReader copy = reader;
+                ByteBufferReader copy = baseReader;
+
+                Assert.True(copy.TryReadTo(out ReadOnlySpan<byte> sp, searchFor, advancePastDelimiter));
+                Assert.True(sp.SequenceEqual(expected));
+
+                copy = baseReader;
                 Assert.True(copy.TryReadTo(out ReadOnlySequence<byte> seq, searchFor, advancePastDelimiter));
                 Assert.True(seq.ToArray().AsSpan().SequenceEqual(expected));
             }
@@ -140,8 +145,14 @@ namespace System.Memory.Tests.BufferReader
                 new byte[] { 47, 42, 66, 32, 42, 32, 66, 42, 47 }   // /*b * b*/
             });
 
-            reader = new ByteBufferReader(bytes);
-            Assert.True(reader.TryReadTo(out ReadOnlySequence<byte> sequence, new byte[] { 42, 47 }, advancePastDelimiter));    //  */
+            baseReader = new ByteBufferReader(bytes);
+            ByteBufferReader copyReader = baseReader;
+
+            Assert.True(copyReader.TryReadTo(out ReadOnlySpan<byte> span, new byte[] { 42, 47 }, advancePastDelimiter));    //  */
+            Assert.True(span.SequenceEqual(new byte[] { 47, 42, 66, 32, 42, 32, 66 }));
+
+            copyReader = baseReader;
+            Assert.True(copyReader.TryReadTo(out ReadOnlySequence<byte> sequence, new byte[] { 42, 47 }, advancePastDelimiter));    //  */
             Assert.True(sequence.ToArray().AsSpan().SequenceEqual(new byte[] { 47, 42, 66, 32, 42, 32, 66 }));
         }
 
@@ -183,17 +194,30 @@ namespace System.Memory.Tests.BufferReader
                 new byte[] { 2, 3, 4, 5, 6 }
             });
 
-            ByteBufferReader reader = new ByteBufferReader(bytes);
+            ByteBufferReader baseReader = new ByteBufferReader(bytes);
+
+            ByteBufferReader spanReader = baseReader;
+            ByteBufferReader sequenceReader = baseReader;
             Span<byte> delimiter = new byte[] { 1 };
 
             for (int i = 1; i < 6; i += 1)
             {
                 // Also check scanning from the start.
-                ByteBufferReader resetReader = new ByteBufferReader(bytes);
+                ByteBufferReader resetReader = baseReader;
                 delimiter[0] = (byte)i;
-                Assert.True(reader.TryReadTo(out ReadOnlySequence<byte> sequence, delimiter, advancePastDelimiter: true));
+                Assert.True(spanReader.TryReadTo(out ReadOnlySpan<byte> span, delimiter, advancePastDelimiter: true));
+                Assert.True(resetReader.TryReadTo(out span, delimiter, advancePastDelimiter: true));
+                Assert.True(spanReader.TryPeek(out byte value));
+                Assert.Equal(i + 1, value);
+                Assert.True(resetReader.TryPeek(out value));
+                Assert.Equal(i + 1, value);
+
+                // Also check scanning from the start.
+                resetReader = baseReader;
+                delimiter[0] = (byte)i;
+                Assert.True(sequenceReader.TryReadTo(out ReadOnlySequence<byte> sequence, delimiter, advancePastDelimiter: true));
                 Assert.True(resetReader.TryReadTo(out sequence, delimiter, advancePastDelimiter: true));
-                Assert.True(reader.TryPeek(out byte value));
+                Assert.True(sequenceReader.TryPeek(out value));
                 Assert.Equal(i + 1, value);
                 Assert.True(resetReader.TryPeek(out value));
                 Assert.Equal(i + 1, value);
@@ -208,7 +232,9 @@ namespace System.Memory.Tests.BufferReader
             segment.Append(Text.Encoding.ASCII.GetBytes("\nWorld")); // add next segment
             ReadOnlySequence<byte> inputSeq = new ReadOnlySequence<byte>(segment, 0, segment, 6); // span only the first segment!
             ByteBufferReader sr = new ByteBufferReader(inputSeq);
-            bool r = sr.TryReadTo(out _, delimiter);
+            bool r = sr.TryReadTo(out ReadOnlySpan<byte> _, delimiter);
+            Assert.False(r);
+            r = sr.TryReadTo(out ReadOnlySequence<byte> _, delimiter);
             Assert.False(r);
         }
     }

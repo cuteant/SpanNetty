@@ -213,7 +213,7 @@ namespace DotNetty.Codecs.Http2.Tests
             int failCount = 0;
             foreach (Task f in futures)
             {
-                if (!f.IsSuccess())
+                if (!f.IsSuccess()) // TODO use IsFailure()
                 {
                     failCount++;
                 }

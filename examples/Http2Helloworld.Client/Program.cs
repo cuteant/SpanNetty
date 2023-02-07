@@ -1,11 +1,5 @@
 ﻿namespace Http2Helloworld.Client
 {
-    using System;
-    using System.IO;
-    using System.Net;
-    using System.Text;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
@@ -13,8 +7,14 @@
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
-    using Examples.Common;
     using DotNetty.Transport.Libuv;
+    using Examples.Common;
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// An HTTP2 client that allows you to send HTTP2 frames to a server using HTTP1-style approaches
@@ -33,7 +33,7 @@
             ExampleHelper.SetConsoleLogger();
 
             bool useLibuv = ClientSettings.UseLibuv;
-            Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+            Console.WriteLine($"Transport type : {(useLibuv ? "Libuv" : "Socket")}");
 
             IEventLoopGroup group;
             if (useLibuv)
@@ -52,12 +52,14 @@
                 cert = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
                 targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
             }
+
             try
             {
                 var bootstrap = new Bootstrap();
                 bootstrap
                     .Group(group)
                     .Option(ChannelOption.TcpNodelay, true);
+
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpChannel>();
@@ -68,14 +70,13 @@
                 }
 
                 Http2ClientInitializer initializer = new Http2ClientInitializer(cert, targetHost, int.MaxValue);
-
                 bootstrap.Handler(initializer);
 
-                IChannel ch = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
+                IChannel channel = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
 
                 try
                 {
-                    Console.WriteLine("Connected to [" + ClientSettings.Host + ':' + ClientSettings.Port + ']');
+                    Console.WriteLine($"Connected to [{ClientSettings.Host}:{ClientSettings.Port}]");
 
                     // Wait for the HTTP/2 upgrade to occur.
                     Http2SettingsHandler http2SettingsHandler = initializer.SettingsHandler;
@@ -86,9 +87,11 @@
                     HttpScheme scheme = ClientSettings.IsSsl ? HttpScheme.Https : HttpScheme.Http;
                     AsciiString hostName = new AsciiString(ClientSettings.Host.ToString() + ':' + ClientSettings.Port);
                     Console.WriteLine("Sending request(s)...");
+
                     var url = ExampleHelper.Configuration["url"];
                     var url2 = ExampleHelper.Configuration["url2"];
                     var url2Data = ExampleHelper.Configuration["url2data"];
+
                     if (!string.IsNullOrEmpty(url))
                     {
                         // Create a simple GET request.
@@ -97,9 +100,10 @@
                         request.Headers.Add(HttpConversionUtil.ExtensionHeaderNames.Scheme, scheme.Name);
                         request.Headers.Add(HttpHeaderNames.AcceptEncoding, HttpHeaderValues.Gzip);
                         request.Headers.Add(HttpHeaderNames.AcceptEncoding, HttpHeaderValues.Deflate);
-                        responseHandler.Put(streamId, ch.WriteAsync(request), ch.NewPromise());
+                        responseHandler.Put(streamId, channel.WriteAsync(request), channel.NewPromise());
                         streamId += 2;
                     }
+
                     if (!string.IsNullOrEmpty(url2))
                     {
                         // Create a simple POST request with a body.
@@ -109,24 +113,25 @@
                         request.Headers.Add(HttpConversionUtil.ExtensionHeaderNames.Scheme, scheme.Name);
                         request.Headers.Add(HttpHeaderNames.AcceptEncoding, HttpHeaderValues.Gzip);
                         request.Headers.Add(HttpHeaderNames.AcceptEncoding, HttpHeaderValues.Deflate);
-                        responseHandler.Put(streamId, ch.WriteAsync(request), ch.NewPromise());
+                        responseHandler.Put(streamId, channel.WriteAsync(request), channel.NewPromise());
                     }
-                    ch.Flush();
+
+                    channel.Flush();
                     await responseHandler.AwaitResponses(TimeSpan.FromSeconds(5));
                     Console.WriteLine("Finished HTTP/2 request(s)");
                     Console.ReadKey();
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    Console.WriteLine(ex.ToString());
-                    Console.WriteLine("按任意键退出");
+                    Console.WriteLine(exception.ToString());
+                    Console.WriteLine("Press any key to exit");
                     Console.ReadKey();
                 }
                 finally
                 {
 
                     // Wait until the connection is closed.
-                    await ch.CloseAsync();
+                    await channel.CloseAsync();
                 }
             }
             finally

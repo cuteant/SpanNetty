@@ -10,48 +10,49 @@ namespace Telnet.Server
 
     public class TelnetServerHandler : SimpleChannelInboundHandler<string>
     {
-        public override void ChannelActive(IChannelHandlerContext contex)
+        public override void ChannelActive(IChannelHandlerContext context)
         {
-            contex.WriteAsync(string.Format("Welcome to {0} !\r\n", Dns.GetHostName()));
-            contex.WriteAndFlushAsync(string.Format("It is {0} now !\r\n", DateTime.Now));
+            context.WriteAsync($"Welcome to {Dns.GetHostName()} !\r\n");
+            context.WriteAndFlushAsync($"It is {DateTime.Now} now !\r\n");
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext contex, string msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, string message)
         {
             // Generate and write a response.
             string response;
             bool close = false;
-            if (string.IsNullOrEmpty(msg))
+
+            if (string.IsNullOrEmpty(message))
             {
                 response = "Please type something.\r\n";
             }
-            else if (string.Equals("bye", msg, StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals("bye", message, StringComparison.OrdinalIgnoreCase))
             {
                 response = "Have a good day!\r\n";
                 close = true;
             }
             else
             {
-                response = "Did you say '" + msg + "'?\r\n";
+                response = $"Did you say '{message}'?\r\n";
             }
 
-            Task wait_close = contex.WriteAndFlushAsync(response);
+            Task wait_close = context.WriteAndFlushAsync(response);
             if (close)
             {
                 Task.WaitAll(wait_close);
-                contex.CloseAsync();
+                context.CloseAsync();
             }
         }
 
-        public override void ChannelReadComplete(IChannelHandlerContext contex)
+        public override void ChannelReadComplete(IChannelHandlerContext context)
         {
-            contex.Flush();
+            context.Flush();
         }
 
-        public override void ExceptionCaught(IChannelHandlerContext contex, Exception e)
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            Console.WriteLine("{0}", e.StackTrace);
-            contex.CloseAsync();
+            Console.WriteLine($"{exception}");
+            context.CloseAsync();
         }
 
         public override bool IsSharable => true;

@@ -31,6 +31,9 @@ namespace DotNetty.Buffers
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Internal;
+#if NET
+    using System.Runtime.InteropServices;
+#endif
 
     unsafe partial class UnpooledUnsafeDirectByteBuffer : AbstractReferenceCountedByteBuffer
     {
@@ -190,7 +193,11 @@ namespace DotNetty.Buffers
         public sealed override ref byte GetPinnableMemoryAddress()
         {
             EnsureAccessible();
+#if NET
+            return ref MemoryMarshal.GetArrayDataReference(_buffer);
+#else
             return ref _buffer[0];
+#endif
         }
 
         public sealed override bool IsContiguous => true;
@@ -393,7 +400,14 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        ref byte Addr(int index) => ref _buffer[index];
+        ref byte Addr(int index)
+        {
+#if NET
+            return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_buffer), index);
+#else
+            return ref _buffer[index];
+#endif
+        }
 
         public sealed override IByteBuffer SetZero(int index, int length)
         {

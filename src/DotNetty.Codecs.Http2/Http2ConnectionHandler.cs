@@ -981,7 +981,7 @@ namespace DotNetty.Codecs.Http2
 
         private void CloseConnectionOnError(IChannelHandlerContext ctx, Task future)
         {
-            if (!future.IsSuccess())
+            if (future.IsFailure())
             {
                 OnConnectionError(ctx, true, future.Exception.InnerException, null);
             }
@@ -990,16 +990,15 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> CloseChannelOnCompleteAction = (t, s) => CloseChannelOnComplete(t, s);
         private static void CloseChannelOnComplete(Task t, object s)
         {
-            var wrapped = ((IChannelHandlerContext, IPromise, IScheduledTask))s;
-            _ = (wrapped.Item3?.Cancel());
-            var promise = wrapped.Item2;
+            var (ctx, promise, timeoutTask) = ((IChannelHandlerContext, IPromise, IScheduledTask))s;
+            _ = timeoutTask?.Cancel();
             if (promise is object)
             {
-                _ = wrapped.Item1.CloseAsync(promise);
+                _ = ctx.CloseAsync(promise);
             }
             else
             {
-                _ = wrapped.Item1.CloseAsync();
+                _ = ctx.CloseAsync();
             }
         }
         private static readonly Action<object, object> ScheduledCloseChannelAction = (c, p) => ScheduledCloseChannel(c, p);
@@ -1011,22 +1010,22 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> CloseConnectionOnErrorOnCompleteAction = (t, s) => CloseConnectionOnErrorOnComplete(t, s);
         private static void CloseConnectionOnErrorOnComplete(Task t, object s)
         {
-            var wrapped = ((Http2ConnectionHandler, IChannelHandlerContext))s;
-            wrapped.Item1.CloseConnectionOnError(wrapped.Item2, t);
+            var (self, ctx) = ((Http2ConnectionHandler, IChannelHandlerContext))s;
+            self.CloseConnectionOnError(ctx, t);
         }
 
         private static readonly Action<Task, object> ProcessRstStreamWriteResultOnCompleteAction = (t, s) => ProcessRstStreamWriteResultOnComplete(t, s);
         private static void ProcessRstStreamWriteResultOnComplete(Task t, object s)
         {
-            var wrapped = ((Http2ConnectionHandler, IChannelHandlerContext, IHttp2Stream))s;
-            wrapped.Item1.ProcessRstStreamWriteResult(wrapped.Item2, wrapped.Item3, t);
+            var (self, ctx, stream) = ((Http2ConnectionHandler, IChannelHandlerContext, IHttp2Stream))s;
+            self.ProcessRstStreamWriteResult(ctx, stream, t);
         }
 
         private static readonly Action<Task, object> ProcessGoAwayWriteResultOnCompleteAction = (t, s) => ProcessGoAwayWriteResultOnComplete(t, s);
         private static void ProcessGoAwayWriteResultOnComplete(Task t, object s)
         {
-            var wrapped = ((IChannelHandlerContext, int, Http2Error, IByteBuffer))s;
-            ProcessGoAwayWriteResult(wrapped.Item1, wrapped.Item2, wrapped.Item3, wrapped.Item4, t);
+            var (ctx, lastStreamId, errorCode, debugData) = ((IChannelHandlerContext, int, Http2Error, IByteBuffer))s;
+            ProcessGoAwayWriteResult(ctx, lastStreamId, errorCode, debugData, t);
         }
 
         private static readonly Action<Task, object> CheckCloseConnOnCompleteAction = (t, s) => CheckCloseConnOnComplete(t, s);

@@ -882,7 +882,7 @@
                                         .WriteAndFlushAsync(data2.RetainedDuplicate(), serverChannelCpy.NewPromise())
                                         .ContinueWith(future =>
                                         {
-                                            if (!future.IsSuccess() &&
+                                            if (future.IsFailure() &&
                                                 future.Exception.InnerException is ClosedChannelException)
                                             {
                                                 writeFailLatch.Signal();
