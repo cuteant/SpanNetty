@@ -38,12 +38,6 @@ jobs:
           arguments: ${{ parameters.scriptArgs }}
         continueOnError: true
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
-      - task: PublishTestResults@2
-        inputs:
-          testRunner: VSTest
-          testResultsFiles: '**/*.trx' #TestResults folder usually
-          testRunTitle: ${{ parameters.name }}
-          mergeTestResults: true
       - task: CopyFiles@2
         displayName: 'Copy Build Output'
         inputs:
@@ -51,7 +45,10 @@ jobs:
           contents: '**\*'
           targetFolder: $(Build.ArtifactStagingDirectory)
           continueOnError: boolean  # 'true' if future steps should run even if this step fails; defaults to 'false'
-      - script: 'echo 1>&2'
-        failOnStderr: true
-        displayName: 'If above is partially succeeded, then fail'
-        condition: eq(variables['Agent.JobStatus'], 'SucceededWithIssues')
+      - task: PublishTestResults@2
+        inputs:
+          testRunner: VSTest
+          testResultsFiles: '**/*.trx' #TestResults folder usually
+          testRunTitle: ${{ parameters.name }}
+          mergeTestResults: true
+          failTaskOnFailedTests: true
