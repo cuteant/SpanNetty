@@ -8,6 +8,7 @@ parameters:
   scriptArgs: 'all'
   outputDirectory: ''
   timeoutInMinutes: 120
+  packageFeed: ''
 
 jobs:
   - job: ${{ parameters.name }}
@@ -21,7 +22,17 @@ jobs:
         inputs:
           packageType: sdk
           version: 5.0.302
+      - task: UseDotNet@2
+        displayName: 'Install SDK 6.x'
+        inputs:
+          packageType: sdk
+          version: 6.x          
       - template: restore-nuget-packages.yaml
+      - task: NuGetCommand@2
+        displayName: Install Fake
+        inputs:
+          command: 'custom'
+          arguments: 'install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source ${{ parameters.packageFeed }}'      
       - task: Bash@3 
         displayName: Build (Linux)
         inputs:
