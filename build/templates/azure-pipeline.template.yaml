@@ -17,10 +17,10 @@ jobs:
     pool:
       vmImage: ${{ parameters.vmImage }}
     steps:
-      - template: templates/install-dotnet.yaml
-      - template: templates/install-nuget.yaml
-      - template: templates/restore-nuget-packages.yaml
-      - template: templates/install-build-dependencies.yaml
+      - template: install-dotnet.yaml
+      - template: install-nuget.yaml
+      - template: restore-nuget-packages.yaml
+      - template: install-build-dependencies.yaml
         parameters:
           packageFeed: ${{ parameters.packageFeed }}
       - task: Bash@3 
