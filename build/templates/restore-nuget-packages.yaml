@@ -1,6 +1,4 @@
 steps:
-  - task: NuGetToolInstaller@1
-    displayName: 'Install NuGet'
   - task: NuGetCommand@2
     displayName: 'Restore NuGet Pacakges'
     inputs:
