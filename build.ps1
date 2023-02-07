@@ -31,7 +31,7 @@ Param(
 
 $FakeVersion = "4.63.0"
 
-$IncrementalistVersion = "0.4.0";
+$IncrementalistVersion = "0.8.0";
 
 # Make sure tools folder exists
 $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
