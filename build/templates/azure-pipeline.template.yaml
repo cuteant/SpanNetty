@@ -32,7 +32,7 @@ jobs:
         displayName: Install Fake
         inputs:
           command: 'custom'
-          arguments: 'install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source ${{ parameters.packageFeed }}'      
+          arguments: install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source ${{ parameters.packageFeed }}
       - task: Bash@3 
         displayName: Build (Linux)
         inputs:
