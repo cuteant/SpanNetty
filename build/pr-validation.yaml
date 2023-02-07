@@ -18,6 +18,7 @@ name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 variables:
   NUGET_XMLDOC_MODE: none
   NUGET_CREDENTIALPROVIDER_SESSIONTOKENCACHE_ENABLED: 'true'
+  packageFeed: 'https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
 
 stages:
 - stage: windows
@@ -56,13 +57,13 @@ stages:
         displayName: Install Fake
         inputs:
           command: 'custom'
-          arguments: 'install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
+          arguments: 'install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source $(packageFeed)'
       - task: CmdLine@2
         displayName: Install Incrementalist
         inputs:
           # https://mattdufeu.co.uk/blog/install-dotnet-global-tool-with-private-nuget-feed/
-          # script: 'dotnet tool install Incrementalist.Cmd --version 0.8.0 --tool-path tools/incrementalist --add-source https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json  --ignore-failed-sources'
-          script: 'dotnet tool install Incrementalist.Cmd --version 0.8.0 --tool-path tools/incrementalist --add-source https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
+          # script: 'dotnet tool install Incrementalist.Cmd --version 0.8.0 --tool-path tools/incrementalist --add-source $(packageFeed)'
+          script: 'dotnet tool install Incrementalist.Cmd --version 0.8.0 --tool-path tools/incrementalist --add-source $(packageFeed)'
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
@@ -91,6 +92,8 @@ stages:
       scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_windows-$(Build.BuildId)'
+      packageFeed: $(packageFeed)
+
 
   - template: templates/azure-pipeline.template.yaml
     parameters:
@@ -101,6 +104,7 @@ stages:
       scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_windows-$(Build.BuildId)'
+      packageFeed: $(packageFeed)
 
 - stage: linux
   displayName: Linux (Ubuntu)
@@ -115,6 +119,7 @@ stages:
       scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_ubuntu_16-$(Build.BuildId)'
+      packageFeed: $(packageFeed)
 
   - template: templates/azure-pipeline.template.yaml
     parameters:
@@ -125,3 +130,4 @@ stages:
       scriptArgs: RunTests incremental
       outputDirectory: 'TestResults'
       artifactName: 'net_core_tests_ubuntu_22-$(Build.BuildId)'
+      packageFeed: $(packageFeed)

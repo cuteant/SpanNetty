@@ -8,7 +8,7 @@ parameters:
   scriptArgs: 'all'
   outputDirectory: ''
   timeoutInMinutes: 120
-  packageFeed: 'https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
+  packageFeed: ''
 
 jobs:
   - job: ${{ parameters.name }}
