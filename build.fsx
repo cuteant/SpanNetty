@@ -114,6 +114,7 @@ Target "ComputeIncrementalChanges" (fun _ ->
                 |> append solution
                 |> append "-f"
                 |> append incrementalistReport
+                |> append "--verbose"
                 |> toText
 
         let result = ExecProcess(fun info ->
