@@ -61,12 +61,10 @@ if (!(Test-Path $FakeExePath)) {
 
 # Make sure the Incrementalist has been installed
 if (Get-Command incrementalist -ErrorAction SilentlyContinue) {
-    Write-Host "Found Incrementalist. Skipping install."
+    Write-Host "Found Incrementalist."
 }
 else{
-    $IncrementalistFolder = Join-Path $ToolPath "incrementalist"
-    Write-Host "Incrementalist not found. Installing to ... $IncrementalistFolder"
-    dotnet tool install Incrementalist.Cmd --version $IncrementalistVersion --tool-path "$IncrementalistFolder"
+    Throw "Incrementalist is not installed."
 }
 
 ###########################################################################

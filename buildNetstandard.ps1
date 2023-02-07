@@ -30,10 +30,8 @@ Param(
 )
 
 $FakeVersion = "4.63.0"
-$NugetVersion = "5.8.0";
-$NugetUrl = "https://dist.nuget.org/win-x86-commandline/v$NugetVersion/nuget.exe"
 
-$IncrementalistVersion = "0.4.0";
+$IncrementalistVersion = "0.8.0";
 
 # Make sure tools folder exists
 $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
@@ -63,12 +61,10 @@ if (!(Test-Path $FakeExePath)) {
 
 # Make sure the Incrementalist has been installed
 if (Get-Command incrementalist -ErrorAction SilentlyContinue) {
-    Write-Host "Found Incrementalist. Skipping install."
+    Write-Host "Found Incrementalist."
 }
 else{
-    $IncrementalistFolder = Join-Path $ToolPath "incrementalist"
-    Write-Host "Incrementalist not found. Installing to ... $IncrementalistFolder"
-    dotnet tool install Incrementalist.Cmd --version $IncrementalistVersion --tool-path "$IncrementalistFolder"
+    Throw "Incrementalist is not installed."
 }
 
 ###########################################################################
