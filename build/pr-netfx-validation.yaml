@@ -15,6 +15,11 @@ pr:
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
+variables:
+  NUGET_XMLDOC_MODE: none
+  NUGET_CREDENTIALPROVIDER_SESSIONTOKENCACHE_ENABLED: 'true'
+  packageFeed: 'https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
+
 stages:
 - stage: windows
   displayName: Windows
@@ -29,12 +34,12 @@ stages:
         clean: false  # whether to fetch clean each time
         submodules: recursive  # set to 'true' for a single level of submodules or 'recursive' to get submodules of submodules
         persistCredentials: true
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 5.0.302'
-        inputs:
-          packageType: sdk
-          version: 5.0.302
+      - template: templates/install-dotnet.yaml
+      - template: templates/install-nuget.yaml
       - template: templates/restore-nuget-packages.yaml
+      - template: templates/install-build-dependencies.yaml
+        parameters:
+          packageFeed: $(packageFeed)
       - task: BatchScript@1
         displayName: Windows Build
         inputs:

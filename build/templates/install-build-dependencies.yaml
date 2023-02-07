@@ -1,0 +1,13 @@
+parameters:
+  packageFeed: ''
+
+steps:
+- task: NuGetCommand@2
+  displayName: Install Fake
+  inputs:
+    command: 'custom'
+    arguments: 'install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source ${{ parameters.packageFeed }}'
+- task: CmdLine@2
+  displayName: Install Incrementalist
+  inputs:
+    script: 'dotnet tool install Incrementalist.Cmd --version 0.8.0 --tool-path tools/incrementalist --add-source ${{ parameters.packageFeed }}'

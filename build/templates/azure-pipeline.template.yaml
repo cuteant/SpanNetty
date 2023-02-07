@@ -17,34 +17,12 @@ jobs:
     pool:
       vmImage: ${{ parameters.vmImage }}
     steps:
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 5.0.302'
-        inputs:
-          packageType: sdk
-          version: 5.0.302
-      - task: UseDotNet@2
-        displayName: 'Install SDK 6.x'
-        inputs:
-          packageType: sdk
-          version: 6.x
-      - task: NuGetToolInstaller@1
-        displayName: 'install nuget'
-        inputs:
-          versionSpec: '5.x'
-      - task: NuGetAuthenticate@1
-        displayName: 'nuget authenticate'
-        inputs:
-          nuGetServiceConnections: 'ApimAzureGenevaMonitoringReadPackages, ApimAzureSecurityMonitoringReadPackages'          
-      - template: restore-nuget-packages.yaml
-      - task: NuGetCommand@2
-        displayName: Install Fake
-        inputs:
-          command: 'custom'
-          arguments: install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source ${{ parameters.packageFeed }}
-      - task: CmdLine@2
-        displayName: Install Incrementalist
-        inputs:
-          script: dotnet tool install Incrementalist.Cmd --version 0.8.0 --tool-path tools/incrementalist --add-source ${{ parameters.packageFeed }}
+      - template: templates/install-dotnet.yaml
+      - template: templates/install-nuget.yaml
+      - template: templates/restore-nuget-packages.yaml
+      - template: templates/install-build-dependencies.yaml
+        parameters:
+          packageFeed: ${{ parameters.packageFeed }}
       - task: Bash@3 
         displayName: Build (Linux)
         inputs:
