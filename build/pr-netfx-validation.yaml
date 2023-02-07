@@ -68,3 +68,4 @@ stages:
       scriptArgs: RunTestsNetFx471 incremental
       outputDirectory: 'TestResults'
       artifactName: 'netfx_tests_windows-$(Build.BuildId)'
+      packageFeed: $(packageFeed)
