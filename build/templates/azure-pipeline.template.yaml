@@ -51,4 +51,8 @@ jobs:
           testResultsFiles: '**/*.trx' #TestResults folder usually
           testRunTitle: ${{ parameters.name }}
           mergeTestResults: true
-          failTaskOnFailedTests: true
+          failTaskOnFailedTests: false
+      - script: 'echo 1>&2'
+        failOnStderr: true
+        displayName: 'Fail job when previous task(s) failed'
+        condition: eq(variables['Agent.JobStatus'], 'SucceededWithIssues')
