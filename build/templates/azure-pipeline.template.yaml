@@ -17,26 +17,12 @@ jobs:
     pool:
       vmImage: ${{ parameters.vmImage }}
     steps:
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 5.0.302'
-        inputs:
-          packageType: sdk
-          version: 5.0.302
-      - task: UseDotNet@2
-        displayName: 'Install SDK 6.x'
-        inputs:
-          packageType: sdk
-          version: 6.x
+      - template: install-dotnet.yaml
+      - template: install-nuget.yaml
       - template: restore-nuget-packages.yaml
-      - task: NuGetCommand@2
-        displayName: Install Fake
-        inputs:
-          command: 'custom'
-          arguments: install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source ${{ parameters.packageFeed }}
-      - task: CmdLine@2
-        displayName: Install Incrementalist
-        inputs:
-          script: dotnet tool install Incrementalist.Cmd --version 0.8.0 --tool-path tools/incrementalist --add-source ${{ parameters.packageFeed }}
+      - template: install-build-dependencies.yaml
+        parameters:
+          packageFeed: ${{ parameters.packageFeed }}
       - task: Bash@3 
         displayName: Build (Linux)
         inputs:
@@ -52,12 +38,6 @@ jobs:
           arguments: ${{ parameters.scriptArgs }}
         continueOnError: true
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
-      - task: PublishTestResults@2
-        inputs:
-          testRunner: VSTest
-          testResultsFiles: '**/*.trx' #TestResults folder usually
-          testRunTitle: ${{ parameters.name }}
-          mergeTestResults: true
       - task: CopyFiles@2
         displayName: 'Copy Build Output'
         inputs:
@@ -65,7 +45,10 @@ jobs:
           contents: '**\*'
           targetFolder: $(Build.ArtifactStagingDirectory)
           continueOnError: boolean  # 'true' if future steps should run even if this step fails; defaults to 'false'
-      - script: 'echo 1>&2'
-        failOnStderr: true
-        displayName: 'If above is partially succeeded, then fail'
-        condition: eq(variables['Agent.JobStatus'], 'SucceededWithIssues')
+      - task: PublishTestResults@2
+        inputs:
+          testRunner: VSTest
+          testResultsFiles: '**/*.trx' #TestResults folder usually
+          testRunTitle: ${{ parameters.name }}
+          mergeTestResults: true
+          failTaskOnFailedTests: true

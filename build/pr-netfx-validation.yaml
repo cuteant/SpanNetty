@@ -34,26 +34,12 @@ stages:
         clean: false  # whether to fetch clean each time
         submodules: recursive  # set to 'true' for a single level of submodules or 'recursive' to get submodules of submodules
         persistCredentials: true
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 5.0.302'
-        inputs:
-          packageType: sdk
-          version: 5.0.302
-      - task: UseDotNet@2
-        displayName: 'Install SDK 6.x'
-        inputs:
-          packageType: sdk
-          version: 6.x          
+      - template: templates/install-dotnet.yaml
+      - template: templates/install-nuget.yaml
       - template: templates/restore-nuget-packages.yaml
-      - task: NuGetCommand@2
-        displayName: Install Fake
-        inputs:
-          command: 'custom'
-          arguments: 'install Fake -ExcludeVersion -Version 4.63.0 -OutputDirectory tools -Source $(packageFeed)'
-      - task: CmdLine@2
-        displayName: Install Incrementalist
-        inputs:
-          script: 'dotnet tool install Incrementalist.Cmd --version 0.8.0 --tool-path tools/incrementalist --add-source $(packageFeed)'      
+      - template: templates/install-build-dependencies.yaml
+        parameters:
+          packageFeed: $(packageFeed)
       - task: BatchScript@1
         displayName: Windows Build
         inputs:

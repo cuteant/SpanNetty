@@ -1,0 +1,11 @@
+steps:
+- task: UseDotNet@2
+  displayName: 'Install SDK 5.0.302'
+  inputs:
+    packageType: sdk
+    version: 5.0.302
+- task: UseDotNet@2
+  displayName: 'Install SDK 6.x'
+  inputs:
+    packageType: sdk
+    version: 6.x

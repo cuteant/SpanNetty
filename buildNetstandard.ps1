@@ -30,10 +30,8 @@ Param(
 )
 
 $FakeVersion = "4.63.0"
-$NugetVersion = "5.8.0";
-$NugetUrl = "https://dist.nuget.org/win-x86-commandline/v$NugetVersion/nuget.exe"
 
-$IncrementalistVersion = "0.4.0";
+$IncrementalistVersion = "0.8.0";
 
 # Make sure tools folder exists
 $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
