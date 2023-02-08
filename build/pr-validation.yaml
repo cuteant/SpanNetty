@@ -83,6 +83,7 @@ stages:
 
 - stage: linux
   displayName: Linux (Ubuntu)
+  dependsOn: []
   jobs:
   - template: templates/azure-pipeline.template.yaml
     parameters:
