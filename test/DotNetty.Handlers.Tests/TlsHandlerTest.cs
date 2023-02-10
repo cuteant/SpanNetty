@@ -26,6 +26,7 @@ namespace DotNetty.Handlers.Tests
     {
         static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
 
+
         public TlsHandlerTest(ITestOutputHelper output)
             : base(output)
         {
@@ -50,14 +51,23 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                var tls10Supported = Tls10Supported();
+
+                if (tls10Supported)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                }
+
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
 #if NETCOREAPP_3_0_GREATER
                 //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                if (tls10Supported)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                }
             }
             else
             {
@@ -378,5 +388,9 @@ namespace DotNetty.Handlers.Tests
                 }
             }
         }
+        
+        static bool Tls10Supported()
+            => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Environment.OSVersion.Version < new Version(10, 0, 22000, 0);
+        
     }
 }
