@@ -17,7 +17,7 @@ namespace DotNetty.Handlers.Proxy.Tests
 {
     public class HttpProxyHandlerTest
     {
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestHostname()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 8080);
@@ -29,7 +29,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestHostnameUnresolved()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 8080);
@@ -41,7 +41,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestHostHeaderWithHttpDefaultPort()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 80);
@@ -51,7 +51,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 false);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestHostHeaderWithHttpDefaultPortIgnored()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 80);
@@ -63,7 +63,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestHostHeaderWithHttpsDefaultPort()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 443);
@@ -75,7 +75,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 false);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestHostHeaderWithHttpsDefaultPortIgnored()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 443);
@@ -87,7 +87,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestIpv6()
         {
             EndPoint socketAddress = new IPEndPoint(IPAddress.Parse("::1"), 8080);
@@ -99,7 +99,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestIpv6Unresolved()
         {
             EndPoint socketAddress = new DnsEndPoint("foo.bar", 8080);
@@ -111,7 +111,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestIpv4()
         {
             EndPoint socketAddress = new IPEndPoint(IPAddress.Parse("10.0.0.1"), 8080);
@@ -122,7 +122,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestIpv4Unresolved()
         {
             EndPoint socketAddress = new DnsEndPoint("10.0.0.1", 8080);
@@ -134,7 +134,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestCustomHeaders()
         {
             EndPoint socketAddress = new DnsEndPoint("10.0.0.1", 8080);
@@ -148,7 +148,7 @@ namespace DotNetty.Handlers.Proxy.Tests
                 true);
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestExceptionDuringConnect()
         {
             IEventLoopGroup group = null;
@@ -240,7 +240,7 @@ namespace DotNetty.Handlers.Proxy.Tests
             ));
         }
 
-        [Fact]
+        [Fact(Timeout = 5000)]
         public void TestHttpClientCodecIsInvisible()
         {
             EmbeddedChannel channel =

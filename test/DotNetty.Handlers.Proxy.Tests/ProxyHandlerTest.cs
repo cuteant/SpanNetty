@@ -86,7 +86,7 @@ namespace DotNetty.Handlers.Proxy.Tests
             ClearServerExceptions();
         }
         
-        [Theory]
+        [Theory(Timeout = 5000)]
         [MemberData(nameof(CreateTestItems))]
         public void Test(TestItem item)
         {
