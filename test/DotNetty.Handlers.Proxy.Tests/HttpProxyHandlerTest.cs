@@ -18,7 +18,7 @@ namespace DotNetty.Handlers.Proxy.Tests
     public class HttpProxyHandlerTest
     {
         [Fact(Timeout = 5000)]
-        public void TestHostname()
+        public async Task TestHostname()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 8080);
             TestInitialMessage(
@@ -30,7 +30,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestHostnameUnresolved()
+        public async Task TestHostnameUnresolved()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 8080);
             TestInitialMessage(
@@ -42,7 +42,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestHostHeaderWithHttpDefaultPort()
+        public async Task TestHostHeaderWithHttpDefaultPort()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 80);
             TestInitialMessage(socketAddress,
@@ -52,7 +52,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestHostHeaderWithHttpDefaultPortIgnored()
+        public async Task TestHostHeaderWithHttpDefaultPortIgnored()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 80);
             TestInitialMessage(
@@ -64,7 +64,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestHostHeaderWithHttpsDefaultPort()
+        public async Task TestHostHeaderWithHttpsDefaultPort()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 443);
             TestInitialMessage(
@@ -76,7 +76,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestHostHeaderWithHttpsDefaultPortIgnored()
+        public async Task TestHostHeaderWithHttpsDefaultPortIgnored()
         {
             EndPoint socketAddress = new DnsEndPoint("localhost", 443);
             TestInitialMessage(
@@ -88,7 +88,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestIpv6()
+        public async Task TestIpv6()
         {
             EndPoint socketAddress = new IPEndPoint(IPAddress.Parse("::1"), 8080);
             TestInitialMessage(
@@ -100,7 +100,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestIpv6Unresolved()
+        public async Task TestIpv6Unresolved()
         {
             EndPoint socketAddress = new DnsEndPoint("foo.bar", 8080);
             TestInitialMessage(
@@ -112,7 +112,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestIpv4()
+        public async Task TestIpv4()
         {
             EndPoint socketAddress = new IPEndPoint(IPAddress.Parse("10.0.0.1"), 8080);
             TestInitialMessage(socketAddress,
@@ -123,7 +123,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestIpv4Unresolved()
+        public async Task TestIpv4Unresolved()
         {
             EndPoint socketAddress = new DnsEndPoint("10.0.0.1", 8080);
             TestInitialMessage(
@@ -135,7 +135,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestCustomHeaders()
+        public async Task TestCustomHeaders()
         {
             EndPoint socketAddress = new DnsEndPoint("10.0.0.1", 8080);
             TestInitialMessage(
@@ -149,7 +149,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestExceptionDuringConnect()
+        public async Task TestExceptionDuringConnect()
         {
             IEventLoopGroup group = null;
             IChannel serverChannel = null;
@@ -241,7 +241,7 @@ namespace DotNetty.Handlers.Proxy.Tests
         }
 
         [Fact(Timeout = 5000)]
-        public void TestHttpClientCodecIsInvisible()
+        public async Task TestHttpClientCodecIsInvisible()
         {
             EmbeddedChannel channel =
                 new InactiveEmbeddedChannel(new HttpProxyHandler(new IPEndPoint(IPAddress.Loopback, 8080)));
