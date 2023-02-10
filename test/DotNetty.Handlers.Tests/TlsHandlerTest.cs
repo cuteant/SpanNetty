@@ -102,6 +102,7 @@ namespace DotNetty.Handlers.Tests
             this.Output.WriteLine($"writeStrategy: {writeStrategy}");
             this.Output.WriteLine($"serverProtocol: {serverProtocol}");
             this.Output.WriteLine($"clientProtocol: {clientProtocol}");
+            this.Output.WriteLine($"os: {Environment.OSVersion}");
 
             var executor = new DefaultEventExecutor();
 
