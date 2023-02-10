@@ -51,9 +51,9 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var tls10Supported = Tls10Supported();
+                var legacyTls = LegacyTlsEnabled();
 
-                if (tls10Supported)
+                if (legacyTls)
                 {
                     protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
                     protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
@@ -64,7 +64,7 @@ namespace DotNetty.Handlers.Tests
                 //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                if (tls10Supported)
+                if (legacyTls)
                 {
                     protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
                 }
@@ -160,14 +160,23 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                var legacyTls = LegacyTlsEnabled();
+
+                if (legacyTls)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                }
+
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
 #if NETCOREAPP_3_0_GREATER
                 //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                if (legacyTls)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                }
             }
             else
             {
@@ -389,7 +398,7 @@ namespace DotNetty.Handlers.Tests
             }
         }
         
-        static bool Tls10Supported()
+        static bool LegacyTlsEnabled()
             => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Environment.OSVersion.Version < new Version(10, 0, 22000, 0);
         
     }
