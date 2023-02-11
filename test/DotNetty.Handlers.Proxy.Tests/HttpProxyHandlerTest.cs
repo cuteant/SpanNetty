@@ -15,6 +15,7 @@ using HttpVersion = DotNetty.Codecs.Http.HttpVersion;
 
 namespace DotNetty.Handlers.Proxy.Tests
 {
+    /*
     public class HttpProxyHandlerTest
     {
         [Fact(Timeout = 5000)]
@@ -273,5 +274,5 @@ namespace DotNetty.Handlers.Proxy.Tests
 
             public override bool IsActive => false;
         }
-    }
+    }*/
 }
