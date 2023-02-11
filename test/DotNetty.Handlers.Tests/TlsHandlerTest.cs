@@ -51,30 +51,29 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var legacyTls = LegacyTlsEnabled();
-
+                var legacyTls = IsWindowsBefore2022();
                 if (legacyTls)
                 {
                     protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
                     protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
                 }
-
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
 #if NETCOREAPP_3_0_GREATER
                 //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                if (legacyTls)
-                {
-                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
-                }
             }
             else
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                var legacyTls = !IsUbuntu2004();
+                if (legacyTls)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                }
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
             var writeStrategyFactories = new Func<IWriteStrategy>[]
             {
@@ -164,12 +163,12 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var legacyTls = LegacyTlsEnabled();
-
+                var legacyTls = IsWindowsBefore2022();
                 if (legacyTls)
                 {
                     protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
                     protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
                 }
 
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
@@ -177,17 +176,17 @@ namespace DotNetty.Handlers.Tests
                 //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                if (legacyTls)
-                {
-                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
-                }
             }
             else
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                var legacyTls = !IsUbuntu2004();
+                if (legacyTls)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                }
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
 
             return
@@ -205,10 +204,6 @@ namespace DotNetty.Handlers.Tests
             this.Output.WriteLine($"isClient: {isClient}");
             this.Output.WriteLine($"serverProtocol: {serverProtocol}");
             this.Output.WriteLine($"clientProtocol: {clientProtocol}");
-            this.Output.WriteLine($"os: {Environment.OSVersion}");
-            this.Output.WriteLine($"os sys: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystem}");
-            this.Output.WriteLine($"os sys plat: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemPlatform}");
-            this.Output.WriteLine($"os sys ver: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemVersion}");
 
             var writeStrategy = new AsIsWriteStrategy();
             this.Output.WriteLine($"writeStrategy: {writeStrategy}");
@@ -406,8 +401,12 @@ namespace DotNetty.Handlers.Tests
             }
         }
         
-        static bool LegacyTlsEnabled()
+        static bool IsWindowsBefore2022()
             => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Environment.OSVersion.Version < new Version(10, 0, 22000, 0);
-        
+
+        static bool IsUbuntu2004()
+            => RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+               && Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystem == "ubuntu"
+               && Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemVersion == "20.04";
     }
 }

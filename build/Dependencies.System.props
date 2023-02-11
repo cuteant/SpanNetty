@@ -29,6 +29,7 @@
     <SystemIdentityModelTokensJwtPackageVersion>6.11.0</SystemIdentityModelTokensJwtPackageVersion>
 
     <!-- Compatibility packages -->
+    <MicrosoftDotNetPlatformAbstractions>3.1.6</MicrosoftDotNetPlatformAbstractions>
     <MicrosoftWin32RegistryPackageVersion>5.0.0</MicrosoftWin32RegistryPackageVersion>
     <MicrosoftWin32RegistryAccessControlPackageVersion>5.0.0</MicrosoftWin32RegistryAccessControlPackageVersion>
     <MicrosoftWindowsCompatibilityPackageVersion>5.0.2</MicrosoftWindowsCompatibilityPackageVersion>
