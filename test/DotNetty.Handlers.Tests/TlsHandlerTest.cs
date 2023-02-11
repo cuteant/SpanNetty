@@ -51,7 +51,7 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var legacyTls = true;//IsWindowsBefore2022();
+                var legacyTls = IsWindowsBefore2022();
                 if (legacyTls)
                 {
                     protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
