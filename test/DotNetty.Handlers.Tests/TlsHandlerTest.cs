@@ -51,7 +51,7 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var legacyTls = IsWindowsBefore2022();
+                var legacyTls = true;//IsWindowsBefore2022();
                 if (legacyTls)
                 {
                     protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
@@ -402,7 +402,7 @@ namespace DotNetty.Handlers.Tests
         }
         
         static bool IsWindowsBefore2022()
-            => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Environment.OSVersion.Version < new Version(10, 0, 22000, 0);
+            => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Environment.OSVersion.Version < new Version(10, 0, 20348, 0);
 
         static bool IsUbuntu2004()
             => RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
