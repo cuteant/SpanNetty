@@ -103,6 +103,9 @@ namespace DotNetty.Handlers.Tests
             this.Output.WriteLine($"serverProtocol: {serverProtocol}");
             this.Output.WriteLine($"clientProtocol: {clientProtocol}");
             this.Output.WriteLine($"os: {Environment.OSVersion}");
+            this.Output.WriteLine($"os sys: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystem}");
+            this.Output.WriteLine($"os sys plat: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemPlatform}");
+            this.Output.WriteLine($"os sys ver: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemVersion}");
 
             var executor = new DefaultEventExecutor();
 
@@ -202,6 +205,10 @@ namespace DotNetty.Handlers.Tests
             this.Output.WriteLine($"isClient: {isClient}");
             this.Output.WriteLine($"serverProtocol: {serverProtocol}");
             this.Output.WriteLine($"clientProtocol: {clientProtocol}");
+            this.Output.WriteLine($"os: {Environment.OSVersion}");
+            this.Output.WriteLine($"os sys: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystem}");
+            this.Output.WriteLine($"os sys plat: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemPlatform}");
+            this.Output.WriteLine($"os sys ver: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemVersion}");
 
             var writeStrategy = new AsIsWriteStrategy();
             this.Output.WriteLine($"writeStrategy: {writeStrategy}");
