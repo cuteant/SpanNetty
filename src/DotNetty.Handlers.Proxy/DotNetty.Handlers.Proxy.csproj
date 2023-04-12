@@ -6,10 +6,11 @@
         <RootNamespace>DotNetty.Handlers.Proxy</RootNamespace>
         <AssemblyName>SpanNetty.Handlers.Proxy</AssemblyName>
         <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <PropertyGroup Label="NuGet">
-        <PackageId>SpanNetty.Handlers.Proxy</PackageId>
+        <PackageId>Microsoft.Azure.SpanNetty.Handlers.Proxy</PackageId>
         <Title>SpanNetty.Handlers.Proxy</Title>
         <Description>Protobuf Proto3 codec.</Description>
         <PackageTags>socket;tcp;protocol;netty;dotnetty;network;proxy;webproxy;httpproxy;tunnelproxy</PackageTags>

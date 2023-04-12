@@ -46,6 +46,7 @@ jobs:
           targetFolder: $(Build.ArtifactStagingDirectory)
           continueOnError: boolean  # 'true' if future steps should run even if this step fails; defaults to 'false'
       - task: PublishTestResults@2
+        displayName: 'Publish test results'
         inputs:
           testRunner: VSTest
           testResultsFiles: '**/*.trx' #TestResults folder usually

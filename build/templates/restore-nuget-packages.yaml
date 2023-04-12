@@ -1,6 +1,6 @@
 steps:
   - task: NuGetCommand@2
-    displayName: 'Restore NuGet Pacakges'
+    displayName: 'Restore NuGet Packages'
     inputs:
       command: 'restore'
       restoreSolution: DotNetty.sln

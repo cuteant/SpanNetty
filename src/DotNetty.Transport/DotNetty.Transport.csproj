@@ -6,10 +6,11 @@
     <RootNamespace>DotNetty.Transport</RootNamespace>
     <AssemblyName>SpanNetty.Transport</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>SpanNetty.Transport</PackageId>
+    <PackageId>Microsoft.Azure.SpanNetty.Transport</PackageId>
     <Title>SpanNetty.Transport</Title>
     <Description>Transport model：the port of the Netty.Transport assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;udp;protocol;netty;dotnetty;network</PackageTags>

@@ -5,7 +5,6 @@ open System
 open System.IO
 open System.Text
 
-
 open Fake
 open Fake.DotNetCli
 open Fake.NuGet.Install

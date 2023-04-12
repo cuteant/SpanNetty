@@ -6,10 +6,11 @@
     <RootNamespace>DotNetty.Buffers</RootNamespace>
     <AssemblyName>SpanNetty.Buffers</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>SpanNetty.Buffers</PackageId>
+    <PackageId>Microsoft.Azure.SpanNetty.Buffers</PackageId>
     <Title>SpanNetty.Buffers</Title>
     <Description>Buffer management：the port of the Netty.Buffers assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
