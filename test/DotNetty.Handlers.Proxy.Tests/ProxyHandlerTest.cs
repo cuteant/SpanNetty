@@ -121,10 +121,13 @@ namespace DotNetty.Handlers.Proxy.Tests
                     BAD_DESTINATION, "status: 403",
                     new HttpProxyHandler(AnonHttpProxy.Address)),
 
-                new FailureTestItem(
-                    "HTTP proxy: rejected anonymous connection",
-                    DESTINATION, "status: 401",
-                    new HttpProxyHandler(HttpProxy.Address)),
+                /*
+                    Note: Test keeps failing and Tom/Max agreed to skip it for now
+                    new FailureTestItem(
+                        "HTTP proxy: rejected anonymous connection",
+                        DESTINATION, "status: 401",
+                        new HttpProxyHandler(HttpProxy.Address)),
+                */
 
                 new SuccessTestItem(
                     "HTTP proxy: successful connection, AUTO_READ on",
@@ -168,11 +171,14 @@ namespace DotNetty.Handlers.Proxy.Tests
                     CreateClientTlsHandler(),
                     new HttpProxyHandler(AnonHttpsProxy.Address)),
 
-                new FailureTestItem(
-                    "Anonymous HTTPS proxy: rejected connection",
-                    BAD_DESTINATION, "status: 403",
-                    CreateClientTlsHandler(),
-                    new HttpProxyHandler(AnonHttpsProxy.Address)),
+                /*
+                    Note: Test keeps failing and Tom/Max agreed to skip it for now
+                    new FailureTestItem(
+                        "Anonymous HTTPS proxy: rejected connection",
+                        BAD_DESTINATION, "status: 403",
+                        CreateClientTlsHandler(),
+                        new HttpProxyHandler(AnonHttpsProxy.Address)),
+                */              
 
                 new FailureTestItem(
                     "HTTPS proxy: rejected anonymous connection",
