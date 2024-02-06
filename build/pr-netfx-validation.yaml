@@ -25,7 +25,7 @@ stages:
   displayName: Windows
   jobs:
   - job: WindowsBuild
-    displayName: Build (Windows VS2022)
+    displayName: Build (Windows 2022)
     pool:
       vmImage: windows-2022
       demands: Cmd
@@ -62,7 +62,7 @@ stages:
   - template: templates/azure-pipeline.template.yaml
     parameters:
       name: 'netfx_tests_windows'
-      displayName: 'Unit Tests (Windows)'
+      displayName: 'Unit Tests (Windows 2019)'
       vmImage: 'windows-2019'
       scriptFileName: build.cmd
       scriptArgs: RunTestsNetFx471 incremental

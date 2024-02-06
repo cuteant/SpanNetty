@@ -387,3 +387,4 @@ TODO.txt
 /global.json
 /.idea/
 build.fsx.lock
+/.vscode
