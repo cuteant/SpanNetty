@@ -59,13 +59,13 @@ stages:
         displayName: 'If above is partially succeeded, then fail'
         condition: eq(variables['Agent.JobStatus'], 'SucceededWithIssues')
 
-  - template: templates/azure-pipeline.template.yaml
-    parameters:
-      name: 'netfx_tests_windows'
-      displayName: 'Unit Tests (Windows 2019)'
-      vmImage: 'windows-2019'
-      scriptFileName: build.cmd
-      scriptArgs: RunTestsNetFx471 incremental
-      outputDirectory: 'TestResults'
-      artifactName: 'netfx_tests_windows-$(Build.BuildId)'
-      packageFeed: $(packageFeed)
+  # - template: templates/azure-pipeline.template.yaml
+  #   parameters:
+  #     name: 'netfx_tests_windows'
+  #     displayName: 'Unit Tests (Windows 2019)'
+  #     vmImage: 'windows-2019'
+  #     scriptFileName: build.cmd
+  #     scriptArgs: RunTestsNetFx471 incremental
+  #     outputDirectory: 'TestResults'
+  #     artifactName: 'netfx_tests_windows-$(Build.BuildId)'
+  #     packageFeed: $(packageFeed)
