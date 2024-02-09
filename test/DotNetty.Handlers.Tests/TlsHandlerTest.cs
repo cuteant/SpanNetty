@@ -26,6 +26,7 @@ namespace DotNetty.Handlers.Tests
     {
         static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
 
+
         public TlsHandlerTest(ITestOutputHelper output)
             : base(output)
         {
@@ -50,21 +51,29 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                var legacyTls = IsWindowsBefore2022();
+                if (legacyTls)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                }
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
 #if NETCOREAPP_3_0_GREATER
                 //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
             else
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                var legacyTls = !IsUbuntu2004();
+                if (legacyTls)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                }
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
             var writeStrategyFactories = new Func<IWriteStrategy>[]
             {
@@ -92,6 +101,10 @@ namespace DotNetty.Handlers.Tests
             this.Output.WriteLine($"writeStrategy: {writeStrategy}");
             this.Output.WriteLine($"serverProtocol: {serverProtocol}");
             this.Output.WriteLine($"clientProtocol: {clientProtocol}");
+            this.Output.WriteLine($"os: {Environment.OSVersion}");
+            this.Output.WriteLine($"os sys: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystem}");
+            this.Output.WriteLine($"os sys plat: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemPlatform}");
+            this.Output.WriteLine($"os sys ver: {Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemVersion}");
 
             var executor = new DefaultEventExecutor();
 
@@ -150,21 +163,30 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                var legacyTls = IsWindowsBefore2022();
+                if (legacyTls)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                }
+
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
 #if NETCOREAPP_3_0_GREATER
                 //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
             else
             {
-                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                var legacyTls = !IsUbuntu2004();
+                if (legacyTls)
+                {
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                    protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+                }
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
-                protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
 
             return
@@ -237,8 +259,8 @@ namespace DotNetty.Handlers.Tests
             X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
             string targetHost = tlsCertificate.GetNameInfo(X509NameType.DnsName, false);
             TlsHandler tlsHandler = isClient ?
-                new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(clientProtocol, false, new List<X509Certificate>(), targetHost)) :
-                new TlsHandler(new ServerTlsSettings(tlsCertificate, false, false, serverProtocol));
+                new TlsHandler(new ClientTlsSettings(clientProtocol, false, new List<X509Certificate>(), targetHost).AllowAnyServerCertificate()) :
+                new TlsHandler(new ServerTlsSettings(tlsCertificate, false, false, serverProtocol).AllowAnyClientCertificate());
             //var ch = new EmbeddedChannel(new LoggingHandler("BEFORE"), tlsHandler, new LoggingHandler("AFTER"));
             var ch = new EmbeddedChannel(tlsHandler);
 
@@ -275,14 +297,18 @@ namespace DotNetty.Handlers.Tests
             });
 
             var driverStream = new SslStream(mediationStream, true, (_1, _2, _3, _4) => true);
+            var handshakeTimeout = TimeSpan.FromSeconds(5);
             if (isClient)
             {
-                await Task.Run(() => driverStream.AuthenticateAsServerAsync(tlsCertificate, false, serverProtocol, false)).WithTimeout(TimeSpan.FromSeconds(5));
+                await Task.Run(() => driverStream.AuthenticateAsServerAsync(tlsCertificate, false, serverProtocol, false)).WithTimeout(handshakeTimeout);
             }
             else
             {
-                await Task.Run(() => driverStream.AuthenticateAsClientAsync(targetHost, null, clientProtocol, false)).WithTimeout(TimeSpan.FromSeconds(5));
+                await Task.Run(() => driverStream.AuthenticateAsClientAsync(targetHost, null, clientProtocol, false)).WithTimeout(handshakeTimeout);
             }
+            
+            await tlsHandler.HandshakeCompletion.WithTimeout(handshakeTimeout);
+            
             writeTasks.Clear();
 
             return Tuple.Create(ch, driverStream);
@@ -338,7 +364,7 @@ namespace DotNetty.Handlers.Tests
             var readHandler = new ReadRegisterHandler();
             var ch = new EmbeddedChannel(EmbeddedChannelId.Instance, false, false,
                readHandler,
-               TlsHandler.Client("dotnetty.com"),
+               TlsHandler.Client("dotnetty.com", true),
                new ActivatingHandler(dropChannelActive)
             );
 
@@ -378,5 +404,44 @@ namespace DotNetty.Handlers.Tests
                 }
             }
         }
+        
+        static bool IsWindowsBefore2022() 
+            => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Environment.OSVersion.Version < new Version(10, 0, 20348, 0);
+
+        static bool IsUbuntu2004()
+            => RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+               && Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystem == "ubuntu"
+               && Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemVersion == "20.04";
+
+        /*const string TlsKeyPrefix = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols";
+
+        static bool WindowsLegacyTlsEnabled()
+            => TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.0\\Client", "DisabledByDefault", out var val) && val == 0
+                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.0\\Client", "Enabled", out val) && val == 1
+                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.0\\Server", "DisabledByDefault", out val) && val == 0
+                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.0\\Server", "Enabled", out val) && val == 1
+                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.1\\Client", "DisabledByDefault", out val) && val == 0
+                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.1\\Client", "Enabled", out val) && val == 1
+                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.1\\Server", "DisabledByDefault", out val) && val == 0
+                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.1\\Server", "Enabled", out val) && val == 1;
+                
+        static bool TryGetRegistryKey<T>(string key, string name, out T result)
+        {
+            result = default;
+            try
+            {
+                var existingValue = Registry.GetValue(key, name, null);
+                if (existingValue is T res)
+                {
+                    result = res;
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }*/
     }
 }

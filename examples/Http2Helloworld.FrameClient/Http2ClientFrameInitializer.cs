@@ -1,11 +1,11 @@
 ﻿namespace Http2Helloworld.FrameClient
 {
-    using System.Collections.Generic;
-    using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
     using DotNetty.Codecs.Http2;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
+    using System.Collections.Generic;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
 
     /// <summary>
     /// Configures client pipeline to support HTTP/2 frames via {@link Http2FrameCodec} and {@link Http2MultiplexHandler}.
@@ -21,23 +21,22 @@
             _targetHost = targetHost;
         }
 
-        protected override void InitChannel(IChannel ch)
+        protected override void InitChannel(IChannel channel)
         {
-            var pipeline = ch.Pipeline;
+            var pipeline = channel.Pipeline;
             if (_cert is object)
             {
-                pipeline.AddLast("tls", new TlsHandler(
-                    stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true),
-                    new ClientTlsSettings(_targetHost)
+                var tlsSettings = new ClientTlsSettings(_targetHost)
+                {
+                    ApplicationProtocols = new List<SslApplicationProtocol>(new[]
                     {
-                        ApplicationProtocols = new List<SslApplicationProtocol>(new[]
-                        {
-                            SslApplicationProtocol.Http2,
-                            //SslApplicationProtocol.Http11
-                        })
-                    }
-                ));
+                        SslApplicationProtocol.Http2,
+                        SslApplicationProtocol.Http11
+                    })
+                }.AllowAnyServerCertificate();
+                pipeline.AddLast("tls", new TlsHandler(tlsSettings));
             }
+
             var build = Http2FrameCodecBuilder.ForClient();
             build.InitialSettings = Http2Settings.DefaultSettings(); // this is the default, but shows it can be changed.
             Http2FrameCodec http2FrameCodec = build.Build();
@@ -47,7 +46,7 @@
 
         sealed class SimpleChannelInboundHandler0 : SimpleChannelInboundHandler<object>
         {
-            protected override void ChannelRead0(IChannelHandlerContext ctx, object msg)
+            protected override void ChannelRead0(IChannelHandlerContext context, object message)
             {
                 // NOOP (this is the handler for 'inbound' streams, which is not relevant in this example)
             }

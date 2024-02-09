@@ -2,7 +2,6 @@
 {
     using System;
     using System.Text;
-    using Examples.Common;
 
     /**
      * Static and dynamically generated HTML for the example.

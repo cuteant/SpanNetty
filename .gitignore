@@ -385,3 +385,6 @@ TODO.txt
 /test/DotNetty.Transport.Tests.Performance/Perf
 /tools
 /global.json
+/.idea/
+build.fsx.lock
+/.vscode

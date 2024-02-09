@@ -3,21 +3,22 @@
 
 namespace SecureChat.Server
 {
-    using System;
-    using System.Net;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Groups;
+    using System;
+    using System.Net;
 
     public class SecureChatServerHandler : SimpleChannelInboundHandler<string>
     {
         static volatile IChannelGroup group;
+        static object syncObject = new object();
 
         public override void ChannelActive(IChannelHandlerContext contex)
         {
             IChannelGroup g = group;
             if (g == null)
             {
-                lock (this)
+                lock (syncObject)
                 {
                     if (group == null)
                     {
@@ -26,7 +27,8 @@ namespace SecureChat.Server
                 }
             }
 
-            contex.WriteAndFlushAsync(string.Format("Welcome to {0} secure chat server!\n", Dns.GetHostName()));
+            var hostname = Dns.GetHostName();
+            contex.WriteAndFlushAsync($"Welcome to {hostname} secure chat server!\n");
             g.Add(contex.Channel);
         }
 
@@ -42,26 +44,26 @@ namespace SecureChat.Server
             public bool Matches(IChannel channel) => channel.Id != this.id;
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext contex, string msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, string msg)
         {
             //send message to all but this one
-            string broadcast = string.Format("[{0}] {1}\n", contex.Channel.RemoteAddress, msg);
-            string response = string.Format("[you] {0}\n", msg);
-            group.WriteAndFlushAsync(broadcast, new EveryOneBut(contex.Channel.Id));
-            contex.WriteAndFlushAsync(response);
+            string broadcast = $"[{context.Channel.RemoteAddress}] {msg}\n";
+            string response = $"[you] {msg}\n";
+            group.WriteAndFlushAsync(broadcast, new EveryOneBut(context.Channel.Id));
+            context.WriteAndFlushAsync(response);
 
             if (string.Equals("bye", msg, StringComparison.OrdinalIgnoreCase))
             {
-                contex.CloseAsync();
+                context.CloseAsync();
             }
         }
 
-        public override void ChannelReadComplete(IChannelHandlerContext ctx) => ctx.Flush();
+        public override void ChannelReadComplete(IChannelHandlerContext context) => context.Flush();
 
-        public override void ExceptionCaught(IChannelHandlerContext ctx, Exception e)
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            Console.WriteLine("{0}", e.StackTrace);
-            ctx.CloseAsync();
+            Console.WriteLine($"{exception}");
+            context.CloseAsync();
         }
 
         public override bool IsSharable => true;

@@ -12,6 +12,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.DotNet.PlatformAbstractions" Version="$(MicrosoftDotNetPlatformAbstractions)" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNetTestSdkPackageVersion)" />
 		<PackageReference Include="xunit" Version="$(xUnitPackageVersion)" />
 		<PackageReference Include="xunit.analyzers" Version="$(xUnitAnalyzersPackageVersion)" />

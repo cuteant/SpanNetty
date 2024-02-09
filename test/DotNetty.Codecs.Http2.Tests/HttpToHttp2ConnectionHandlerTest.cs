@@ -49,21 +49,21 @@ namespace DotNetty.Codecs.Http2.Tests
         }
     }
 
-    //public sealed class SocketHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
-    //{
-    //    public SocketHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
+    public sealed class SocketHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
+    {
+        public SocketHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
 
-    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
-    //                 .Channel<TcpServerSocketChannel>();
-    //    }
+        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+        {
+            bootstrap.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup())
+                     .Channel<TcpServerSocketChannel>();
+        }
 
-    //    protected override void SetupBootstrap(Bootstrap bootstrap)
-    //    {
-    //        bootstrap.Group(new MultithreadEventLoopGroup()).Channel<TcpSocketChannel>();
-    //    }
-    //}
+        protected override void SetupBootstrap(Bootstrap bootstrap)
+        {
+            bootstrap.Group(new MultithreadEventLoopGroup()).Channel<TcpSocketChannel>();
+        }
+    }
 
     public sealed class LocalHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
     {
@@ -726,8 +726,8 @@ namespace DotNetty.Codecs.Http2.Tests
             X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
             string targetHost = tlsCertificate.GetNameInfo(X509NameType.DnsName, false);
             TlsHandler tlsHandler = isClient ?
-                new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)) :
-                new TlsHandler(new ServerTlsSettings(tlsCertificate));
+                new TlsHandler(new ClientTlsSettings(targetHost).AllowAnyServerCertificate()):
+                new TlsHandler(new ServerTlsSettings(tlsCertificate).AllowAnyClientCertificate());
             return tlsHandler;
         }
 

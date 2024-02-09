@@ -3,11 +3,11 @@
 
 namespace Examples.Common
 {
-    using System;
     using DotNetty.Common.Internal.Logging;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
     using NLog.Extensions.Logging;
+    using System;
 
     public static class ExampleHelper
     {

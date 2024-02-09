@@ -1,7 +1,7 @@
 ﻿namespace WebSockets.Server
 {
-    using System.Text;
     using DotNetty.Buffers;
+    using System.Text;
 
     /// <summary>
     /// Generates the demo HTML page which is served at http://localhost:8080/

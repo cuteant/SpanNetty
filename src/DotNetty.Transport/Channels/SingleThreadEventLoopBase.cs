@@ -105,11 +105,7 @@ namespace DotNetty.Transport.Channels
                 Reject(task);
             }
 
-            if (!(task is ILazyRunnable)
-#if DEBUG
-                && WakesUpForTask(task)
-#endif
-                )
+            if (!(task is ILazyRunnable) && WakesUpForTask(task))
             {
                 WakeUp(InEventLoop);
             }

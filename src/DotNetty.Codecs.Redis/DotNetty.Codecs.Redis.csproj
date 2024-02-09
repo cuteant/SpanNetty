@@ -6,12 +6,11 @@
     <RootNamespace>DotNetty.Codecs.Redis</RootNamespace>
     <AssemblyName>SpanNetty.Codecs.Redis</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <IsPackable>false</IsPackable>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <PackageId>SpanNetty.Codecs.Redis</PackageId>
+    <PackageId>Microsoft.Azure.SpanNetty.Codecs.Redis</PackageId>
     <Title>SpanNetty.Codecs.Redis</Title>
     <Description>Redis codec：the port of the Netty.Codecs.Redis assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;redis</PackageTags>

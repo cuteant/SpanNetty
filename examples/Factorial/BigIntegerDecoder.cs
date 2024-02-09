@@ -3,12 +3,12 @@
 
 namespace Factorial
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Numerics;
     using DotNetty.Buffers;
     using DotNetty.Codecs;
     using DotNetty.Transport.Channels;
+    using System;
+    using System.Collections.Generic;
+    using System.Numerics;
 
     public class BigIntegerDecoder : ByteToMessageDecoder
     {
@@ -24,14 +24,16 @@ namespace Factorial
             if (magicNumber != 'F')
             {
                 input.ResetReaderIndex();
-                throw new Exception("Invalid magic number: " + magicNumber);
+                throw new Exception($"Invalid magic number: {magicNumber}");
             }
+
             int dataLength = input.ReadInt();
             if (input.ReadableBytes < dataLength)
             {
                 input.ResetReaderIndex();
                 return;
             }
+
             var decoded = new byte[dataLength];
             input.ReadBytes(decoded);
 

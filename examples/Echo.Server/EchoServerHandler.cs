@@ -3,10 +3,10 @@
 
 namespace Echo.Server
 {
-    using System;
-    using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
+    using System;
+    using System.Text;
 
     /// <summary>
     /// Handler implementation for the echo server.
@@ -19,7 +19,7 @@ namespace Echo.Server
         {
             if (message is IByteBuffer buffer)
             {
-                Console.WriteLine("Received from client: " + buffer.ToString(Encoding.UTF8));
+                Console.WriteLine($"Received from client: {buffer.ToString(Encoding.UTF8)}");
             }
             context.WriteAsync(message);
         }
@@ -28,7 +28,7 @@ namespace Echo.Server
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            Console.WriteLine("Exception: " + exception);
+            Console.WriteLine($"{exception}");
             context.CloseAsync();
         }
     }

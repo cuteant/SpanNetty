@@ -23,8 +23,12 @@
 namespace DotNetty.Common.Utilities
 {
     using System.Runtime.CompilerServices;
+#if NET
+    using System;
+#else
     using System.Runtime.InteropServices;
     using DotNetty.Common.Internal;
+#endif
 
 
     public static class ICharSequenceExtensions
@@ -38,12 +42,19 @@ namespace DotNetty.Common.Utilities
 
                 case IHasAsciiSpan hasAscii:
                     if ((uint)c > AsciiString.uMaxCharValue) { return false; }
+#if NET
+                    return hasAscii.AsciiSpan.Contains((byte)c);
+#else
                     var asciiSpan = hasAscii.AsciiSpan;
                     return SpanHelpers.Contains(ref MemoryMarshal.GetReference(asciiSpan), (byte)c, asciiSpan.Length);
+#endif
 
                 case IHasUtf16Span hasUtf16:
+#if NET
+#else
                     var utf16Span = hasUtf16.Utf16Span;
                     return SpanHelpers.Contains(ref MemoryMarshal.GetReference(utf16Span), c, utf16Span.Length);
+#endif
 
                 default:
                     int length = sequence.Count;

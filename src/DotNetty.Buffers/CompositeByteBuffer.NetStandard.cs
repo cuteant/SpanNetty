@@ -27,7 +27,6 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Buffers;
-    using System.Diagnostics;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 
@@ -35,80 +34,39 @@ namespace DotNetty.Buffers
     {
         protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
         {
-            if (0u >= (uint)count) { return ReadOnlyMemory<byte>.Empty; }
+            if (0u >= (uint)count || _componentCount == 0) { return ReadOnlyMemory<byte>.Empty; }
 
-            switch (_componentCount)
-            {
-                case 0:
-                    return ReadOnlyMemory<byte>.Empty;
-                case 1:
-                    ComponentEntry c = _components[0];
-                    IByteBuffer buf = c.Buffer;
-                    if (buf.IsSingleIoBuffer)
-                    {
-                        return buf.GetReadableMemory(c.Idx(index), count);
-                    }
-                    break;
-            }
-
-            var merged = new Memory<byte>(new byte[count]);
             var buffers = GetSequence(index, count);
+            if (buffers.IsSingleSegment) { return buffers.First; }
 
-            int offset = 0;
-            foreach (var buf in buffers)
-            {
-                Debug.Assert(merged.Length - offset >= buf.Length);
-
-                buf.CopyTo(merged.Slice(offset));
-                offset += buf.Length;
-            }
-
+            var merged = buffers.ToArray();
             return merged;
         }
 
         protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
-            if (0u >= (uint)count) { return ReadOnlySpan<byte>.Empty; }
+            if (0u >= (uint)count || _componentCount == 0) { return ReadOnlySpan<byte>.Empty; }
 
-            switch (_componentCount)
-            {
-                case 0:
-                    return ReadOnlySpan<byte>.Empty;
-                case 1:
-                    //ComponentEntry c = _components[0];
-                    //return c.Buffer.GetReadableSpan(index, count);
-                    ComponentEntry c = _components[0];
-                    IByteBuffer buf = c.Buffer;
-                    if (buf.IsSingleIoBuffer)
-                    {
-                        return buf.GetReadableSpan(c.Idx(index), count);
-                    }
-                    break;
-            }
-
-            var merged = new Memory<byte>(new byte[count]);
             var buffers = GetSequence(index, count);
+            if (buffers.IsSingleSegment) { return buffers.First.Span; }
 
-            int offset = 0;
-            foreach (var buf in buffers)
-            {
-                Debug.Assert(merged.Length - offset >= buf.Length);
-
-                buf.CopyTo(merged.Slice(offset));
-                offset += buf.Length;
-            }
-
-            return merged.Span;
+            var merged = buffers.ToArray();
+            return merged;
         }
 
         protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count)
         {
             if (0u >= (uint)count) { return ReadOnlySequence<byte>.Empty; }
 
+            int i = ToComponentIndex0(index);
+            if (i == ToComponentIndex0(index + count - 1))
+            {
+                ComponentEntry c = _components[i];
+                return c.Buffer.GetSequence(c.Idx(index), count);
+            }
             var buffers = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(_componentCount);
             try
             {
-                int i = ToComponentIndex0(index);
                 while (count > 0)
                 {
                     ComponentEntry c = _components[i];
@@ -167,6 +125,12 @@ namespace DotNetty.Buffers
                     ComponentEntry c = _components[0];
                     return c.Buffer.GetMemory(index, count);
                 default:
+                    var idx = ToComponentIndex0(index);
+                    if (idx == ToComponentIndex0(index + count - 1))
+                    {
+                        ComponentEntry c1 = _components[idx];
+                        return c1.Buffer.GetMemory(c1.Idx(index), count);
+                    }
                     throw ThrowHelper.GetNotSupportedException();
             }
         }
@@ -183,7 +147,51 @@ namespace DotNetty.Buffers
                     ComponentEntry c = _components[0];
                     return c.Buffer.GetSpan(index, count);
                 default:
+                    var idx = ToComponentIndex0(index);
+                    if (idx == ToComponentIndex0(index + count - 1))
+                    {
+                        ComponentEntry c1 = _components[idx];
+                        return c1.Buffer.GetSpan(c1.Idx(index), count);
+                    }
                     throw ThrowHelper.GetNotSupportedException();
+            }
+        }
+
+        protected internal override void _GetBytes(int index, Span<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            var srcIndex = 0;
+            int i = ToComponentIndex0(index);
+            while (length > 0)
+            {
+                ComponentEntry c = _components[i];
+                int localLength = Math.Min(length, c.EndOffset - index);
+                _ = c.Buffer.GetBytes(c.Idx(index), destination.Slice(srcIndex, localLength));
+                index += localLength;
+                srcIndex += localLength;
+                length -= localLength;
+                i++;
+            }
+        }
+
+        protected internal override void _GetBytes(int index, Memory<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            var srcIndex = 0;
+            int i = ToComponentIndex0(index);
+            while (length > 0)
+            {
+                ComponentEntry c = _components[i];
+                int localLength = Math.Min(length, c.EndOffset - index);
+                _ = c.Buffer.GetBytes(c.Idx(index), destination.Slice(srcIndex, localLength));
+                index += localLength;
+                srcIndex += localLength;
+                length -= localLength;
+                i++;
             }
         }
 

@@ -38,6 +38,15 @@ namespace DotNetty.Handlers.Tests
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => this.readDataFunc(new ArraySegment<byte>(buffer, offset, count));
 
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => this.writeDataFunc(new ArraySegment<byte>(buffer, offset, count));
+        
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = new CancellationToken())
+        {
+            var array = buffer.ToArray();
+            await this.writeDataFunc(new ArraySegment<byte>(array, 0, array.Length));
+        }
+#endif
+        
 
 #if !NETCOREAPP1_1
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)

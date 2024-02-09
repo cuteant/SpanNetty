@@ -3,33 +3,43 @@
 trigger:
   branches:
     include:
-      - future
-      - master
+      - main
       - release/*
 
 pr:
   autoCancel: true # indicates whether additional pushes to a PR should cancel in-progress runs for the same PR. Defaults to true
   branches:
-    include: [ future, master, release/* ] # branch names which will trigger a build
+    include:  # branch names which will trigger a build
+    - main
+    - release/*
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
-jobs:
+variables:
+  NUGET_XMLDOC_MODE: none
+  NUGET_CREDENTIALPROVIDER_SESSIONTOKENCACHE_ENABLED: 'true'
+  packageFeed: 'https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
+
+stages:
+- stage: windows
+  displayName: Windows
+  jobs:
   - job: WindowsBuild
-    displayName: Windows Build
+    displayName: Build (Windows 2022)
     pool:
-      vmImage: vs2017-win2016
+      vmImage: windows-2022
       demands: Cmd
     steps:
       - checkout: self  # self represents the repo where the initial Pipelines YAML file was found
         clean: false  # whether to fetch clean each time
         submodules: recursive  # set to 'true' for a single level of submodules or 'recursive' to get submodules of submodules
         persistCredentials: true
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 5.0.203'
-        inputs:
-          packageType: sdk
-          version: 5.0.203
+      - template: templates/install-dotnet.yaml
+      - template: templates/install-nuget.yaml
+      - template: templates/restore-nuget-packages.yaml
+      - template: templates/install-build-dependencies.yaml
+        parameters:
+          packageFeed: $(packageFeed)
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
@@ -49,22 +59,13 @@ jobs:
         displayName: 'If above is partially succeeded, then fail'
         condition: eq(variables['Agent.JobStatus'], 'SucceededWithIssues')
 
-  - template: azure-pipeline.template.yaml
-    parameters:
-      name: 'netfx_tests_windows'
-      displayName: '.NET Framework Unit Tests (Windows)'
-      vmImage: 'windows-2019'
-      scriptFileName: build.cmd
-      scriptArgs: RunTestsNetFx471 incremental
-      outputDirectory: 'TestResults'
-      artifactName: 'netfx_tests_windows-$(Build.BuildId)'
-
-  - template: azure-pipeline.template.yaml
-    parameters:
-      name: 'netfx_451_tests_windows'
-      displayName: '.NET Framework 451 Unit Tests (Windows)'
-      vmImage: 'vs2017-win2016'
-      scriptFileName: build.cmd
-      scriptArgs: RunTestsNetFx451 incremental
-      outputDirectory: 'TestResults'
-      artifactName: 'netfx_451_tests_windows-$(Build.BuildId)'
+  # - template: templates/azure-pipeline.template.yaml
+  #   parameters:
+  #     name: 'netfx_tests_windows'
+  #     displayName: 'Unit Tests (Windows 2019)'
+  #     vmImage: 'windows-2019'
+  #     scriptFileName: build.cmd
+  #     scriptArgs: RunTestsNetFx471 incremental
+  #     outputDirectory: 'TestResults'
+  #     artifactName: 'netfx_tests_windows-$(Build.BuildId)'
+  #     packageFeed: $(packageFeed)

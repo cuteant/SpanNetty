@@ -26,6 +26,7 @@ namespace DotNetty.Handlers.Tls
     using System;
     using System.Net.Security;
     using System.Runtime.CompilerServices;
+    using DotNetty.Common;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
 
@@ -66,8 +67,10 @@ namespace DotNetty.Handlers.Tls
     /// </summary>
     public abstract class ApplicationProtocolNegotiationHandler : ChannelHandlerAdapter
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ApplicationProtocolNegotiationHandler>();
-        readonly SslApplicationProtocol fallbackProtocol;
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ApplicationProtocolNegotiationHandler>();
+        private readonly SslApplicationProtocol _fallbackProtocol;
+        private readonly ThreadLocalObjectList _bufferedMessages;
+        private IChannelHandlerContext _ctx;
 
         /// <summary>
         /// Creates a new instance with the specified fallback protocol name.
@@ -75,9 +78,10 @@ namespace DotNetty.Handlers.Tls
         /// <param name="protocol">the name of the protocol to use when
         /// ALPN/NPN negotiation fails or the client does not support ALPN/NPN</param>
         public ApplicationProtocolNegotiationHandler(string protocol)
+            : this()
         {
             if (protocol is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.protocol); }
-            this.fallbackProtocol = new SslApplicationProtocol(protocol);
+            _fallbackProtocol = new SslApplicationProtocol(protocol);
         }
 
         /// <summary>
@@ -86,8 +90,46 @@ namespace DotNetty.Handlers.Tls
         /// <param name="fallbackProtocol">the name of the protocol to use when
         /// ALPN/NPN negotiation fails or the client does not support ALPN/NPN</param>
         public ApplicationProtocolNegotiationHandler(SslApplicationProtocol fallbackProtocol)
+            : this()
         {
-            this.fallbackProtocol = fallbackProtocol;
+            _fallbackProtocol = fallbackProtocol;
+        }
+
+        private ApplicationProtocolNegotiationHandler()
+        {
+            _bufferedMessages = ThreadLocalObjectList.NewInstance();
+        }
+
+        public override void HandlerAdded(IChannelHandlerContext ctx)
+        {
+            _ctx = ctx;
+            base.HandlerAdded(ctx);
+        }
+
+        public override void HandlerRemoved(IChannelHandlerContext ctx)
+        {
+            FireBufferedMessages();
+            _bufferedMessages.Return();
+            base.HandlerRemoved(ctx);
+        }
+
+        public override void ChannelRead(IChannelHandlerContext ctx, object msg)
+        {
+            // Let's buffer all data until this handler will be removed from the pipeline.
+            _bufferedMessages.Add(msg);
+        }
+
+        /// <summary>Process all backlog into pipeline from List.</summary>
+        private void FireBufferedMessages()
+        {
+            if (0u >= (uint)_bufferedMessages.Count) { return; }
+
+            for (int i = 0; i < _bufferedMessages.Count; i++)
+            {
+                _ctx.FireChannelRead(_bufferedMessages[i]);
+            }
+            _ctx.FireChannelReadComplete();
+            _bufferedMessages.Clear();
         }
 
         public override void UserEventTriggered(IChannelHandlerContext ctx, object evt)
@@ -102,16 +144,16 @@ namespace DotNetty.Handlers.Tls
                         if (sslHandler is null) { ThrowInvalidOperationException(); }
 
                         var protocol = sslHandler.NegotiatedApplicationProtocol;
-                        this.ConfigurePipeline(ctx, !protocol.Protocol.IsEmpty ? protocol : fallbackProtocol);
+                        ConfigurePipeline(ctx, !protocol.Protocol.IsEmpty ? protocol : _fallbackProtocol);
                     }
                     else
                     {
-                        this.HandshakeFailure(ctx, handshakeEvent.Exception);
+                        HandshakeFailure(ctx, handshakeEvent.Exception);
                     }
                 }
                 catch (Exception exc)
                 {
-                    this.ExceptionCaught(ctx, exc);
+                    ExceptionCaught(ctx, exc);
                 }
                 finally
                 {

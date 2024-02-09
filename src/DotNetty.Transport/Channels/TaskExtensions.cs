@@ -111,7 +111,7 @@ namespace DotNetty.Transport.Channels
         {
             if (task.IsCompleted)
             {
-                if (task.IsFault())
+                if (task.IsFailure())
                 {
                     _ = channel.CloseAsync();
                 }
@@ -125,7 +125,7 @@ namespace DotNetty.Transport.Channels
         private static readonly Action<Task, object> CloseChannelOnFailureAction = (t, s) => CloseChannelOnFailure(t, s);
         private static void CloseChannelOnFailure(Task t, object c)
         {
-            if (t.IsFault())
+            if (t.IsFailure())
             {
                 _ = ((IChannel)c).CloseAsync();
             }
@@ -137,7 +137,7 @@ namespace DotNetty.Transport.Channels
         {
             if (task.IsCompleted)
             {
-                if (task.IsFault())
+                if (task.IsFailure())
                 {
                     _ = channel.CloseAsync(promise);
                 }
@@ -151,7 +151,7 @@ namespace DotNetty.Transport.Channels
         private static readonly Action<Task, object> CloseWrappedChannelOnFailureAction = (t, s) => CloseWrappedChannelOnFailure(t, s);
         private static void CloseWrappedChannelOnFailure(Task t, object s)
         {
-            if (t.IsFault())
+            if (t.IsFailure())
             {
                 var wrapped = ((IChannel, IPromise))s;
                 _ = wrapped.Item1.CloseAsync(wrapped.Item2);
@@ -164,7 +164,7 @@ namespace DotNetty.Transport.Channels
         {
             if (task.IsCompleted)
             {
-                if (task.IsFault())
+                if (task.IsFailure())
                 {
                     _ = ctx.CloseAsync();
                 }
@@ -178,7 +178,7 @@ namespace DotNetty.Transport.Channels
         private static readonly Action<Task, object> CloseContextOnFailureAction = (t, s) => CloseContextOnFailure(t, s);
         private static void CloseContextOnFailure(Task t, object c)
         {
-            if (t.IsFault())
+            if (t.IsFailure())
             {
                 _ = ((IChannelHandlerContext)c).CloseAsync();
             }
@@ -190,7 +190,7 @@ namespace DotNetty.Transport.Channels
         {
             if (task.IsCompleted)
             {
-                if (task.IsFault())
+                if (task.IsFailure())
                 {
                     _ = ctx.CloseAsync(promise);
                 }
@@ -204,7 +204,7 @@ namespace DotNetty.Transport.Channels
         private static readonly Action<Task, object> CloseWrappedContextOnFailureAction = (t, s) => CloseWrappedContextOnFailure(t, s);
         private static void CloseWrappedContextOnFailure(Task t, object s)
         {
-            if (t.IsFault())
+            if (t.IsFailure())
             {
                 var wrapped = ((IChannelHandlerContext, IPromise))s;
                 _ = wrapped.Item1.CloseAsync(wrapped.Item2);
@@ -216,7 +216,7 @@ namespace DotNetty.Transport.Channels
         {
             if (task.IsCompleted)
             {
-                if (task.IsFault())
+                if (task.IsFailure())
                 {
                     _ = pipeline.FireExceptionCaught(TaskUtil.Unwrap(task.Exception));
                 }
@@ -230,7 +230,7 @@ namespace DotNetty.Transport.Channels
         private static readonly Action<Task, object> FirePipelineExceptionOnFailureAction = (t, s) => FirePipelineExceptionOnFailure(t, s);
         private static void FirePipelineExceptionOnFailure(Task t, object s)
         {
-            if (t.IsFault())
+            if (t.IsFailure())
             {
                 _ = ((IChannelPipeline)s).FireExceptionCaught(TaskUtil.Unwrap(t.Exception));
             }
@@ -241,7 +241,7 @@ namespace DotNetty.Transport.Channels
         {
             if (task.IsCompleted)
             {
-                if (task.IsFault())
+                if (task.IsFailure())
                 {
                     _ = ctx.FireExceptionCaught(TaskUtil.Unwrap(task.Exception));
                 }
@@ -255,21 +255,10 @@ namespace DotNetty.Transport.Channels
         private static readonly Action<Task, object> FireContextExceptionOnFailureAction = (t, s) => FireContextExceptionOnFailure(t, s);
         private static void FireContextExceptionOnFailure(Task t, object s)
         {
-            if (t.IsFault())
+            if (t.IsFailure())
             {
                 _ = ((IChannelHandlerContext)s).FireExceptionCaught(TaskUtil.Unwrap(t.Exception));
             }
-        }
-
-        /// <summary>TBD</summary>
-        [MethodImpl(InlineMethod.AggressiveOptimization)]
-        private static bool IsFault(this Task task)
-        {
-#if NETCOREAPP || NETSTANDARD_2_0_GREATER
-            return !task.IsCompletedSuccessfully;
-#else
-            return task.IsFaulted || task.IsCanceled;
-#endif
         }
     }
 }

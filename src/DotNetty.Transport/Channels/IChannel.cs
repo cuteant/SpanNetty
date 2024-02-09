@@ -107,6 +107,15 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         IChannel Parent { get; }
 
+        [Obsolete("Please use IsOpen instead.")]
+        bool Open { get; }
+
+        [Obsolete("Please use IsActive instead.")]
+        bool Active { get; }
+
+        [Obsolete("Please use IsRegistered instead.")]
+        bool Registered { get; }
+
         /// <summary>
         /// Returns <c>true</c> if the <see cref="IChannel"/> is open and may get active later.
         /// </summary>

@@ -112,6 +112,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             public IChannelHandler Handler => this;
 
+            public bool Removed => false;
             public bool IsRemoved => false;
 
             public IChannelPipeline Pipeline => _channel.Pipeline;

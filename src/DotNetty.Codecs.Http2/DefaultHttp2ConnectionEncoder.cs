@@ -583,11 +583,11 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> NotifyLifecycleManagerOnErrorAction = (t, s) => NotifyLifecycleManagerOnError0(t, s);
         private static void NotifyLifecycleManagerOnError0(Task t, object s)
         {
-            var wrapped = ((IHttp2LifecycleManager, IChannelHandlerContext))s;
+            var (lm, ctx) = ((IHttp2LifecycleManager, IChannelHandlerContext))s;
             var cause = t.Exception;
             if (cause is object)
             {
-                wrapped.Item1.OnError(wrapped.Item2, true, cause.InnerException);
+                lm.OnError(ctx, true, cause.InnerException);
             }
         }
 
@@ -681,7 +681,7 @@ namespace DotNetty.Codecs.Http2
             private static readonly Action<Task, object> LinkOutcomeContinuationAction = (t, s) => LinkOutcomeContinuation(t, s);
             private static void LinkOutcomeContinuation(Task task, object state)
             {
-                if (!task.IsSuccess())
+                if (task.IsFailure())
                 {
                     var self = (FlowControlledBase)state;
                     self.Error(self._owner.FlowController.ChannelHandlerContext, task.Exception.InnerException);

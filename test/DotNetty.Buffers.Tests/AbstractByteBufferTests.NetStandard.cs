@@ -16,6 +16,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void GetByteBufferState_Span()
         {
+            Assert.ThrowsAny<Exception>(() => this.buffer.SetBytes(this.buffer.Capacity - 3, new byte[4].AsSpan()));
             var value = new Span<byte>(new byte[4]);
             value[0] = 1;
             value[1] = 2;
@@ -34,6 +35,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void GetByteBufferState_Memory()
         {
+            Assert.ThrowsAny<Exception>(() => this.buffer.SetBytes(this.buffer.Capacity - 3, new byte[4].AsMemory()));
             var value = new byte[4];
             value[0] = 1;
             value[1] = 2;
@@ -54,6 +56,78 @@ namespace DotNetty.Buffers.Tests
 
         [Fact]
         public void GetDirectByteBufferBoundaryCheck_Memory() => Assert.Throws<IndexOutOfRangeException>(() => this.buffer.GetBytes(-1, Memory<byte>.Empty));
+
+        [Fact]
+        public void ReadBytes_Memory()
+        {
+            const int capacity = 8;
+            const int dataLen = capacity + 8;
+            IByteBuffer buf = this.NewBuffer(capacity);
+            if (buf.MaxCapacity < dataLen)
+            {
+                //For SlicedByteBuffer
+                _ = buf.Release();
+                buf = this.NewBuffer(dataLen);
+            }
+            //For SlicedByteBuffer
+            buf.SetWriterIndex(0);
+
+            var input = new byte[dataLen + 4];
+            this.random.NextBytes(input);
+            buf.WriteBytes(input.AsMemory(0, dataLen));
+            Assert.True(buf.WriterIndex == dataLen);
+
+            var output = new byte[dataLen + 4];
+            Array.Copy(input, dataLen, output, dataLen, 4);
+
+            Assert.True(buf.ReadBytes(output.AsMemory(0, 4)) == 4);
+            Assert.True(buf.ReaderIndex == 4);
+            Assert.True(buf.Slice(4, 2).ReadBytes(output.AsMemory(4)) == 2);
+            Assert.True(buf.Slice(6, 8).ReadBytes(output.AsMemory(6, 2)) == 2);
+            Assert.True(buf.Slice(6, 4).GetBytes(2, output.AsMemory(8)) == 2);
+            Assert.True(buf.Slice(6, 10).GetBytes(4, output.AsMemory(10, 2)) == 2);
+            buf.SkipBytes(8);
+            Assert.True(buf.ReadBytes(output.AsMemory(12)) == 4);
+            Assert.True(buf.ReaderIndex == dataLen);
+            Assert.Equal(input, output);
+            Assert.True(buf.Release());
+        }
+
+        [Fact]
+        public void ReadBytes_Span()
+        {
+            const int capacity = 8;
+            const int dataLen = capacity + 8;
+            IByteBuffer buf = this.NewBuffer(capacity);
+            if (buf.MaxCapacity < dataLen)
+            {
+                //For SlicedByteBuffer
+                _ = buf.Release();
+                buf = this.NewBuffer(dataLen);
+            }
+            //For SlicedByteBuffer
+            buf.SetWriterIndex(0);
+
+            var input = new byte[dataLen + 4];
+            this.random.NextBytes(input);
+            buf.WriteBytes(input.AsSpan(0, dataLen));
+            Assert.True(buf.WriterIndex == dataLen);
+
+            var output = new byte[dataLen + 4];
+            Array.Copy(input, dataLen, output, dataLen, 4);
+
+            Assert.True(buf.ReadBytes(output.AsSpan(0, 4)) == 4);
+            Assert.True(buf.ReaderIndex == 4);
+            Assert.True(buf.Slice(4, 2).ReadBytes(output.AsSpan(4)) == 2);
+            Assert.True(buf.Slice(6, 8).ReadBytes(output.AsSpan(6, 2)) == 2);
+            Assert.True(buf.Slice(6, 4).GetBytes(2, output.AsSpan(8)) == 2);
+            Assert.True(buf.Slice(6, 10).GetBytes(4, output.AsSpan(10, 2)) == 2);
+            buf.SkipBytes(8);
+            Assert.True(buf.ReadBytes(output.AsSpan(12)) == 4);
+            Assert.True(buf.ReaderIndex == dataLen);
+            Assert.Equal(input, output);
+            Assert.True(buf.Release());
+        }
 
         [Fact]
         public void ByteArrayTransfer_Span()

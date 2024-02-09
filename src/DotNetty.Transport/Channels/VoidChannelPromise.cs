@@ -53,7 +53,11 @@ namespace DotNetty.Transport.Channels
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             _channel = channel;
             _fireException = fireException;
-            _task = new Lazy<Task>(() => TaskUtil.FromException(Error), LazyThreadSafetyMode.ExecutionAndPublication);
+            _task = new Lazy<Task>(
+#if NET
+                static
+#endif
+                () => TaskUtil.FromException(Error), LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         public Task Task => _task.Value;

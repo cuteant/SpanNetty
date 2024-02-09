@@ -69,6 +69,8 @@ namespace DotNetty.Common.Tests.Concurrency
 
         sealed class TestScheduledEventExecutor : AbstractScheduledEventExecutor
         {
+            protected override bool HasTasks => false;
+
             public override bool IsShuttingDown => false;
 
             public override Task TerminationCompletion => throw new NotImplementedException();

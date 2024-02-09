@@ -3,8 +3,8 @@
 
 namespace Telnet.Client
 {
-    using System;
     using DotNetty.Transport.Channels;
+    using System;
 
     /// <summary>
     /// Handles a client-side channel.
@@ -13,16 +13,16 @@ namespace Telnet.Client
     {
         public override bool IsSharable => true;
 
-        protected override void ChannelRead0(IChannelHandlerContext contex, string msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, string message)
         {
-            Console.WriteLine(msg);
+            Console.WriteLine(message);
         }
 
-        public override void ExceptionCaught(IChannelHandlerContext contex, Exception e)
+        public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
             Console.WriteLine(DateTime.Now.Millisecond);
-            Console.WriteLine("{0}", e.StackTrace);
-            contex.CloseAsync();
+            Console.WriteLine($"{exception}");
+            context.CloseAsync();
         }
     }
 }

@@ -26,8 +26,10 @@
 namespace DotNetty.Buffers
 {
     using System;
+    using System.Buffers;
     using System.Diagnostics;
     using System.IO;
+    using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -430,18 +432,12 @@ namespace DotNetty.Buffers
                 }
             }
 
-            var merged = new byte[length];
-            var memory = new Memory<byte>(merged);
-            var bufs = GetSequence(index, length);
-
-            int offset = 0;
-            foreach (var buf in bufs)
+            var buffers = GetSequence(index, length);
+            if (buffers.IsSingleSegment && MemoryMarshal.TryGetArray(buffers.First, out var segment))
             {
-                Debug.Assert(merged.Length - offset >= buf.Length);
-
-                buf.CopyTo(memory.Slice(offset));
-                offset += buf.Length;
+                return segment;
             }
+            var merged = buffers.ToArray();
             return new ArraySegment<byte>(merged);
         }
 

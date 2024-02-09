@@ -12,6 +12,9 @@ namespace DotNetty.Common.Internal
     using System.Threading;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
+#if NET
+    using System.Runtime.InteropServices;
+#endif
 
     using static PlatformDependent0;
 
@@ -59,7 +62,11 @@ namespace DotNetty.Common.Internal
                 return true;
             }
 
-            return SpanHelpers.SequenceEqual(ref bytes1[startPos1], ref bytes2[startPos2], unchecked((uint)length));
+#if NET
+            return new ReadOnlySpan<byte>(bytes1, startPos1, length).SequenceEqual(new ReadOnlySpan<byte>(bytes2, startPos2, length));
+#else
+            return SpanHelpers.SequenceEqual(ref bytes1[startPos1], ref bytes2[startPos2], length);
+#endif
         }
 
         public static unsafe int ByteArrayEqualsConstantTime(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
@@ -258,6 +265,11 @@ namespace DotNetty.Common.Internal
                     }
                 }
             }
+#elif NET
+            Unsafe.CopyBlockUnaligned(
+                ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(dst), dstIndex), 
+                ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(src), srcIndex), 
+                nlen);
 #else
             Unsafe.CopyBlockUnaligned(ref dst[dstIndex], ref src[srcIndex], nlen);
 #endif

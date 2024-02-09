@@ -1,11 +1,11 @@
 ﻿namespace Http2Helloworld.Client
 {
-    using System;
-    using System.Threading.Tasks;
     using DotNetty.Codecs.Http2;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
+    using System;
+    using System.Threading.Tasks;
 
     public class Http2SettingsHandler : SimpleChannelInboundHandler2<Http2Settings>
     {
@@ -19,6 +19,7 @@
             {
                 throw new InvalidOperationException("Timed out waiting for settings");
             }
+
             if (!this.promise.IsSuccess)
             {
                 var cause = this.promise.Task.Exception.InnerException;
@@ -26,12 +27,12 @@
             }
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, Http2Settings msg)
+        protected override void ChannelRead0(IChannelHandlerContext context, Http2Settings settings)
         {
             this.promise.Complete();
 
             // Only care about the first settings message
-            ctx.Pipeline.Remove(this);
+            context.Pipeline.Remove(this);
         }
     }
 }

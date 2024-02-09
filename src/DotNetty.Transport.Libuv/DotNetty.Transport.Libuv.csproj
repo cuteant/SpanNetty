@@ -6,10 +6,11 @@
     <RootNamespace>DotNetty.Transport.Libuv</RootNamespace>
     <AssemblyName>SpanNetty.Transport.Libuv</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>SpanNetty.Transport.Libuv</PackageId>
+    <PackageId>Microsoft.Azure.SpanNetty.Transport.Libuv</PackageId>
     <Title>SpanNetty.Transport.Libuv</Title>
     <Description>Libuv transport model.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>

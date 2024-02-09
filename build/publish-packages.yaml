@@ -1,0 +1,80 @@
+# Explicitly disable PR trigger
+pr: none
+
+# Trigger pipeline when tag is created
+trigger:
+  tags:
+    include:
+    - 'v*'
+
+variables:
+  NUGET_XMLDOC_MODE: none
+  NUGET_CREDENTIALPROVIDER_SESSIONTOKENCACHE_ENABLED: 'true'
+  packageFeed: 'https://pkgs.dev.azure.com/msazure/_packaging/ApiManagement/nuget/v3/index.json'
+
+jobs:
+  - job: publish
+    displayName: Publish NuGet Packages
+    pool: 
+      vmImage: 'windows-2022'
+    variables:
+      configuration: 'Release'
+    steps:
+    - checkout: self  # self represents the repo where the initial Pipelines YAML file was found
+      clean: false  # whether to fetch clean each time
+      submodules: recursive  # set to 'true' for a single level of submodules or 'recursive' to get submodules of submodules
+      persistCredentials: true
+      
+      # We need to fetch the origin manually, otherwise main branch is not 'known'
+      # This is required for our build script as it will otherwise fail
+    - powershell: 'git fetch origin'
+      displayName: 'Fetch Git origin'
+        
+    - powershell: 'exit 1'
+      displayName: 'Stop for non-Git tag triggers'
+      condition: not(contains(variables['Build.SourceBranch'], 'refs/tags/v'))
+    
+    - powershell: echo '$(Build.SourceBranch)'
+      displayName: 'Show Git tag'
+
+    - powershell: |
+        $version = "$(Build.SourceBranch)".Replace("refs/tags/v", "")
+
+        Write-Host "Git tag: $version"
+        echo "##vso[task.setvariable variable=packageVersion;]$version"
+        echo "##vso[task.setvariable variable=BUILD_NUMBER;]$version"
+      displayName: 'Determine package version'
+
+    - powershell: |
+        Write-Host "##vso[build.updatebuildnumber]v$(packageVersion)"
+      displayName: 'Set pipeline run name'
+      
+    - template: templates/install-dotnet.yaml
+    - template: templates/install-nuget.yaml
+    - template: templates/restore-nuget-packages.yaml
+    - template: templates/install-build-dependencies.yaml
+      parameters:
+        packageFeed: $(packageFeed)
+
+    - task: BatchScript@1
+      displayName: Build & Test Code
+      inputs:
+        filename: build.cmd
+        arguments: 'RunTests incremental -Configuration Release' # Run an incremental build
+      continueOnError: true
+
+    - task: PublishTestResults@2
+      displayName: 'Publish test results'
+      inputs:
+        testRunner: VSTest
+        testResultsFiles: '**/*.trx'
+        testRunTitle: 'Tests'
+        mergeTestResults: true
+        failTaskOnFailedTests: true
+
+    - task: NuGetCommand@2
+      displayName: 'Push NuGet Packages to Azure Artifacts'
+      inputs:
+        command: push
+        packagesToPush: '**/*.$(packageVersion).symbols.nupkg'
+        publishVstsFeed: '6cb87577-1efb-475d-94b1-a5b0618c8812'

@@ -455,7 +455,9 @@
         public void TestOnEventLoopIteration()
         {
             CountingRunnable onIteration = new CountingRunnable();
+#if DEBUG
             _loopC.ExecuteAfterEventLoopIteration(onIteration);
+#endif
             CountingRunnable noopTask = new CountingRunnable();
             _loopC.SubmitAsync(() =>
             {
@@ -470,10 +472,12 @@
         [Fact]
         public void TestRemoveOnEventLoopIteration()
         {
+            CountingRunnable onIteration2 = new CountingRunnable();
+#if DEBUG
             CountingRunnable onIteration1 = new CountingRunnable();
             _loopC.ExecuteAfterEventLoopIteration(onIteration1);
-            CountingRunnable onIteration2 = new CountingRunnable();
             _loopC.ExecuteAfterEventLoopIteration(onIteration2);
+#endif
             //_loopC.RemoveAfterEventLoopIterationTask(onIteration1);
             CountingRunnable noopTask = new CountingRunnable();
             _loopC.SubmitAsync(() =>

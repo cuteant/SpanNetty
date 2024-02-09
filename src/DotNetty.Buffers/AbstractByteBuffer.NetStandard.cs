@@ -169,61 +169,77 @@ namespace DotNetty.Buffers
         protected internal abstract Span<byte> _GetSpan(int index, int count);
 
 
+        protected internal virtual void _GetBytes(int index, Span<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            var selfSpan = _GetReadableSpan(index, length);
+            selfSpan.CopyTo(destination);
+        }
+
         public virtual int GetBytes(int index, Span<byte> destination)
         {
-            CheckIndex(index);
-
-            var count = Math.Min(Capacity - index, destination.Length);
-            if (0u >= (uint)count) { return 0; }
-
-            var selfSpan = _GetReadableSpan(index, count);
-            selfSpan.CopyTo(destination);
-            return count;
+            var length = Math.Min(Capacity - index, destination.Length);
+            _GetBytes(index, destination, length);
+            return length;
         }
+        protected internal virtual void _GetBytes(int index, Memory<byte> destination, int length)
+        {
+            CheckIndex(index, length);
+            if (0u >= (uint)length) { return; }
+
+            var selfMemory = _GetReadableMemory(index, length);
+            selfMemory.CopyTo(destination);
+        }
+
         public virtual int GetBytes(int index, Memory<byte> destination)
         {
-            CheckIndex(index);
-
-            var count = Math.Min(Capacity - index, destination.Length);
-            if (0u >= (uint)count) { return 0; }
-
-            var selfMemory = _GetReadableMemory(index, count);
-            selfMemory.CopyTo(destination);
-            return count;
+            var length = Math.Min(Capacity - index, destination.Length);
+            _GetBytes(index, destination, length);
+            return length;
         }
 
         public virtual int ReadBytes(Span<byte> destination)
         {
-            var count = GetBytes(_readerIndex, destination);
-            if (count > 0) { _readerIndex += count; }
-            return count;
+            var readerIndex = _readerIndex;
+            var readableBytes = Math.Min(_writerIndex - readerIndex, destination.Length);
+            if (readableBytes > 0)
+            {
+                _GetBytes(readerIndex, destination, readableBytes);
+                _readerIndex = readerIndex + readableBytes;
+            }
+            return readableBytes;
         }
         public virtual int ReadBytes(Memory<byte> destination)
         {
-            var count = GetBytes(_readerIndex, destination);
-            if (count > 0) { _readerIndex += count; }
-            return count;
+            var readerIndex = _readerIndex;
+            var readableBytes = Math.Min(_writerIndex - readerIndex, destination.Length);
+            if (readableBytes > 0)
+            {
+                _GetBytes(readerIndex, destination, readableBytes);
+                _readerIndex = readerIndex + readableBytes;
+            }
+            return readableBytes;
         }
 
 
         public virtual IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
-            CheckIndex(index);
+            CheckIndex(index, src.Length);
             if (src.IsEmpty) { return this; }
 
             var length = src.Length;
-            EnsureWritable0(index, length);
             var selfSpan = _GetSpan(index, length);
             src.CopyTo(selfSpan);
             return this;
         }
         public virtual IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
-            CheckIndex(index);
+            CheckIndex(index, src.Length);
             if (src.IsEmpty) { return this; }
 
             var length = src.Length;
-            EnsureWritable0(index, length);
             var selfMemory = _GetMemory(index, length);
             src.CopyTo(selfMemory);
             return this;
@@ -232,6 +248,7 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
             var writerIdx = _writerIndex;
+            EnsureWritable0(writerIdx, src.Length);
             _ = SetBytes(writerIdx, src);
             _writerIndex = writerIdx + src.Length;
             return this;
@@ -239,6 +256,7 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
             var writerIdx = _writerIndex;
+            EnsureWritable0(writerIdx, src.Length);
             _ = SetBytes(writerIdx, src);
             _writerIndex = writerIdx + src.Length;
             return this;
@@ -261,12 +279,21 @@ namespace DotNetty.Buffers
 
         protected sealed class ReadOnlyBufferSegment : ReadOnlySequenceSegment<byte>
         {
-            public static ReadOnlySequence<byte> Create(IEnumerable<ReadOnlyMemory<byte>> buffers)
+            public static ReadOnlySequence<byte> Create(List<ReadOnlyMemory<byte>> buffers)
             {
+                switch (buffers.Count)
+                {
+                    case 0:
+                        return ReadOnlySequence<byte>.Empty;
+                    case 1:
+                        return new ReadOnlySequence<byte>(buffers[0]);
+                }
                 ReadOnlyBufferSegment segment = null;
                 ReadOnlyBufferSegment first = null;
                 foreach (var buffer in buffers)
                 {
+                    if (buffer.Length == 0)
+                        continue;
                     var newSegment = new ReadOnlyBufferSegment()
                     {
                         Memory = buffer,
@@ -287,7 +314,11 @@ namespace DotNetty.Buffers
 
                 if (first is null)
                 {
-                    first = segment = new ReadOnlyBufferSegment();
+                    return ReadOnlySequence<byte>.Empty;
+                }
+                if (first == segment)
+                {
+                    return new ReadOnlySequence<byte>(first.Memory);
                 }
 
                 return new ReadOnlySequence<byte>(first, 0, segment, segment.Memory.Length);
@@ -367,14 +398,22 @@ namespace DotNetty.Buffers
         internal protected virtual int IndexOf0(int index, int count, byte value)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.IndexOf(value);
+#else
             var result = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(span), value, span.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOf0(int index, int count, byte value)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.LastIndexOf(value);
+#else
             var result = SpanHelpers.LastIndexOf(ref MemoryMarshal.GetReference(span), value, span.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
@@ -400,14 +439,22 @@ namespace DotNetty.Buffers
         internal protected virtual int IndexOf0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.IndexOf(values);
+#else
             var result = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(span), span.Length, ref MemoryMarshal.GetReference(values), values.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOf0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.LastIndexOf(values);
+#else
             var result = SpanHelpers.LastIndexOf(ref MemoryMarshal.GetReference(span), span.Length, ref MemoryMarshal.GetReference(values), values.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
@@ -433,14 +480,22 @@ namespace DotNetty.Buffers
         internal protected virtual int IndexOfAny0(int index, int count, byte value0, byte value1)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.IndexOfAny(value0, value1);
+#else
             var result = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(span), value0, value1, span.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, byte value0, byte value1)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.LastIndexOfAny(value0, value1);
+#else
             var result = SpanHelpers.LastIndexOfAny(ref MemoryMarshal.GetReference(span), value0, value1, span.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
@@ -466,14 +521,22 @@ namespace DotNetty.Buffers
         internal protected virtual int IndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.IndexOfAny(value0, value1, value2);
+#else
             var result = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(span), value0, value1, value2, span.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.LastIndexOfAny(value0, value1, value2);
+#else
             var result = SpanHelpers.LastIndexOfAny(ref MemoryMarshal.GetReference(span), value0, value1, value2, span.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
@@ -499,14 +562,22 @@ namespace DotNetty.Buffers
         internal protected virtual int IndexOfAny0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.IndexOfAny(values);
+#else
             var result = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(span), span.Length, ref MemoryMarshal.GetReference(values), values.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = GetReadableSpan(index, count);
+#if NET
+            var result = span.LastIndexOfAny(values);
+#else
             var result = SpanHelpers.LastIndexOfAny(ref MemoryMarshal.GetReference(span), span.Length, ref MemoryMarshal.GetReference(values), values.Length);
+#endif
             return (uint)result < SharedConstants.uIndexNotFound ? index + result : result;
         }
     }

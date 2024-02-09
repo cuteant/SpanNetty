@@ -5,8 +5,10 @@ namespace DotNetty.Common.Internal
 {
     using System;
     using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
     using DotNetty.Common.Utilities;
+#if !NET
+    using System.Runtime.InteropServices;
+#endif
 
     partial class AppendableCharSequence : IHasAsciiSpan
     {
@@ -28,8 +30,12 @@ namespace DotNetty.Common.Internal
                 return true;
             }
 
+#if NET
+            return other is object && AsciiSpan.SequenceEqual(other.AsciiSpan);
+#else
             return other is object && _pos == other._pos
                 && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(AsciiSpan), ref MemoryMarshal.GetReference(other.AsciiSpan), _pos);
+#endif
         }
 
         public override bool Equals(object obj)
@@ -39,8 +45,12 @@ namespace DotNetty.Common.Internal
             switch (obj)
             {
                 case AppendableCharSequence other:
+#if NET
+                    return AsciiSpan.SequenceEqual(other.AsciiSpan);
+#else
                     return _pos == other._pos
                         && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(AsciiSpan), ref MemoryMarshal.GetReference(other.AsciiSpan), _pos);
+#endif
 
                 case IHasAsciiSpan hasAscii:
                     return AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);
@@ -63,8 +73,12 @@ namespace DotNetty.Common.Internal
                     return false;
 
                 case AppendableCharSequence comparand:
+#if NET
+                    return AsciiSpan.SequenceEqual(comparand.AsciiSpan);
+#else
                     return _pos == comparand._pos
                         && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(AsciiSpan), ref MemoryMarshal.GetReference(comparand.AsciiSpan), _pos);
+#endif
 
                 case IHasAsciiSpan hasAscii:
                     return AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);

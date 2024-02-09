@@ -6,10 +6,11 @@
     <RootNamespace>DotNetty.Common</RootNamespace>
     <AssemblyName>SpanNetty.Common</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>SpanNetty.Common</PackageId>
+    <PackageId>Microsoft.Azure.SpanNetty.Common</PackageId>
     <Title>SpanNetty.Common</Title>
     <Description>Common routines.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>

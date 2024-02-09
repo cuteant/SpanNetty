@@ -338,7 +338,7 @@ namespace DotNetty.Transport.Channels
             while (true)
             {
                 object msg = Current;
-                if (!(msg is IByteBuffer buf))
+                if (msg is not IByteBuffer buf)
                 {
                     Debug.Assert(writtenBytes == 0);
                     break;

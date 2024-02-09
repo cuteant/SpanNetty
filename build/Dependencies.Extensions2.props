@@ -21,6 +21,7 @@
     <MicrosoftExtensionsConfigurationFileExtensions2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationFileExtensions2PackageVersion>
     <MicrosoftExtensionsConfigurationIni2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationIni2PackageVersion>
     <MicrosoftExtensionsConfigurationJson2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationJson2PackageVersion>
+    <MicrosoftExtensionsConfigurationKeyPerFile2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationKeyPerFile2PackageVersion>
     <MicrosoftExtensionsConfiguration2PackageVersion>2.2.0</MicrosoftExtensionsConfiguration2PackageVersion>
     <MicrosoftExtensionsConfigurationUserSecrets2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationUserSecrets2PackageVersion>
     <MicrosoftExtensionsConfigurationXml2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationXml2PackageVersion>
@@ -56,8 +57,31 @@
     <MicrosoftExtensionsLoggingTraceSource2PackageVersion>2.2.0</MicrosoftExtensionsLoggingTraceSource2PackageVersion>
     <MicrosoftExtensionsObjectPool2PackageVersion>2.2.0</MicrosoftExtensionsObjectPool2PackageVersion>
     <MicrosoftExtensionsOptionsConfigurationExtensions2PackageVersion>2.2.0</MicrosoftExtensionsOptionsConfigurationExtensions2PackageVersion>
+    <MicrosoftExtensionsOptionsDataAnnotations2PackageVersion>2.2.0</MicrosoftExtensionsOptionsDataAnnotations2PackageVersion>
     <MicrosoftExtensionsOptions2PackageVersion>2.2.0</MicrosoftExtensionsOptions2PackageVersion>
     <MicrosoftExtensionsPrimitives2PackageVersion>2.2.0</MicrosoftExtensionsPrimitives2PackageVersion>
+    <MicrosoftExtensionsWebEncoders2PackageVersion>2.2.0</MicrosoftExtensionsWebEncoders2PackageVersion>
+
+    <MicrosoftExtensionsIdentityCore2PackageVersion>2.2.0</MicrosoftExtensionsIdentityCore2PackageVersion>
+    <MicrosoftExtensionsIdentityStores2PackageVersion>2.2.0</MicrosoftExtensionsIdentityStores2PackageVersion>
+    <MicrosoftExtensionsSecretManagerTools2PackageVersion>2.0.2</MicrosoftExtensionsSecretManagerTools2PackageVersion>
+    <MicrosoftExtensionsWebEncoders2PackageVersion>2.2.0</MicrosoftExtensionsWebEncoders2PackageVersion>
+
+    <MicrosoftNetHttpHeaders2PackageVersion>2.2.0</MicrosoftNetHttpHeaders2PackageVersion>
+
+    <MicrosoftDataSqliteCore2PackageVersion>2.2.6</MicrosoftDataSqliteCore2PackageVersion>
+    <MicrosoftDataSqlite2PackageVersion>2.2.6</MicrosoftDataSqlite2PackageVersion>
+
+    <MicrosoftEntityFrameworkCore2PackageVersion>2.2.6</MicrosoftEntityFrameworkCore2PackageVersion>
+    <MicrosoftEntityFrameworkCoreAbstractions2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreAbstractions2PackageVersion>
+    <MicrosoftEntityFrameworkCoreAnalyzers2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreAnalyzers2PackageVersion>
+    <MicrosoftEntityFrameworkCoreDesign2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreDesign2PackageVersion>
+    <MicrosoftEntityFrameworkCoreInMemory2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreInMemory2PackageVersion>
+    <MicrosoftEntityFrameworkCoreRelational2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreRelational2PackageVersion>
+    <MicrosoftEntityFrameworkCoreSqlite2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreSqlite2PackageVersion>
+    <MicrosoftEntityFrameworkCoreSqliteCore2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreSqliteCore2PackageVersion>
+    <MicrosoftEntityFrameworkCoreSqlServer2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreSqlServer2PackageVersion>
+    <MicrosoftEntityFrameworkCoreTools2PackageVersion>2.2.6</MicrosoftEntityFrameworkCoreTools2PackageVersion>
 
 
     <NetFxAspNetCoreJsonPatchPackageVersion>2.2.0</NetFxAspNetCoreJsonPatchPackageVersion>

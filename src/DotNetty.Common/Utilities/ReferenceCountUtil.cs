@@ -154,7 +154,7 @@ namespace DotNetty.Common.Utilities
         {
             try
             {
-                _ = (msg?.Release());
+                _ = msg?.Release();
             }
             catch (Exception ex)
             {
@@ -167,7 +167,7 @@ namespace DotNetty.Common.Utilities
         {
             try
             {
-                _ = (msg?.Release(decrement));
+                _ = msg?.Release(decrement);
             }
             catch (Exception ex)
             {

@@ -69,7 +69,17 @@ namespace DotNetty.Transport.Channels
 
         /// <summary>Gets or sets if <see cref="IChannelHandlerContext.Read()"/> will be invoked automatically so that a user application doesn't
         /// need to call it at all. The default value is <c>true</c>.</summary>
+        [Obsolete("Please use IsAutoRead instead.")]
+        bool AutoRead { get; set; }
+
+        /// <summary>Gets or sets if <see cref="IChannelHandlerContext.Read()"/> will be invoked automatically so that a user application doesn't
+        /// need to call it at all. The default value is <c>true</c>.</summary>
         bool IsAutoRead { get; set; }
+
+        /// <summary>Gets or sets whether the <see cref="IChannel"/> should be closed automatically and immediately on write failure.
+        /// The default is <c>true</c>.</summary>
+        [Obsolete("Please use IsAutoClose instead.")]
+        bool AutoClose { get; set; }
 
         /// <summary>Gets or sets whether the <see cref="IChannel"/> should be closed automatically and immediately on write failure.
         /// The default is <c>true</c>.</summary>

@@ -2,14 +2,15 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;netstandard2.1;$(StandardTfms)</TargetFrameworks>
+    <TargetFrameworks>net5.0;netcoreapp2.1;netstandard2.1;$(StandardTfms)</TargetFrameworks>
     <RootNamespace>DotNetty.Handlers</RootNamespace>
     <AssemblyName>SpanNetty.Handlers</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>SpanNetty.Handlers</PackageId>
+    <PackageId>Microsoft.Azure.SpanNetty.Handlers</PackageId>
     <Title>SpanNetty.Handlers</Title>
     <Description>Application handlers：the port of the Netty.Handlers assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;tls;ssl</PackageTags>

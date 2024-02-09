@@ -51,6 +51,7 @@
     <SystemIOPipesAccessControl3PackageVersion>4.5.1</SystemIOPipesAccessControl3PackageVersion>
     <SystemIOPorts3PackageVersion>4.7.0</SystemIOPorts3PackageVersion>
     <SystemManagement3PackageVersion>4.7.0</SystemManagement3PackageVersion>
+    <SystemResourcesExtensions3PackageVersion>4.7.1</SystemResourcesExtensions3PackageVersion>
     <SystemRuntimeCaching3PackageVersion>4.7.0</SystemRuntimeCaching3PackageVersion>
     <SystemSecurityAccessControl3PackageVersion>4.7.0</SystemSecurityAccessControl3PackageVersion>
     <SystemSecurityPermissions3PackageVersion>4.7.0</SystemSecurityPermissions3PackageVersion>
@@ -67,6 +68,9 @@
     <SystemIOPipelines3PackageVersion>4.7.3</SystemIOPipelines3PackageVersion>
     <SystemMemory3PackageVersion>4.5.4</SystemMemory3PackageVersion>
     <SystemNetHttp3PackageVersion>4.3.4</SystemNetHttp3PackageVersion>
+    <SystemNetHttpJson3PackageVersion>3.2.1</SystemNetHttpJson3PackageVersion>
+    <SystemNetHttpWinHttpHandler3PackageVersion>4.7.2</SystemNetHttpWinHttpHandler3PackageVersion>
+    <SystemNetWebSocketsWebSocketProtocol3PackageVersion>4.7.1</SystemNetWebSocketsWebSocketProtocol3PackageVersion>
     <SystemNumericsVectors3PackageVersion>4.5.0</SystemNumericsVectors3PackageVersion>
 
     <SystemReflectionDispatchProxy3PackageVersion>4.7.1</SystemReflectionDispatchProxy3PackageVersion>

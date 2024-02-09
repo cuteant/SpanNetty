@@ -150,7 +150,13 @@ namespace DotNetty.Transport.Channels
             }
         }
 
+        [Obsolete("Please use IsOpen instead.")]
+        public bool Open => IsOpen;
+
         public abstract bool IsOpen { get; }
+
+        [Obsolete("Please use IsActive instead.")]
+        public bool Active => IsActive;
 
         public abstract bool IsActive { get; }
 
@@ -214,6 +220,9 @@ namespace DotNetty.Transport.Channels
                 return null;
             }
         }
+
+        [Obsolete("Please use IsRegistered instead.")]
+        public bool Registered => IsRegistered;
 
         public bool IsRegistered => SharedConstants.False < (uint)Volatile.Read(ref v_registered);
 

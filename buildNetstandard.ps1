@@ -30,10 +30,8 @@ Param(
 )
 
 $FakeVersion = "4.63.0"
-$NugetVersion = "5.8.0";
-$NugetUrl = "https://dist.nuget.org/win-x86-commandline/v$NugetVersion/nuget.exe"
 
-$IncrementalistVersion = "0.4.0";
+$IncrementalistVersion = "0.8.0";
 
 # Make sure tools folder exists
 $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
@@ -44,18 +42,6 @@ if (!(Test-Path $ToolPath)) {
 }
 
 ###########################################################################
-# INSTALL NUGET
-###########################################################################
-
-# Make sure nuget.exe exists.
-$NugetPath = Join-Path $ToolPath "nuget.exe"
-if (!(Test-Path $NugetPath)) {
-    Write-Host "Downloading NuGet.exe..."
-    [System.Net.ServicePointManager]::SecurityProtocol=[System.Net.SecurityProtocolType]::Tls12
-    (New-Object System.Net.WebClient).DownloadFile($NugetUrl, $NugetPath);
-}
-
-###########################################################################
 # INSTALL FAKE
 ###########################################################################
 # Make sure Fake has been installed.
@@ -63,7 +49,7 @@ if (!(Test-Path $NugetPath)) {
 $FakeExePath = Join-Path $ToolPath "FAKE/tools/FAKE.exe"
 if (!(Test-Path $FakeExePath)) {
     Write-Host "Installing Fake..."
-    Invoke-Expression "&`"$NugetPath`" install Fake -ExcludeVersion -Version $FakeVersion -OutputDirectory `"$ToolPath`"" | Out-Null;
+    Invoke-Expression "nuget.exe install Fake -ExcludeVersion -Version $FakeVersion -OutputDirectory `"$ToolPath`"" | Out-Null;
     if ($LASTEXITCODE -ne 0) {
         Throw "An error occured while restoring Fake from NuGet."
     }

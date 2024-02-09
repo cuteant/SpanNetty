@@ -6,10 +6,11 @@
     <RootNamespace>DotNetty.Codecs</RootNamespace>
     <AssemblyName>SpanNetty.Codecs</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>SpanNetty.Codecs</PackageId>
+    <PackageId>Microsoft.Azure.SpanNetty.Codecs</PackageId>
     <Title>SpanNetty.Codecs</Title>
     <Description>General purpose codecs：the port of the Netty.Codecs assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;codec</PackageTags>

@@ -3,15 +3,15 @@
 
 namespace QuoteOfTheMoment.Client
 {
-    using System;
-    using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
+    using System;
+    using System.Text;
 
     public class QuoteOfTheMomentClientHandler : SimpleChannelInboundHandler<DatagramPacket>
     {
-        protected override void ChannelRead0(IChannelHandlerContext ctx, DatagramPacket packet)
+        protected override void ChannelRead0(IChannelHandlerContext context, DatagramPacket packet)
         {
             Console.WriteLine($"Client Received => {packet}");
 
@@ -27,12 +27,12 @@ namespace QuoteOfTheMoment.Client
             }
 
             Console.WriteLine($"Quote of the Moment: {message.Substring(6)}");
-            ctx.CloseAsync();
+            context.CloseAsync();
         }
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            Console.WriteLine("Exception: " + exception);
+            Console.WriteLine($"{exception}");
             context.CloseAsync();
         }
     }

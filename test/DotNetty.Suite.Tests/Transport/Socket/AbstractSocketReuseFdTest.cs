@@ -59,7 +59,7 @@
             {
                 cb.ConnectAsync(sc.LocalAddress).ContinueWith(t =>
                 {
-                    if (!t.IsSuccess())
+                    if (t.IsFailure())
                     {
                         clientDonePromise.TrySetException(t.Exception);
                     }

@@ -18,7 +18,7 @@ call Ensure-DotNetSdk.cmd
 SET SOLUTION=%CMDHOME%\DotNetty.CrossPlatform.sln
 
 :: Set DateTime prefix or suffix for builds
-if "%PublishConfiguration%" == "dev" for /f %%j in ('powershell -NoProfile -ExecutionPolicy ByPass Get-Date -format "{yyMMddHHmm}"') do set DATE_SUFFIX=%%j
+if "%PublishConfiguration%" == "dev" for /f %%j in ('powershell -NoProfile -ExecutionPolicy ByPass Get-Date -format "{yyMMdd}"') do set DATE_SUFFIX=%%j
 if "%PublishConfiguration%" == "dev" SET AdditionalConfigurationProperties=;VersionDateSuffix=%DATE_SUFFIX%
 if "%PublishConfiguration%" == "release" for /f %%j in ('powershell -NoProfile -ExecutionPolicy ByPass Get-Date -format "{yyMM}"') do set YEAR_PREFIX=%%j
 if "%PublishConfiguration%" == "release" for /f %%j in ('powershell -NoProfile -ExecutionPolicy ByPass Get-Date -format "{ddHH}"') do set DATE_PREFIX=%%j

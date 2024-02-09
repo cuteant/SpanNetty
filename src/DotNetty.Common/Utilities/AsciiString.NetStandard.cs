@@ -178,13 +178,25 @@ namespace DotNetty.Common.Utilities
             {
                 case AsciiString asciiStr:
                     return this.GetHashCode() == asciiStr.GetHashCode()
+#if NET
+                        && this.AsciiSpan.SequenceEqual(asciiStr.AsciiSpan);
+#else
                         && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(asciiStr.AsciiSpan), thisLength);
+#endif
 
                 case IHasAsciiSpan hasAscii:
+#if NET
+                    return this.AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);
+#else
                     return SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), thisLength);
+#endif
 
                 case IHasUtf16Span hasUtf16:
+#if NET
+                    return this.Utf16Span.SequenceEqual(hasUtf16.Utf16Span);
+#else
                     return SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.Utf16Span), ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), thisLength);
+#endif
 
                 default:
                     return ContentEquals0(other);
@@ -292,27 +304,43 @@ namespace DotNetty.Common.Utilities
             {
                 if (subString is IHasAsciiSpan hasAscii)
                 {
+#if NET
+                    return this.AsciiSpan.IndexOf(hasAscii.AsciiSpan);
+#else
                     return SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(this.AsciiSpan), thisLen, ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
+#endif
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
+#if NET
+                    return this.Utf16Span.IndexOf(hasUtf16.Utf16Span);
+#else
                     return SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(this.Utf16Span), thisLen, ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
+#endif
                 }
             }
             else
             {
                 if (subString is IHasAsciiSpan hasAscii)
                 {
+#if NET
+                    var result = this.AsciiSpan.Slice(start, searchLen).IndexOf(hasAscii.AsciiSpan);
+#else
                     var result = SpanHelpers.IndexOf(
                         ref Unsafe.Add(ref MemoryMarshal.GetReference(this.AsciiSpan), start), searchLen,
                         ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
+#endif
                     return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
+#if NET
+                    var result = this.Utf16Span.Slice(start, searchLen).IndexOf(hasUtf16.Utf16Span);
+#else
                     var result = SpanHelpers.IndexOf(
                         ref Unsafe.Add(ref MemoryMarshal.GetReference(this.Utf16Span), start), searchLen,
                         ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
+#endif
                     return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
                 }
             }
@@ -364,10 +392,18 @@ namespace DotNetty.Common.Utilities
 
             if (0u >= uStart)
             {
+#if NET
+                return this.AsciiSpan.IndexOf((byte)ch);
+#else
                 return SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(this.AsciiSpan), (byte)ch, thisLen);
+#endif
             }
             var seachSpan = this.AsciiSpan.Slice(start);
+#if NET
+            var result = seachSpan.IndexOf((byte)ch);
+#else
             var result = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(seachSpan), (byte)ch, seachSpan.Length);
+#endif
             return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
         }
 
@@ -386,15 +422,33 @@ namespace DotNetty.Common.Utilities
 
             if (subString is IHasAsciiSpan hasAscii)
             {
+#if NET
+                var searchLength = start + subCount;
+                if (searchLength > thisLen)
+                {
+                    return this.AsciiSpan.LastIndexOf(hasAscii.AsciiSpan);
+                }
+                return this.AsciiSpan.Slice(0, searchLength).LastIndexOf(hasAscii.AsciiSpan);
+#else
                 return SpanHelpers.LastIndexOf(
                     ref MemoryMarshal.GetReference(this.AsciiSpan), start + subCount,
                     ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
+#endif
             }
             if (subString is IHasUtf16Span hasUtf16)
             {
+#if NET
+                var searchLength = start + subCount;
+                if (searchLength > thisLen)
+                {
+                    return this.Utf16Span.LastIndexOf(hasUtf16.Utf16Span);
+                }
+                return this.Utf16Span.Slice(0, searchLength).LastIndexOf(hasUtf16.Utf16Span);
+#else
                 return SpanHelpers.LastIndexOf(
                     ref MemoryMarshal.GetReference(this.Utf16Span), start + subCount,
                     ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
+#endif
             }
 
             return LastIndexOf0(subString, start);
@@ -451,17 +505,25 @@ namespace DotNetty.Common.Utilities
 
             if (seq is IHasAsciiSpan hasAscii)
             {
+#if NET
+                return this.AsciiSpan.Slice(thisStart, count).SequenceEqual(hasAscii.AsciiSpan.Slice(start, count));
+#else
                 return SpanHelpers.SequenceEqual(
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(this.AsciiSpan), thisStart),
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), start),
                     count);
+#endif
             }
             if (seq is IHasUtf16Span hasUtf16)
             {
+#if NET
+                return this.Utf16Span.Slice(thisStart, count).SequenceEqual(hasUtf16.Utf16Span.Slice(start, count));
+#else
                 return SpanHelpers.SequenceEqual(
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(this.Utf16Span), thisStart),
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), start),
                     count);
+#endif
             }
 
             return RegionMatches0(thisStart, seq, start, count);

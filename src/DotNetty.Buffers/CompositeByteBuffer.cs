@@ -26,12 +26,14 @@
 namespace DotNetty.Buffers
 {
     using System;
+    using System.Buffers;
     using System.Collections;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Diagnostics;
     using System.IO;
     using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common;
@@ -738,12 +740,6 @@ namespace DotNetty.Buffers
                         return _components[0].Buffer.IsSingleIoBuffer;
                     default:
                         return false;
-                        //int count = 0;
-                        //for (int i = 0; i < size; i++)
-                        //{
-                        //    count += _components[i].Buffer.IoBufferCount;
-                        //}
-                        //return 1u >= (uint)count;
                 }
             }
         }
@@ -789,18 +785,12 @@ namespace DotNetty.Buffers
                     break;
             }
 
-            var merged = new byte[length];
-            var memory = new Memory<byte>(merged);
             var buffers = GetSequence(index, length);
-
-            int offset = 0;
-            foreach (var buf in buffers)
+            if (buffers.IsSingleSegment && MemoryMarshal.TryGetArray(buffers.First, out var segment))
             {
-                Debug.Assert(merged.Length - offset >= buf.Length);
-
-                buf.CopyTo(memory.Slice(offset));
-                offset += buf.Length;
+                return segment;
             }
+            var merged = buffers.ToArray();
             return new ArraySegment<byte>(merged);
         }
 
@@ -936,7 +926,8 @@ namespace DotNetty.Buffers
             switch (_componentCount)
             {
                 case 1:
-                    return ref _components[0].Buffer.GetPinnableMemoryAddress();
+                    ComponentEntry c = _components[0];
+                    return ref Unsafe.Add(ref c.Buffer.GetPinnableMemoryAddress(), c.Adjustment);
                 default:
                     throw ThrowHelper.GetNotSupportedException();
             }
@@ -947,7 +938,13 @@ namespace DotNetty.Buffers
             switch (_componentCount)
             {
                 case 1:
-                    return _components[0].Buffer.AddressOfPinnedMemory();
+                    ComponentEntry c = _components[0];
+                    IntPtr ptr = c.Buffer.AddressOfPinnedMemory();
+                    if (ptr == IntPtr.Zero)
+                    {
+                        return ptr;
+                    }
+                    return ptr + c.Adjustment;
                 default:
                     throw ThrowHelper.GetNotSupportedException();
             }

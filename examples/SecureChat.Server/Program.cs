@@ -3,10 +3,6 @@
 
 namespace SecureChat.Server
 {
-    using System;
-    using System.IO;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Threading.Tasks;
     using DotNetty.Codecs;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
@@ -14,6 +10,10 @@ namespace SecureChat.Server
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
+    using System;
+    using System.IO;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
 
     class Program
     {
@@ -24,15 +24,16 @@ namespace SecureChat.Server
             var bossGroup = new MultithreadEventLoopGroup(1);
             var workerGroup = new MultithreadEventLoopGroup();
 
-            var STRING_ENCODER = new StringEncoder();
-            var STRING_DECODER = new StringDecoder();
-            var SERVER_HANDLER = new SecureChatServerHandler();
+            var stringEncoder = new StringEncoder();
+            var stringDecoder = new StringDecoder();
+            var serverHandler = new SecureChatServerHandler();
 
             X509Certificate2 tlsCertificate = null;
             if (ServerSettings.IsSsl)
             {
                 tlsCertificate = new X509Certificate2(Path.Combine(ExampleHelper.ProcessDirectory, "dotnetty.com.pfx"), "password");
             }
+
             try
             {
                 var bootstrap = new ServerBootstrap();
@@ -51,7 +52,7 @@ namespace SecureChat.Server
 
                         pipeline.AddLast(new LoggingHandler("CONN"));
                         pipeline.AddLast(new DelimiterBasedFrameDecoder(8192, Delimiters.LineDelimiter()));
-                        pipeline.AddLast(STRING_ENCODER, STRING_DECODER, SERVER_HANDLER);
+                        pipeline.AddLast(stringEncoder, stringDecoder, serverHandler);
                     }));
 
                 IChannel bootstrapChannel = await bootstrap.BindAsync(ServerSettings.Port);

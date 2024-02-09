@@ -49,12 +49,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Microbench", "perf
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure-pipelines", "azure-pipelines", "{EC6681D3-3F9C-4CBB-B5D5-091E7F85D1C7}"
 	ProjectSection(SolutionItems) = preProject
-		build\azure-pipeline.template.yaml = build\azure-pipeline.template.yaml
+		build\templates\azure-pipeline.template.yaml = build\templates\azure-pipeline.template.yaml
 		build\pr-netfx-validation.yaml = build\pr-netfx-validation.yaml
 		build\pr-validation.yaml = build\pr-validation.yaml
 	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.NetUV", "src\DotNetty.NetUV\DotNetty.NetUV.csproj", "{3162B002-96BD-4C3A-BA83-94791BA65A49}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "local-build", "local-build", "{D16D7F56-E54C-498D-B4B2-AEBF1C8CA462}"
 	ProjectSection(SolutionItems) = preProject
@@ -270,22 +268,6 @@ Global
 		{10264C0F-F854-4201-AFCB-2B7315EFBCE0}.Release|x64.Build.0 = Release|Any CPU
 		{10264C0F-F854-4201-AFCB-2B7315EFBCE0}.Release|x86.ActiveCfg = Release|Any CPU
 		{10264C0F-F854-4201-AFCB-2B7315EFBCE0}.Release|x86.Build.0 = Release|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Debug|ARM.Build.0 = Debug|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Debug|x64.Build.0 = Debug|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Debug|x86.Build.0 = Debug|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Release|ARM.ActiveCfg = Release|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Release|ARM.Build.0 = Release|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Release|x64.ActiveCfg = Release|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Release|x64.Build.0 = Release|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Release|x86.ActiveCfg = Release|Any CPU
-		{3162B002-96BD-4C3A-BA83-94791BA65A49}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -304,7 +286,6 @@ Global
 		{F5A34D9C-854C-4972-ABF3-8BAE4712386D} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{10264C0F-F854-4201-AFCB-2B7315EFBCE0} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
 		{EC6681D3-3F9C-4CBB-B5D5-091E7F85D1C7} = {013DFD29-E1DB-4968-A67B-C2342E6F5B6E}
-		{3162B002-96BD-4C3A-BA83-94791BA65A49} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{D16D7F56-E54C-498D-B4B2-AEBF1C8CA462} = {013DFD29-E1DB-4968-A67B-C2342E6F5B6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

@@ -279,14 +279,12 @@ namespace DotNetty.Codecs.Http
 
         private static HttpMethod ConvertToHttpMethod(string name)
         {
-            var methodName = name.ToUpperInvariant();
-
-            if (MethodMap.TryGetValue(methodName, out var result))
+            if (MethodMap.TryGetValue(name, out var result))
             {
                 return result;
             }
 
-            return new HttpMethod(methodName);
+            return new HttpMethod(name);
         }
     }
 }
