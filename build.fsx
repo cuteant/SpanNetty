@@ -227,7 +227,6 @@ Target "RunTests" (fun _ ->
                                 | _ -> !! "./test/*.Tests/*.Tests.csproj" // if you need to filter specs for Linux vs. Windows, do it here
                                        -- "./test/*.Tests/DotNetty.Transport.Tests.csproj"
                                        -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
-                                       -- "./test/*.Tests/DotNetty.Codecs.Http2.Tests.csproj"
                                        -- "./test/*.Tests/DotNetty.Handlers.Tests.csproj"
                                        -- "./test/*.Tests/DotNetty.Handlers.Proxy.Tests.csproj"
             rawProjects |> Seq.choose filterProjects
