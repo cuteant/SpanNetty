@@ -86,7 +86,7 @@ namespace DotNetty.Handlers.Proxy.Tests
             ClearServerExceptions();
         }
         
-        [Theory(Timeout = 5000, Skip = "Unreliable test from upstream merge.")] // Infrequently fails in ubuntu and Win2022
+        [Theory(Timeout = 5000)] // Infrequently fails in ubuntu and Win2022
         [MemberData(nameof(CreateTestItems))]
         public void Test(TestItem item)
         {
