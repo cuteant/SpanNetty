@@ -229,6 +229,7 @@ Target "RunTests" (fun _ ->
                                        -- "./test/*.Tests/DotNetty.Suite.Tests.csproj"
                                        -- "./test/*.Tests/DotNetty.Codecs.Http2.Tests.csproj"
                                        -- "./test/*.Tests/DotNetty.Handlers.Tests.csproj"
+                                       -- "./test/*.Tests/DotNetty.Handlers.Proxy.Tests.csproj"
             rawProjects |> Seq.choose filterProjects
      
         let runSingleProject project =
