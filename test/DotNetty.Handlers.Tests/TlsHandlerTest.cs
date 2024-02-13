@@ -66,12 +66,6 @@ namespace DotNetty.Handlers.Tests
             }
             else
             {
-                var legacyTls = !IsUbuntu2004();
-                if (legacyTls)
-                {
-                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
-                    protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
-                }
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
             }
@@ -179,12 +173,6 @@ namespace DotNetty.Handlers.Tests
             }
             else
             {
-                var legacyTls = !IsUbuntu2004();
-                if (legacyTls)
-                {
-                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
-                    protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
-                }
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
             }
@@ -407,41 +395,5 @@ namespace DotNetty.Handlers.Tests
         
         static bool IsWindowsBefore2022() 
             => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Environment.OSVersion.Version < new Version(10, 0, 20348, 0);
-
-        static bool IsUbuntu2004()
-            => RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-               && Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystem == "ubuntu"
-               && Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment.OperatingSystemVersion == "20.04";
-
-        /*const string TlsKeyPrefix = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols";
-
-        static bool WindowsLegacyTlsEnabled()
-            => TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.0\\Client", "DisabledByDefault", out var val) && val == 0
-                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.0\\Client", "Enabled", out val) && val == 1
-                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.0\\Server", "DisabledByDefault", out val) && val == 0
-                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.0\\Server", "Enabled", out val) && val == 1
-                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.1\\Client", "DisabledByDefault", out val) && val == 0
-                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.1\\Client", "Enabled", out val) && val == 1
-                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.1\\Server", "DisabledByDefault", out val) && val == 0
-                && TryGetRegistryKey<int>($"{TlsKeyPrefix}\\TLS 1.1\\Server", "Enabled", out val) && val == 1;
-                
-        static bool TryGetRegistryKey<T>(string key, string name, out T result)
-        {
-            result = default;
-            try
-            {
-                var existingValue = Registry.GetValue(key, name, null);
-                if (existingValue is T res)
-                {
-                    result = res;
-                    return true;
-                }
-            }
-            catch
-            {
-            }
-
-            return false;
-        }*/
     }
 }
