@@ -150,14 +150,6 @@ namespace DotNetty.Handlers.Tests
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var legacyTls = IsWindowsBefore2022();
-                if (legacyTls)
-                {
-                    protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-                    protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
-                    protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
-                }
-
                 protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
 #if NETCOREAPP_3_0_GREATER
                 //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
